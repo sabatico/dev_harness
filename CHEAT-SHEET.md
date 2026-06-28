@@ -16,6 +16,7 @@
 - **Builder ≠ test author.** Tests come from a different model/agent.
 - Coverage to target, or `DEFERRED-TEST:` + register it.
 - UI work → read `sops/ui-development-guardrails.md` first; tokens + components, zero inline styles.
+- Design mockup → pixel-perfect → read `sops/mockup-implementation.md`; ask for the structured handoff, extract values (don't eyeball), verify by rendered-HTML diff.
 
 ## Spawning a sub-agent
 - Only if work is parallelizable + **file sets disjoint**.

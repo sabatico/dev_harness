@@ -8,7 +8,7 @@ Led by an AI lead agent + spawned role sub-agents; the human owner («role») gi
 2. **`docs/adr/README.md`** — the **ADR log** (the running list of locked decisions). Never re-litigate a locked decision.
 3. **`docs/feature-catalog.md`** — the **single inventory of EVERYTHING** the product does (every user-facing capability + every core module), with status, surface, tests. The fastest "what does this do, end to end?" answer.
 4. **`docs/runner.md`** — the **live tracker for the active work wave** (what's in flight, statuses, open questions).
-5. Then dive deeper as the task needs — `docs/architecture.md`, the relevant ADRs, `docs/sops/*`. **Touching «X subsystem»?** read «its doc» first. **Doing UI work?** read **`docs/sops/ui-development-guardrails.md`** FIRST (tokens + components, zero inline styles). **Touching an integration?** read **`docs/third-party-services.md`** first.
+5. Then dive deeper as the task needs — `docs/architecture.md`, the relevant ADRs, `docs/sops/*`. **Touching «X subsystem»?** read «its doc» first. **Doing UI work?** read **`docs/sops/ui-development-guardrails.md`** FIRST (tokens + components, zero inline styles). **Implementing a design mockup pixel-perfect?** read **`docs/sops/mockup-implementation.md`** (structure preservation + extract values + rendered-HTML diff; ask for the structured handoff). **Touching an integration?** read **`docs/third-party-services.md`** first.
 6. Work-to-do lives in **`docs/backlog-tickets.md`** (bugs + features, unscheduled); work deliberately deferred-by-constraint lives in **`docs/tbd-parking-lot.md`**.
 
 ## ⛔ Standing rules (non-negotiable — never miss these)

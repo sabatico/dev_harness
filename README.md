@@ -49,7 +49,8 @@ dev_harness/
 │   ├── test-and-coverage.md        ← cross-authored tests + coverage-as-Done + deferred-test discipline
 │   ├── agents-and-roles.md         ← roles, when to spawn, worktree isolation, integrate-before-removal
 │   ├── decisions-adr.md            ← ADR format + the second-ideator rule + locking
-│   └── ui-development-guardrails.md ← tokens + components + zero inline styles; read before any UI work
+│   ├── ui-development-guardrails.md ← tokens + components + zero inline styles; read before any UI work
+│   └── mockup-implementation.md    ← design mockup → pixel-perfect: structure preservation + extract values + rendered-HTML diff
 └── running-files/                  ← the project's living memory (updated at the end of every act)
     ├── ONBOARDING.md               ← current state + append-only session log
     ├── runner.md                   ← the ACTIVE wave's in-flight work
@@ -99,4 +100,4 @@ The **quality review** is a periodic, deeper pass that runs across everything si
 - **Separation of authorship for tests/review** — "don't mark your own homework"; here re-cast for agents/models.
 - **A per-repo agent constitution (`CLAUDE.md`) and worktree-isolated parallel agents** — the genuinely agent-era parts.
 
-See `sops/` for the four operating procedures and `running-files/` for the templates.
+See `sops/` for the operating procedures and `running-files/` for the templates.
