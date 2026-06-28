@@ -32,11 +32,31 @@ A same‑family structured handoff needs **no pixel inference** — you write ag
 
 **Don't silently fall back.** If you don't have the structured handoff, **ASK the owner to export one**
 before settling for reverse‑engineering — and make the ask actionable (tell them the exact export menu).
-**First, hand the design tool the project's styling context** so its handoff targets *your* stack (these
-tools tailor output to the declared stack — Tailwind vs plain CSS vs React + CSS Modules). Keep a
-**styling‑context manifest** in the repo as that contract — the stack, the token names, and the existing
-primitive components to reuse — so the bundle emits code that drops into your system instead of generic
-markup. `«where the styling-context manifest lives»`. Re‑offer the handoff each new screen/wave.
+
+### Brief the designer (or design tool) BEFORE the handoff
+Whoever produces the handoff — a design tool's export or a human designer — must be told the **same
+checklist**, so the package comes back *implementation‑ready* instead of needing a translation pass.
+Keep this as a **styling‑context manifest** in the repo and paste/link it every time
+(`«where the styling-context manifest lives»`). The brief:
+
+1. **Target stack.** Name the exact styling system the output must hit — framework + styling method
+   (e.g. «CSS‑custom‑property tokens + CSS Modules», or the project's locked stack). These tools tailor
+   output to the *declared* stack (Tailwind vs plain CSS vs React + CSS Modules), so this is the single
+   highest‑leverage line.
+2. **Token vocabulary.** Give the **semantic token names** to reference (or link the tokens file):
+   "use these names — don't emit raw hex/px values."
+3. **Component library.** List the **existing primitives to reuse** (names + their variants/props), so it
+   doesn't re‑invent buttons/cards/inputs/nav.
+4. **Output rules.** Emit components + scoped styles + `var(--token)` references; **no inline styles, no
+   hardcoded colors/spacing, no new token system, no foreign‑framework utility classes.**
+5. **Map + flag.** Map every value used on the canvas to a semantic token; **flag any value not in the
+   palette** so it's added deliberately — never silently invented.
+6. **Scope + format.** The **structured handoff** (component tree + tokens + layout hierarchy + assets),
+   **all screens / the full IA** — not a single frame, and not a flat screenshot/PDF.
+7. **Connect the codebase if the tool supports it.** Pointing the tool at the repo so it **auto‑ingests
+   the tokens + components** is the biggest quality lever; the manifest is the fallback when it can't.
+
+Re‑offer the handoff each new screen/wave — it deletes most of Step 0's manual work.
 
 ## Procedure
 
