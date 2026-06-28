@@ -73,15 +73,45 @@ each primitive against the mockup with a computed‑style diff:
 
 **Skipping this is what causes the rework.** Lock it once → every screen after is pure structure.
 
-### Step 1 — Mirror the structure
-Build the screen's components so the DOM hierarchy matches the mockup's section. Add what the static
-mockup lacks: semantic tags, ARIA roles/labels, keyboard/focus, responsive layout, state/data wiring.
+### Step 1 — Extract the COMPLETE frame spec, then RECONCILE with the docs (the GATE — before any code)
+**The step that ends the back‑and‑forth.** Do BOTH halves before writing markup.
+- **(a) Extract EVERYTHING, not spot‑measurements.** Walk the mockup frame's DOM and emit *every*
+  element: `tag · layout box (x,y,w,h) · bg · border · radius · font/size/weight · color · padding ·
+  nesting`. This one artifact is the **build contract** — colour spot‑checks miss **layout, alignment,
+  nesting, and small parts** (flush‑left rails, bullets, dividers, borders). A complete spec is also what
+  lets a builder (or a cheaper model) **one‑shot** the screen.
+- **(b) RECONCILE the spec against the designer's docs** (component/screen/token docs) — a **hard gate**.
+  For each shared element + the layout, confirm the measured mockup agrees with the prose: nav
+  **orientation + items**; **layout** (columns, alignment, what is *nested in* what); **surfaces**; which
+  **primitive**. **Match → proceed. Any discrepancy → STOP, raise it with the owner, resolve it before
+  implementing.** Mockup pixels are authoritative, but a conflict means the docs (or your reading) may be
+  wrong elsewhere too — don't silently pick one. *(Real case: a doc said the account sub‑nav was a
+  "horizontal strip"; the mockup rendered a vertical rail — building on the doc cost a full rework.)* Also
+  flag **shell variants** here: do these screens use a *different shell* than the default (e.g. header +
+  full‑height sidebar vs header + centered content)? Decide + build a shell variant at the **shell level**.
+- **(c) READ THE GEOMETRY FOR STRUCTURE — a complete spec is necessary but NOT sufficient.** Before mapping
+  any element to a `<div>`, classify each major element by its **box vs the frame edges + header**: does it
+  **hug a frame edge** (`x≈0`/right), **dock to the header** (`y ≈ header height`), **run the full height**
+  (`h ≈ frame height`)? **If yes → it is CHROME (a shell element), not content** — reproduce it as a
+  **shell‑layout change**, NOT a styled div inside the existing (centered/padded/content‑sized) container,
+  or it renders *detached* (off the edge, gapped from the header, only as tall as its content). *Cautionary
+  tale: an account rail's box `[x=1, y=header‑bottom, full‑height]` literally meant "full‑height sidebar
+  docked under the header," yet three independent builders (a human‑led pass + two one‑shot models) all
+  matched its styling and all dropped it inside the content area → detached. **Let the geometry dictate the
+  structure; don't bend the design to fit the shell you already have.***
 
-### Step 2 — Apply styles from tokens
-Style via tokens + scoped styles only. Pull any value not already a token from the mockup's computed
-style (never by eye).
+### Step 2 — Mirror the structure (per the extracted spec)
+Build the screen's components so the DOM hierarchy + **layout** match the spec (columns, nesting,
+alignment). Add what the static mockup lacks: semantic tags, ARIA roles/labels, keyboard/focus,
+responsive layout, state/data wiring.
 
-### Step 3 — Verify (the core of this SOP)
+### Step 3 — Apply styles from the spec → tokens
+Style via tokens + scoped styles only. Every value comes from the **extracted spec** (map hex/px → token),
+never by eye.
+
+### Step 4 — Verify (a FINAL check, not the iteration loop) — and don't commit before sign‑off
+With the full spec done up front, this confirms; it isn't where you discover the design. **Never commit
+a screen before the owner has reviewed the side‑by‑side and approved it.**
 **Render BOTH sides to HTML with all styles resolved inline, then diff element‑by‑element.** Because the
 structures are parallel, the trees line up and a mismatch is a **fact** (`color #7A6F60 vs #9A8F7D`), not
 an opinion. The computed‑style diff is the **source of truth for exact values**.
