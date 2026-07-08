@@ -28,6 +28,8 @@ Pick **one** stack and lock it; reopen only via ADR, never mid-slice. Choose for
 - **Consistency lives in the component layer.** Screens compose `<Button variant="primary">`, never a div with nine style props copy-pasted around.
 - **A design export is a REFERENCE, not source.** If you're handed a design-tool export (inline-styled, class-less markup), **never copy its markup/inline styles** into the app. Read it for *intent* — layout, copy, color, spacing, hierarchy — then rebuild faithfully on the token + component system.
 - **Adopt the information architecture fully.** Don't cherry-pick screens; take the IA as designed so navigation stays coherent.
+- **Review every surface at three window widths** (the snap-to-side case — users resize the browser to work side-by-side): **full (~1440) / half (~960) / one-third (~640)** of a desktop display. At each, and at the mobile widths already targeted: no horizontal body scroll, no overlapping/clipped controls, everything operable, the design still intentional (the compact/mobile composition is acceptable at one-third — "looks okay and works", not "identical layout"). Automate it if you have a real-browser test layer (loop the width/no-overlap/no-horizontal-scroll assertions over the three viewports); until then it's a review-blocking manual check.
+- **Untrusted input renders as inert text.** Every user-supplied string a screen displays is escaped by default; never build markup from it, never feed it to a raw-HTML/`href`/`src` sink unsanitized. (The client is not the security gate — the server is — but a UI that reflects hostile input is its own bug. See `edge-case-catalog.md` family I.)
 
 ## 4. UI ahead of backend → defer explicitly
 When you build a screen whose backend isn't ready, **stub the data + mark it** — `TBD-UI: <what's missing>` — and register it in `running-files/tbd-parking-lot.md` (or a dedicated UI-deferred registry). Never let "the backend isn't there yet" become an invisible gap. The screen ships; the wiring is tracked.
@@ -36,8 +38,10 @@ When you build a screen whose backend isn't ready, **stub the data + mark it** �
 1. Uses only tokens + primitive components (no raw values, no inline styles — lint passes).
 2. Faithful to the design intent (layout, copy, hierarchy, emotional tone).
 3. Responsive + accessible to the project's stated bar (keyboard, contrast, focus, aria).
-4. Any missing backend is stubbed + `TBD-UI:`-registered.
-5. Tests per the cross-author rule; running files updated.
+4. **Three-width check passed** — full (~1440) / half (~960) / one-third (~640): no horizontal body scroll, no overlap/clipped controls, everything operable, design still intentional.
+5. **Edge-case checklist instantiated + attacked** (`edge-case-catalog.md`) — the surface's abnormal-usage cases (back/forward through gated steps, refresh/close mid-flow, double-submit, rapid open/close, mid-action lock/expiry, concurrent tabs) each Handled-with-test / N/A-justified / DEFERRED; hostile input (family I) on every field.
+6. Any missing backend is stubbed + `TBD-UI:`-registered.
+7. Tests per the cross-author rule; running files updated.
 
 ## 6. Keep the emotional/brand brief in front of you
 A product has a *feeling* to hit. Write the one-line brand/emotional brief at the top of the project's UI doc (`«e.g. warm and calm, never clinical»`) and check every screen against it — tone is a guardrail too, not just spacing.

@@ -20,18 +20,20 @@ Led by an AI lead agent + spawned role sub-agents; the human owner («role») gi
 - **Coverage is part of Done:** every slice **measures** coverage on its new/changed code and hits «target band, e.g. 80–100%». A test you can't write yet (missing harness/dep) is **DEFERRED, never dropped** — tag the site `DEFERRED-TEST:`, register it, and write it the moment the dependency lands.
 - **Git:** «branch/PR policy». End commits with the agreed co-author trailer.
 - **Spend:** sub-«$N» de-risk validation is never a blocker — just do it, then clean up (per the destructive-action rule).
-- **"Quality review" = run the SOP (`docs/sops/quality-review.md`):** review ALL code since the last `quality-review:` commit across 3 axes (code quality / tests+coverage / observability); lead leads + an **independent second reviewer**; lead **judges** each finding; resolve; verify green; commit with the `quality-review:` prefix.
+- **"Quality review" = run the SOP (`docs/sops/quality-review.md`):** review ALL code since the last `quality-review:` commit across **4 axes** (code quality / tests+coverage / observability / **edge-case & abnormal-usage coverage** — "did we cover all the unexpected gaps?"); lead leads + an **independent second reviewer**; lead **judges** each finding; resolve; verify green; commit with the `quality-review:` prefix.
+- **"Bug hunt" = run the SOP (`docs/sops/bug-hunt.md`) — DIFFERENT from a quality review:** the owner names a **scope** (whole codebase / a directory / a feature / a delta). It hunts **defects ONLY** — function by function, procedure by procedure, UI by UI, seam by seam — through the full lens stack (logic·correctness · the `edge-case-catalog.md` abnormal-usage families incl. the back-and-forth-skips-a-check class · hostile input data, family I · adversarial/security incl. authz/IDOR/replay/enumeration/invariants). **NOT interested in log coverage, code quality/tuning, or coverage %** (that's the quality review). **Per unit, invent even nastier user actions / wronger data specific to that unit, try them, and come back with proposed additional cases** → owner/lead ruling → approved ⇒ cross-author tests + fold into the catalog. Confirmed bugs → `bug-register.md` rows (P0/P1 get an escape analysis); coverage map + report → `bug-hunt-log.md`; commit with the `bug-hunt:` prefix.
+- **Every bug found anywhere → a `docs/bug-register.md` row at discovery time** (P0–P3 ladder; anything that breaks a project invariant = automatic P0). **P0/P1 close only with an escape analysis** (which phase should have caught it → the harness patch that stops the class → the cross-author regression test).
 - **Maintain state — no stale docs (check at the end of EVERY act, before yielding):** update ALL of these "running files" for anything the work changed (mandatory, exactly like ONBOARDING — don't wait for "session end"):
   - **`docs/ONBOARDING.md`** — status + decided/open + milestone + a session-log line.
   - **`docs/runner.md`** (the active wave runner) — flip every touched item's status + add new items.
   - **`docs/feature-catalog.md`** — flip the status / add the row for any capability added/changed/removed.
   - **`docs/use-case-runbook.md`** — update changed flows + add a story for any new capability.
   - **`docs/build-tracker.md`** — reflect progress.
-  - *(if touched)* **`docs/backlog-tickets.md`** (move/close tickets), **`docs/tbd-parking-lot.md`** (add deferrals + fire resurface triggers), **`docs/third-party-services.md`** (new/changed integration).
+  - *(if touched)* **`docs/backlog-tickets.md`** (move/close tickets), **`docs/bug-register.md`** (every defect found, at discovery), **`docs/bug-hunt-log.md`** (after a hunt), **`docs/tbd-parking-lot.md`** (add deferrals + fire resurface triggers), **`docs/third-party-services.md`** (new/changed integration).
 
 ## ✅ Definition of Done (a slice is not done until ALL are true)
-1. It works (the happy path + the obvious edges).
-2. Tests authored by a different role/model, measured to the coverage target (or deferred-and-registered).
+1. It works — the happy path **and the abnormal-usage cases**: the slice's `edge-case-catalog.md` checklist is instantiated (Handled / N/A-why / DEFERRED), with hostile-input (family I) handled on every field, client and server.
+2. Tests authored by a different role/model, measured to the coverage target (or deferred-and-registered); the tester **attacked the edge-case checklist and proposed its own additional cases**.
 3. Build + tests + **all gates** green — *watched*, not assumed.
 4. Observability: meaningful outcomes are logged/traced; no secret material in logs.
 5. Decisions of consequence recorded as ADRs; running files updated.

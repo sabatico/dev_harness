@@ -23,6 +23,30 @@ When a test genuinely can't be written yet (missing sandbox, unbuilt module, ext
 3. A CI check (`list-deferred-tests --check`) fails if a marker exists with no registry row.
 4. **When the dependency lands, write the owed test in that same slice**, remove the marker, delete the row. (The "resurface rule" — the gap can't be quietly forgotten and rediscovered later.)
 
+## Edge-case coverage is part of Done (not just line coverage)
+Coverage % proves lines ran; it does NOT prove the flow survives abnormal use (back/forward,
+refresh-mid-flow, double-submit, hostile input, a concurrent tab). That objective is owned at three
+phases against `sops/edge-case-catalog.md`:
+1. **Build:** the builder instantiates the catalog into a **feature-specific checklist** (every
+   applicable class → Handled / N/A-why / DEFERRED), with special weight on input-data validity
+   (catalog family I), and ships it with the change.
+2. **Test:** the cross-author tester **attacks the checklist** — every `Handled` gets a test; cases
+   the unit harness can't see (back/forward, session restore, real timers/streams) go to a
+   real-driver test; untestable-yet cases become `DEFERRED-TEST:` rows, never dropped.
+3. **Review:** quality-review **axis 4** asks "did we cover all the unexpected gaps and abnormal-usage
+   scenarios?" A case that can break a **project invariant** is a hard gate, not a suggestion.
+
+## The tester-enrichment loop (the tester is not limited to the given cases)
+The cross-author tester must **propose its OWN additional edge/use cases** beyond the builder's
+checklist and beyond the catalog — nastier user actions, wronger data, specific to this feature.
+Then:
+1. Proposals **come back for review** (lead/owner) — **approve or reject each with a reason.**
+2. Every **approved** proposal gets its **test written in the same change** (by the cross author).
+3. Anything that **generalizes** is **folded into `sops/edge-case-catalog.md`** as a new class, so
+   every future feature inherits it.
+
+This is also executed at hunt time by `sops/bug-hunt.md` (its invent-nastier duty).
+
 ## The test pyramid (default shape)
 - Lots of fast **unit** tests (pure logic, mocked edges).
 - Fewer **integration** tests (real DB/store/contract).

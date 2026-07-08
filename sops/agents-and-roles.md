@@ -4,8 +4,8 @@
 | Role | Model tier | Owns |
 |------|-----------|------|
 | **Lead / Integrator** | strong | The contract boundary, integration, the running files, final judgment, hard/security-critical code, ADRs. Never delegates judgment. |
-| **Builder** | cheap–mid | A scoped, multi-file implementation slice in an isolated worktree with a **disjoint file set**. |
-| **Tester (cross author)** | ≠ builder | Tests for code it did not write (see `test-and-coverage.md`). |
+| **Builder** | cheap–mid | A scoped, multi-file implementation slice in an isolated worktree with a **disjoint file set**. Ships the slice's **edge-case checklist** (`edge-case-catalog.md` → Handled / N/A-why / DEFERRED). |
+| **Tester (cross author)** | ≠ builder | Tests for code it did not write (see `test-and-coverage.md`). **Attacks the builder's edge-case checklist AND enriches it** — proposes its own additional cases → lead/owner ruling → approved ones become tests + fold into the catalog. |
 | **Reviewer (second)** | ≠ lead | The independent pass in a quality review. |
 | **Second ideator** | ≠ lead | Debates a hard decision so the lead isn't reasoning alone (see `decisions-adr.md`). |
 | **Scribe** | cheap | Documents each finished item into the running files. |

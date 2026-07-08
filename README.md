@@ -6,7 +6,7 @@ A portable, project-agnostic operating system for software projects **led by an 
 
 ---
 
-## The 8 pillars
+## The 9 pillars
 
 | # | Pillar | The one-line rule | Files |
 |---|--------|-------------------|-------|
@@ -14,10 +14,11 @@ A portable, project-agnostic operating system for software projects **led by an 
 | 2 | **Running files** | The project's state lives in living docs, updated at the end of **every** act. | `running-files/*` |
 | 3 | **Decisions** | Hard/irreversible choices become ADRs; never re-litigate a locked one. | `running-files/adr/` |
 | 4 | **Roles & orchestration** | A strong "lead" integrates; parallel work goes to isolated agents; tests are authored by a *different* agent than the builder. | `sops/agents-and-roles.md` |
-| 5 | **Quality reviews** | "Quality review" = a repeatable 3-axis SOP: lead + an independent second reviewer, lead judges, commit as the new baseline. | `sops/quality-review.md` |
+| 5 | **Quality reviews** | "Quality review" = a repeatable 4-axis SOP: lead + an independent second reviewer, lead judges, commit as the new baseline. | `sops/quality-review.md` |
 | 6 | **Test & coverage discipline** | Coverage is part of Done; blocked tests are deferred-and-registered, never dropped. | `sops/test-and-coverage.md` |
 | 7 | **Guardrails & safety** | Name the 1–3 invariants that must never break; confirm destructive actions; never leak secrets. | (in `CLAUDE.md`) |
 | 8 | **Verify, don't assume** | "Done" means build + tests + gates are green and you watched them pass. | (in `CLAUDE.md` DoD) |
+| 9 | **Adversarial quality** | Abnormal-usage + hostile-input coverage is owned at build/test/review; a defect-only **bug hunt** sweeps on demand; every escape patches the process. | `sops/edge-case-catalog.md`, `sops/bug-hunt.md`, `running-files/bug-register.md` |
 
 ---
 
@@ -35,6 +36,8 @@ A portable, project-agnostic operating system for software projects **led by an 
 
 6. **Decisions are cheap to make and expensive to forget.** Record them as ADRs (context, decision, alternatives rejected, consequences). Lock them. Don't re-argue.
 
+7. **The happy path is the easy 80%; the bugs live in the other 20%.** Users go back-and-forward, double-click, close mid-save, paste the wrong thing, and send hostile data — and *that* is where features break. So abnormal-usage and hostile-input coverage is an **owned objective at build, test, and review** (a per-feature checklist from the edge-case catalog), a **defect-only bug hunt** sweeps it adversarially on demand, and **every escaped bug patches the process** (an escape analysis), not just the code. The harness gets smarter each time reality surprises it.
+
 ---
 
 ## The kit at a glance (file map)
@@ -44,17 +47,22 @@ dev_harness/
 ├── CLAUDE.md                       ← the per-repo constitution template (fill the «slots»)
 ├── CHEAT-SHEET.md                  ← the end-of-act ritual + quality-review steps + "where things go"
 ├── ci/gates.md                     ← the enforcement layer (build/test/coverage/secret-scan/registry checks)
+├── ci/gates.md                     ← gates (build/test/coverage/secret-scan/registry checks) + the security sweep + deploy/rollback; run locally when hosted CI isn't an option
 ├── sops/
-│   ├── quality-review.md           ← 3-axis review (baseline → lead + independent 2nd → judge → quality-review: commit)
-│   ├── test-and-coverage.md        ← cross-authored tests + coverage-as-Done + deferred-test discipline
+│   ├── quality-review.md           ← 4-axis review (quality · tests+coverage · observability · edge-case coverage) → lead + independent 2nd → judge → quality-review: commit
+│   ├── test-and-coverage.md        ← cross-authored tests + coverage-as-Done + deferred-test discipline + the edge-case enrichment loop
+│   ├── edge-case-catalog.md        ← the growing catalog of unexpected user/data behavior (families A–I); instantiated per feature at build/test/review
+│   ├── bug-hunt.md                 ← the defect-only adversarial sweep (invent-nastier duty); DIFFERENT from a quality review
 │   ├── agents-and-roles.md         ← roles, when to spawn, worktree isolation, integrate-before-removal
 │   ├── decisions-adr.md            ← ADR format + the second-ideator rule + locking
-│   ├── ui-development-guardrails.md ← tokens + components + zero inline styles; read before any UI work
+│   ├── ui-development-guardrails.md ← tokens + components + zero inline styles + the three-width review; read before any UI work
 │   └── mockup-implementation.md    ← design mockup → pixel-perfect: structure preservation + extract values + rendered-HTML diff
 └── running-files/                  ← the project's living memory (updated at the end of every act)
     ├── ONBOARDING.md               ← current state + append-only session log
     ├── runner.md                   ← the ACTIVE wave's in-flight work
     ├── backlog-tickets.md          ← bugs + features to do, not yet scheduled
+    ├── bug-register.md             ← the ONE triaged defect list (P0–P3) + the escape-analysis loop
+    ├── bug-hunt-log.md             ← bug-hunt coverage map (waves) + per-session reports
     ├── tbd-parking-lot.md          ← work deliberately deferred by a constraint (with resurface triggers)
     ├── feature-catalog.md          ← the enumerable "what does it do" inventory
     ├── use-case-runbook.md         ← user stories = manual-test script = playbook
@@ -71,8 +79,8 @@ The "ledgers of the incomplete" — `tbd-parking-lot`, `deferred-test-registry`,
 ```
 COLD START   → read CLAUDE.md, then the running files in the prescribed order.
 PLAN         → restate the goal; pick the smallest valuable slice; note open decisions.
-BUILD        → implement; for hard/irreversible decisions, write/▲ an ADR first.
-TEST         → tests authored by a different role/model than the builder.
+BUILD        → implement; for hard/irreversible decisions, write/▲ an ADR first; instantiate the edge-case checklist.
+TEST         → tests authored by a different role/model than the builder; attack + enrich the edge-case checklist.
 VERIFY       → build + tests + gates green, watched (not assumed).
 END OF ACT   → update ALL running files; commit; report outcomes faithfully.
 ```
@@ -87,7 +95,7 @@ The **quality review** is a periodic, deeper pass that runs across everything si
 2. Copy `running-files/*` into the repo (e.g. under `docs/`); fill the headers.
 3. Keep the `sops/*` either in the repo (`docs/sops/`) or linked from `CLAUDE.md`.
 4. Pick the project's **invariants** (pillar 7) — the 1–3 properties that must never break — and write the guardrail tests for them first.
-5. Set up the **gates** (CI): build, test, coverage floor, secret-scan, stub/deferred-registry checks.
+5. Set up the **gates**: build, test, coverage floor, secret-scan, stub/deferred-registry checks, and the security sweep (dependency-CVE + secret + SAST). Wire them into one `run-all-gates` script — run it locally before every push if hosted CI isn't available.
 6. Start the first act. At its end, run the end-of-act ritual. The habit is the harness.
 
 ---
@@ -98,6 +106,8 @@ The **quality review** is a periodic, deeper pass that runs across everything si
 - **Definition of Done + test pyramid** — Agile/XP.
 - **Code-review checklists & "review the diff since baseline"** — standard PR hygiene.
 - **Separation of authorship for tests/review** — "don't mark your own homework"; here re-cast for agents/models.
+- **Adversarial / negative testing + fuzzing** — decades of QA practice (boundary values, abuse cases, input fuzzing); here made an *owned objective* via the edge-case catalog, the enrichment loop, and the bug hunt.
+- **Blameless post-mortems** — SRE practice; here the per-bug **escape analysis** that patches the process, not just the code.
 - **A per-repo agent constitution (`CLAUDE.md`) and worktree-isolated parallel agents** — the genuinely agent-era parts.
 
 See `sops/` for the operating procedures and `running-files/` for the templates.
