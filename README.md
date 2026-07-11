@@ -37,9 +37,9 @@ A portable, project-agnostic operating system for software projects **led by an 
 
 6. **Decisions are cheap to make and expensive to forget.** Record them as ADRs (context, decision, alternatives rejected, consequences). Lock them. Don't re-argue.
 
+7. **The happy path is the easy 80%; the bugs live in the other 20%.** Users go back-and-forward, double-click, close mid-save, paste the wrong thing, and send hostile data — and *that* is where features break. So abnormal-usage and hostile-input coverage is an **owned objective at build, test, and review** (a per-feature checklist from the edge-case catalog), a **defect-only bug hunt** sweeps it adversarially on demand, and **every escaped bug patches the process** (an escape analysis), not just the code. The harness gets smarter each time reality surprises it.
 
 8. **Two sources of truth guarantee drift — and prose rots on its own clock.** The field test: engineering tickets on a visual board drifted from the code *within hours* (tickets for already-built features; agents obeying tickets instead of inventorying reality) — and the status doc's hand-typed counts drifted too, just slower. The cures, in order of strength: **generate** what a script can count (facts blocks, gate-checked) → **auto-collect** what needs judgment (a claims checklist the quality review walks) → **audit on a schedule** what's left (the claims axis). Boards keep only what a repo can't do: the owner's queue, deadlines, blockage visibility — in plain language the owner never has to decode.
-7. **The happy path is the easy 80%; the bugs live in the other 20%.** Users go back-and-forward, double-click, close mid-save, paste the wrong thing, and send hostile data — and *that* is where features break. So abnormal-usage and hostile-input coverage is an **owned objective at build, test, and review** (a per-feature checklist from the edge-case catalog), a **defect-only bug hunt** sweeps it adversarially on demand, and **every escaped bug patches the process** (an escape analysis), not just the code. The harness gets smarter each time reality surprises it.
 
 ---
 
