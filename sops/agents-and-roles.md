@@ -25,6 +25,10 @@ Good: "Build feature A (files X,Y) while feature B (files P,Q) is built separate
 5. **Definition of Done for a spawned slice** = builds, cross-authored tests green, no files outside its agreed set touched, running files updated by the lead on integration.
 
 ## Communicating with sub-agents
+- **Briefs start from SKILLS, not from memory** (see `agent-skills.md`): inject BY PATH the
+  universal `skill-core` + exactly one task-type skill (coding / test-authoring / doc-authoring /
+  adversary / UI) + the binding guides that skill names. The brief itself then carries only the
+  task specifics. Rule delivery must not depend on the lead remembering rules.
 - Give the agent **the contract + the disjoint file set + the DoD**, not vague goals.
 - Give cross-family test authors **rich context** (the real code under test + an existing test as the harness/style exemplar) so the output integrates with minimal mechanical fixup.
 - Treat an agent's final message as a **report**, not ground truth — verify its claims (run the build/tests yourself).

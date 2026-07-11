@@ -34,7 +34,9 @@ data CRUD → ⑤ admin/privileged → ⑥ the rest of the UI → ⑦ static/con
 map in `running-files/bug-hunt-log.md` so a multi-session hunt resumes where it stopped.
 
 **Overweight where bugs live:** the newest code, the least-tested code, units with prior bug history,
-state machines, anything touching money/irreversible actions, and every seam.
+state machines, anything touching money/irreversible actions, every seam — and **areas of recent
+DELETION/refactor** (a deletion orphans callers and hooks silently; the survivors all still
+compile — lens 6).
 
 ## 2. The per-unit lens stack (run ALL on EVERY unit)
 1. **Logic & correctness** — off-by-one, inverted comparisons, swallowed errors, wrong state
@@ -53,6 +55,16 @@ state machines, anything touching money/irreversible actions, and every seam.
 5. **UI-specific** (screen/flow units) — UI-state vs server-state desync (UI claims a success the
    server rejected), the **multi-width review** (full/half/one-third), focus/keyboard traps, stale
    props after optimistic updates, error states that dead-end the user.
+6. **Wiring & reachability — correct code that is DISCONNECTED is a defect,** and no lens above
+   sees it: every function can be individually right while the *connection* between them was
+   deleted. Per unit: (a) is this actually CALLED from a live path (grep the callers; "believed
+   live but orphaned" = a finding, not a quality nit); (b) do its outbound **side-effect hooks**
+   (notify / event emit / audit append / webhook fan-out) demonstrably fire on the happy path
+   END-TO-END — trace or test the chain, not the hook body; (c) after any recent deletion or
+   refactor near this unit, grep the deleted code for outbound calls and prove each one is
+   re-fired on a surviving path. (Real-world origin: a dead-code cleanup deleted the only caller
+   of a "recipients notified" hook — every function stayed correct, users silently stopped being
+   notified for a week, and nothing failed.)
 
 ## 3. The INVENT-NASTIER duty (mandatory per unit)
 The catalog is the floor, not the ceiling. **Before leaving any unit**, explicitly ask:

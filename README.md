@@ -6,7 +6,7 @@ A portable, project-agnostic operating system for software projects **led by an 
 
 ---
 
-## The 9 pillars
+## The 10 pillars
 
 | # | Pillar | The one-line rule | Files |
 |---|--------|-------------------|-------|
@@ -14,11 +14,12 @@ A portable, project-agnostic operating system for software projects **led by an 
 | 2 | **Running files** | The project's state lives in living docs, updated at the end of **every** act. | `running-files/*` |
 | 3 | **Decisions** | Hard/irreversible choices become ADRs; never re-litigate a locked one. | `running-files/adr/` |
 | 4 | **Roles & orchestration** | A strong "lead" integrates; parallel work goes to isolated agents; tests are authored by a *different* agent than the builder. | `sops/agents-and-roles.md` |
-| 5 | **Quality reviews** | "Quality review" = a repeatable 4-axis SOP: lead + an independent second reviewer, lead judges, commit as the new baseline. | `sops/quality-review.md` |
+| 5 | **Quality reviews** | "Quality review" = a repeatable 5-axis SOP (code, tests, observability, edge cases, **doc-claim truth**): lead + an independent second reviewer, lead judges, commit as the new baseline. | `sops/quality-review.md` |
 | 6 | **Test & coverage discipline** | Coverage is part of Done; blocked tests are deferred-and-registered, never dropped. | `sops/test-and-coverage.md` |
 | 7 | **Guardrails & safety** | Name the 1–3 invariants that must never break; confirm destructive actions; never leak secrets. | (in `CLAUDE.md`) |
 | 8 | **Verify, don't assume** | "Done" means build + tests + gates are green and you watched them pass. | (in `CLAUDE.md` DoD) |
 | 9 | **Adversarial quality** | Abnormal-usage + hostile-input coverage is owned at build/test/review; a defect-only **bug hunt** sweeps on demand; every escape patches the process. | `sops/edge-case-catalog.md`, `sops/bug-hunt.md`, `running-files/bug-register.md` |
+| 10 | **One truth + a human-readable surface** | One home per fact — boards/trackers COORDINATE, files DECIDE; counts are generated, claims are audited; the owner gets plain language + a weekly digest; agents get their rules as task-type **skills**, not memory. | `sops/owner-communication.md`, `sops/agent-skills.md`, `ci/gates.md` |
 
 ---
 
@@ -36,6 +37,8 @@ A portable, project-agnostic operating system for software projects **led by an 
 
 6. **Decisions are cheap to make and expensive to forget.** Record them as ADRs (context, decision, alternatives rejected, consequences). Lock them. Don't re-argue.
 
+
+8. **Two sources of truth guarantee drift — and prose rots on its own clock.** The field test: engineering tickets on a visual board drifted from the code *within hours* (tickets for already-built features; agents obeying tickets instead of inventorying reality) — and the status doc's hand-typed counts drifted too, just slower. The cures, in order of strength: **generate** what a script can count (facts blocks, gate-checked) → **auto-collect** what needs judgment (a claims checklist the quality review walks) → **audit on a schedule** what's left (the claims axis). Boards keep only what a repo can't do: the owner's queue, deadlines, blockage visibility — in plain language the owner never has to decode.
 7. **The happy path is the easy 80%; the bugs live in the other 20%.** Users go back-and-forward, double-click, close mid-save, paste the wrong thing, and send hostile data — and *that* is where features break. So abnormal-usage and hostile-input coverage is an **owned objective at build, test, and review** (a per-feature checklist from the edge-case catalog), a **defect-only bug hunt** sweeps it adversarially on demand, and **every escaped bug patches the process** (an escape analysis), not just the code. The harness gets smarter each time reality surprises it.
 
 ---

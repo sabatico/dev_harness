@@ -16,6 +16,8 @@ The SOPs are honor-system until CI enforces them. These are the gates every proj
 | **deferred-test registry** | no silent coverage gaps | a `DEFERRED-TEST:` marker with no row in the registry |
 | **stub registry** | no silent incomplete integration | a `STUB:NAME` / `TBD:` marker with no registry row |
 | **security sweep** | known-vuln deps, committed secrets, static-analysis smells | a HIGH+ dependency CVE, a secret in the tree, or a SAST finding (see below) |
+| **doc-claims** | countable doc claims match reality | a hand-typed count in a running file ("through ADR-N", "N endpoints") disagrees with the computed truth (see the claims-checker pattern) |
+| **state-snapshot** | the generated facts block is current | regenerating the block would change it (someone forgot to re-run the script) |
 
 ## The marker-and-registry pattern (reused for each "make the unfinished visible" gate)
 1. Code site carries a marker: `DEFERRED-TEST:`, `STUB:PROVIDER`, `TBD:`, `TBD-UI:`.
@@ -50,6 +52,28 @@ jobs:
 ```
 
 > Keep the check scripts tiny and greppable — agents maintain them, so they must be obvious. The gate is only as good as it is unhallucinatable.
+>
+> **⚠ Never pipe the gate runner.** `run-all-gates | tail` reports the PIPE's exit code, not the
+> gates' — a red gate sails through the `&&` and gets pushed. Run it bare (or capture to a file and
+> check `$?`). This exact mistake has shipped a red gate in the field; the runner's exit code is
+> the contract.
+
+## The generated-facts-block pattern (hand-typed counts always rot)
+Any countable fact that appears in a running doc — how many ADRs and the highest number, the
+migration head, endpoint count, open bugs, open cards — WILL drift if a human or agent types it
+("ADRs through 68" while the tree says 78 is the canonical field failure). The fix:
+1. The doc carries a marked block: `<!-- GENERATED:state-snapshot BEGIN -->` … `END -->`.
+2. A tiny script computes the facts from the tree (ls/grep, no builds) and rewrites the block;
+   its `--check` mode diffs a fresh regeneration against the file and fails if stale.
+3. Wire `--check` as a gate. Prose *explains around* the block; scripts do the counting.
+
+## The claims-checker pattern (prose claims rot on their own clock)
+The subtler sibling: non-countable CLAIMS ("X is still to do", "blocked by Y", "in progress")
+can't be auto-verified — but they CAN be auto-COLLECTED. A script greps the running files for the
+claim patterns and prints every hit as a checklist; the quality review's claims axis (axis 5)
+walks the generated list and verifies each against the code instead of relying on anyone's memory.
+Auto-verify what's countable (the facts block above); checklist what needs judgment. Convention:
+never quote a stale-claim literal in prose the checker reads — it self-flags.
 
 ## The security sweep (free, local tools — no paid scanner needed)
 A dependency-CVE + secret + static-analysis sweep, run **every quality review, before every deploy,
