@@ -1,5 +1,8 @@
 # Bug Register — «PROJECT» — the ONE triaged list of every known defect
 
+> **Ticket type `BUG`** in the coordination taxonomy (`tickets/README.md`) — but kept in its own
+> long-standing file, since defects have their own severity ladder + escape-analysis loop.
+
 > **The single home for defects**, with one severity ladder and the escape-analysis loop. Distinct
 > from `backlog-tickets.md` (that's the *scheduling queue* for planned work; this is *every defect,
 > logged at discovery, whoever found it*). A defect can be referenced from both, but it is triaged

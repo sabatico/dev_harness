@@ -18,7 +18,7 @@ A portable, project-agnostic operating system for software projects **led by an 
 | 6 | **Test & coverage discipline** | Coverage is part of Done; blocked tests are deferred-and-registered, never dropped. | `sops/test-and-coverage.md` |
 | 7 | **Guardrails & safety** | Name the 1–3 invariants that must never break; confirm destructive actions; never leak secrets. | (in `CLAUDE.md`) |
 | 8 | **Verify, don't assume** | "Done" means build + tests + gates are green and you watched them pass. | (in `CLAUDE.md` DoD) |
-| 9 | **Adversarial quality** | Abnormal-usage + hostile-input coverage is owned at build/test/review; a defect-only **bug hunt** sweeps on demand; every escape patches the process. | `sops/edge-case-catalog.md`, `sops/bug-hunt.md`, `running-files/bug-register.md` |
+| 9 | **Adversarial quality** | Abnormal-usage + hostile-input coverage is owned at build/test/review; a defect-only **bug hunt** sweeps on demand; every escape patches the process. Reviews & hunts file findings as `BUG`/`SEC` tickets unless fixable inline. | `sops/edge-case-catalog.md`, `sops/bug-hunt.md`, `running-files/tickets/bug-register.md`, `running-files/tickets/security.md` |
 | 10 | **One truth + a human-readable surface** | One home per fact — boards/trackers COORDINATE, files DECIDE; counts are generated, claims are audited; the owner gets plain language + a weekly digest; agents get their rules as task-type **skills**, not memory. | `sops/owner-communication.md`, `sops/agent-skills.md`, `ci/gates.md` |
 
 ---
@@ -62,17 +62,30 @@ dev_harness/
 │   └── mockup-implementation.md    ← design mockup → pixel-perfect: structure preservation + extract values + rendered-HTML diff
 └── running-files/                  ← the project's living memory (updated at the end of every act)
     ├── ONBOARDING.md               ← current state + append-only session log
-    ├── runner.md                   ← the ACTIVE wave's in-flight work
-    ├── backlog-tickets.md          ← bugs + features to do, not yet scheduled
-    ├── bug-register.md             ← the ONE triaged defect list (P0–P3) + the escape-analysis loop
+    ├── runner.md                   ← the ACTIVE wave's in-flight ENGINEERING work
+    ├── tickets/                    ← the typed COORDINATION queue (one file per type — replaces a project board)
+    │   ├── README.md               ←   the ticket taxonomy + rules + where reviews/hunts file findings
+    │   ├── user-actions.md         ←   USER — actions only the human can do
+    │   ├── decisions.md            ←   DEC  — pending human decisions (→ recorded as ADRs)
+    │   ├── blocked-features.md     ←   FEAT — blocked-feature visibility ONLY (closes on unblock)
+    │   ├── doc-work.md             ←   DOC  — documentation work not doable inline
+    │   ├── business.md             ←   BIZ  — business / organisational actions
+    │   ├── bug-register.md         ←   BUG  — the ONE triaged defect list (P0–P3) + escape-analysis loop
+    │   └── security.md             ←   SEC  — security-hardening register (not live defects)
+    ├── backlog-tickets.md          ← unscheduled ENGINEERING bugs + features
     ├── bug-hunt-log.md             ← bug-hunt coverage map (waves) + per-session reports
-    ├── tbd-parking-lot.md          ← work deliberately deferred by a constraint (with resurface triggers)
+    ├── tbd-parking-lot.md          ← work deliberately deferred by a constraint + open questions  (TBD)
     ├── feature-catalog.md          ← the enumerable "what does it do" inventory
     ├── use-case-runbook.md         ← user stories = manual-test script = playbook
     ├── third-party-services.md     ← every external dependency: what, why, config-by-name (no secrets)
     ├── deferred-test-registry.md   ← owed-but-blocked test coverage
     └── adr/{README.md, ADR-template.md}
 ```
+**Coordination tickets vs engineering state:** the `tickets/*` files carry only what a repo can't —
+the human's queue, pending decisions, blockage visibility. **Engineering work is never a ticket**
+(it lives in `ONBOARDING.md` + the ADR + `runner.md`) — two sources of truth for engineering state
+guarantee drift. `BUG` and `TBD` keep their own long-standing files; the `tickets/README.md` index
+names the whole taxonomy in one place.
 The "ledgers of the incomplete" — `tbd-parking-lot`, `deferred-test-registry`, the stub rows in `third-party-services`/`feature-catalog` — share one pattern: **a marker in code + a registry row + a CI check**, so nothing is silently unfinished.
 
 ---

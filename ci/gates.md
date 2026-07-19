@@ -86,10 +86,13 @@ per concern — substitute your stack's equivalent:
 | Committed secrets | `gitleaks` / `trufflehog` |
 | Static analysis (SAST) | `gosec` · `bandit` · `semgrep` (community rules) · a linter's security ruleset |
 
-Rules: **HIGH+ severity fails**; lower is reported for judgment. A finding is fixed **or explicitly
-accepted by the owner with a reason** (a `bug-register.md` row). Each section **skips loudly with an
-install hint** if its tool is absent — a skip is not a pass. Pin scanners to the project's toolchain
-version so they don't fail with "requires newer/older runtime".
+Rules: **HIGH+ severity fails**; lower is reported for judgment. Route each finding into the ticket
+system (`running-files/tickets/`): a live **defect** → `bug-register.md` (`BUG`); a **hardening /
+coverage / accepted-false-positive** item → `security.md` (`SEC`, incl. the accepted-with-reason
+rows, so a suppression is auditable, never silent). Fix inline only if quick + in scope; otherwise
+the ticket is the record. Each section **skips loudly with an install hint** if its tool is absent —
+a skip is not a pass. Pin scanners to the project's toolchain version so they don't fail with
+"requires newer/older runtime".
 
 ## Deploy + rollback discipline (even without hosted CI)
 Three things must exist so "deployed" means "verified, and reversible":

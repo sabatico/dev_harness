@@ -86,10 +86,15 @@ HERE?"* — cases the catalog does not have yet.
   different bugs — judge and merge.
 
 ## 5. Recording & response
-- **Every confirmed bug → a `running-files/bug-register.md` row at discovery time** (severity ladder;
-  an invariant breakage = top severity). The response ladder applies mid-hunt: **top-severity = stop
-  hunting, fix now** (with a cross-author regression test + escape analysis); otherwise register +
-  schedule and keep hunting.
+- **Every confirmed bug → a `running-files/tickets/bug-register.md` row at discovery time** (severity
+  ladder; an invariant breakage = top severity). The response ladder applies mid-hunt: **top-severity
+  = stop hunting, fix now** (with a cross-author regression test + escape analysis); otherwise
+  register + schedule and keep hunting. **A defect the hunter can fix inline quickly + in scope may be
+  fixed in the same act** (still gets its register row) — anything wider is registered, not
+  refactored around.
+- **Security-hardening findings that are NOT live defects** (a missing control, a coverage gap, an
+  accepted scanner false-positive) → a `running-files/tickets/security.md` (`SEC`) row, not the bug
+  register. A security *defect* is a `BUG` (top severity if it risks an invariant).
 - **"No bug, just untested" findings** → the proposed-tasks list, not the register.
 - **Fixes during a hunt are minimal + scoped** (fix the defect, don't refactor); regression tests
   authored cross-family. Anything wider → parked for the quality review.
@@ -116,4 +121,4 @@ ritual, and **commit with a `bug-hunt:` prefix** (so a later delta hunt can scop
 | Posture | adversarial: assume the code is guilty | editorial: make the code better |
 
 See also: `edge-case-catalog.md` · `test-and-coverage.md` (enrichment loop) ·
-`running-files/bug-register.md` · `running-files/bug-hunt-log.md`.
+`running-files/tickets/bug-register.md` · `running-files/tickets/security.md` · `running-files/bug-hunt-log.md`.

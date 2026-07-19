@@ -1,5 +1,7 @@
 # TBD Parking Lot — Deliberately-Deferred Work — «PROJECT»
 
+> **Ticket type `TBD`** in the coordination taxonomy (`tickets/README.md`) — kept in its own file.
+
 > **Everything we consciously decided to develop *later* because of a constraint** — not forgotten, not unscheduled-by-accident, but **deferred on purpose** with a reason and a resurface trigger. The "we know, and here's why we're not doing it yet" list.
 > **Distinct from `backlog-tickets.md`:** the backlog is "intend to do, just queued." This is "**blocked/punted by a specific constraint** — revisit when the constraint changes."
 > **Distinct from `deferred-test-registry.md`:** that is specifically *owed test coverage*. This is *owed product/engineering work* of any kind.
