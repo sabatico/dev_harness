@@ -106,3 +106,134 @@ Three things must exist so "deployed" means "verified, and reversible":
    With SHA-tagged artifacts, rollback = re-point the release at the previous SHA (no rebuild). Note
    the **migration caveat**: if migrations run on deploy, a *destructive* migration is not
    rollback-safe — prefer **additive** migrations so old and new code both tolerate the schema.
+
+---
+
+# Gate INTEGRITY — the gates themselves are code, and they fail in ways that look like success
+
+Everything above assumes a gate that reports green has *checked something*. That assumption is where
+the expensive failures live. **In one project, three separate gates were found reporting "all clear"
+after examining zero files, and the pattern that produced it was identical each time.** None of them
+looked broken; each printed a confident summary line.
+
+**Read this section as the answer to one question: how would I know if this gate were lying?**
+
+## G1 · A gate must REFUSE to report success over an empty scan
+
+The shape, and it is always the same:
+
+```sh
+FILES=$(git ls-files '*.ext' | grep ... || true)   # ← the `|| true` is the whole bug
+for f in $FILES; do ...; done
+echo "OK: all $COUNT files pass."                   # ← prints "all 0 files pass" and exits 0
+```
+
+`|| true` on the line that produces the **work list** is not defensive — it is a mute button. If the
+enumeration breaks (a wrong path prefix, a failed VCS call, an over-eager filter), the loop runs zero
+times and the gate congratulates you.
+
+**Every gate that builds a work list must assert the list is non-empty**, or carry an explicit floor:
+
+```sh
+if [ -z "$WORK_LIST" ]; then
+  echo "✗ enumerated ZERO items — the scanner is broken, not the tree. Refusing to report green." >&2
+  exit 1
+fi
+```
+
+**A worse variant, worth naming separately: a gate that HASHES.** A tree-hash or fingerprint computed
+over an empty enumeration is not random — it is the hash of nothing, and it is **stable**. So a
+receipt written while the enumeration was broken will **match** a later check made while it was still
+broken, and the whole mechanism passes having verified an empty tree. If your gate produces a digest,
+it must refuse to emit one for an empty input.
+
+## G2 · Capture every gate's output, or a red can only be believed or ignored
+
+A gate that fails inside a summarised run — `... | tail -4`, a CI step that prints only the last
+lines — destroys the only copy of the evidence. The failure then cannot be *diagnosed*, only argued
+about, and the usual outcome is "probably flaky, re-run it".
+
+**Tee each gate to its own log** and print the path in the summary:
+
+```sh
+run_gate() {
+  local name="$1"; shift
+  "$@" 2>&1 | tee "$GATE_LOGS/$name.log"
+  [ "${PIPESTATUS[0]}" -eq 0 ] && PASS+=("$name") || FAIL+=("$name")
+}
+```
+
+⚠ **`$?` after a pipeline is the LAST command's status, not your gate's.** `cmd | tee f; echo $?`
+reports `tee`. Use `PIPESTATUS[0]`, or you will record passes for failing gates.
+
+**This pays for itself the first time an unrelated suite goes red.** In one case a gate failed inside
+a run touching a completely different subsystem, passed 3/3 on re-run, and would have been dismissed
+as flakiness — the captured log named the exact line, and it was a real (load-dependent) defect.
+
+## G3 · RATCHET a new gate; do not demand a clean sweep
+
+A gate introduced against an existing codebase finds pre-existing violations. Blocking on all of them
+means the gate does not ship — and the archaeology mostly produces guesses, which is worse than
+silence.
+
+**Freeze what exists, refuse what is new:**
+
+```
+scripts/<gate>-baseline.txt     # one frozen violation per line, with a header saying WHY
+```
+
+Rules that keep a baseline honest:
+- Every line is a **known** violation at a known date — never a way to silence a new one.
+- **Fix a line by deleting it**; the gate then guards that case forever.
+- Say in the header **what the baseline is not**: it is not a to-do list, and it is not permission.
+- **Report the count** on every run, so a growing baseline is visible.
+
+Before freezing, **triage the initial violations** — in one case 47 hits were 4 categories, and 3 of
+them were legitimate (paths in a sibling repo, forward references in a plan document, deliberate
+records of a rename). Freezing without triage buries real findings among false ones.
+
+## G4 · Bind the VERIFIED tree to the PUSHED tree
+
+"Gates passed" and "gates passed on *this* code" are different claims. Between the run and the push,
+a file changes and the claim silently becomes false.
+
+**Write a receipt** — a hash of the working tree — when the gates pass, and have the pre-push hook
+recompute it and compare. Two details decide whether it works:
+- **Include untracked-but-not-ignored files.** A hash of tracked files only will not notice the new
+  file you just wrote, which is exactly the code most likely to be unverified.
+- **Use ONE shared hashing function** for both the writer and the checker. Two implementations drift,
+  and the first symptom is a hook that refuses the very commit that created it.
+
+## G5 · A gate cannot judge MEANING — say so, or a green will be over-read
+
+Mechanical checks verify *shape*: does the file exist, does the token match the vocabulary, is the row
+present. They cannot verify that the cited document is the right one, that the comment is true, or
+that the test is meaningful.
+
+**Write the limit into the gate's own header.** A gate whose green is over-read is worse than no gate,
+because it converts an open question into a settled one. Two examples worth copying:
+- a citation gate proves the pointer exists, never that it points anywhere true;
+- a coverage gate proves lines executed, never that anything was asserted about them (see the
+  mutation-testing note in `test-and-coverage.md`).
+
+## G6 · Prefer checking against CODE over checking two prose surfaces against each other
+
+A natural first instinct is to cross-check two documents — a status line against a tracker row, a
+count in one file against a count in another. **This produces false alarms immediately**, because
+prose says the same thing many ways: *"accepted — building"* and *"unblocked, not yet built"* are one
+state in two vocabularies.
+
+**Compare a claim against the artefact it describes.** Does a document claiming a feature is built
+have code that references it? Does a path named in prose exist on disk? Those answers are binary. If
+you genuinely need two documents to agree, **standardise the vocabulary first** and gate the token,
+not the sentence.
+
+## G7 · Watch a new gate FAIL before you trust it
+
+The first run of a new gate is not evidence. Plant a known violation, watch it exit non-zero, remove
+it, watch it pass, and confirm the removal was byte-identical.
+
+**Do this even when — especially when — the gate reports a clean tree on its first run.** Of the
+gates in the case above, one was written *specifically* to catch a class of error, reported a clean
+tree, and was only found to be scanning nothing because its author planted a violation and it did not
+notice.
