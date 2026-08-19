@@ -1,2 +1,5 @@
 .DS_Store
 *.local
+
+# init.sh writes these per-project; the KIT's own copies are committed deliberately
+# (harness.conf makes the kit self-hosting; the baseline records its installed-layout paths).

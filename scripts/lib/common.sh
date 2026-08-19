@@ -9,7 +9,15 @@
 #
 #   0  PASS       the check ran, and found nothing wrong
 #   1  FAIL       the check ran, and found something wrong
-#   3  INCOMPLETE the check could NOT run — missing config, missing tool, no target
+#   3  INCOMPLETE the check could NOT run but SHOULD have — missing tool, unreachable target,
+#                 no harness.conf at all. Forces the run verdict to INCOMPLETE.
+#   4  N/A        the check is deliberately not configured for this project (its setting is
+#                 empty in an existing harness.conf). Reported as `skipped`: never a pass,
+#                 always listed, but it does NOT force INCOMPLETE.
+#
+# 3 vs 4 is the distinction between "this should have run and did not" and "this correctly does
+# not apply". Collapsing them either hides a real hole (everything becomes N/A) or trains people
+# to ignore the verdict (everything becomes INCOMPLETE). See ci/run-integrity.md R2.
 #
 # 3 exists because of the failure this whole harness is built around: a check that
 # scanned nothing reports zero findings, which is indistinguishable from clean. A
@@ -91,6 +99,14 @@ gate_incomplete() {
   exit 3
 }
 
+# Deliberately not applicable to this project. Still not a pass — it is listed in the manifest
+# and the report must account for what went uncovered.
+gate_not_applicable() {
+  printf '%s  N/A%s %s\n' "$C_DIM" "$C_0" "$*"
+  printf '%s      (not a pass — this check covers nothing here)%s\n' "$C_DIM" "$C_0"
+  exit 4
+}
+
 # Standard ending for a gate that ran to completion.
 gate_finish() {
   # gate_finish <what-was-scanned-description>
@@ -112,10 +128,12 @@ harness_need_config() {
 
 harness_need_var() {
   # harness_need_var VAR_NAME "what it configures"
+  # Empty in an EXISTING config = a deliberate opt-out (exit 4, reported as skipped).
+  # No config at all is caught earlier by harness_need_config (exit 3).
   local val
   eval "val=\${$1:-}"
   if [ -z "$val" ]; then
-    gate_incomplete "$1 is not set in harness.conf — $2"
+    gate_not_applicable "$1 is empty in harness.conf — $2"
   fi
 }
 
@@ -183,8 +201,24 @@ harness_baseline_has() {
 
 harness_baseline_write() {
   # harness_baseline_write <name>  — reads keys from stdin
-  local bp; bp="$(harness_baseline_path "$1")"
+  local bp tmp; bp="$(harness_baseline_path "$1")"
   mkdir -p "$(dirname "$bp")"
-  sort -u > "$bp"
-  printf 'baseline written: %s (%d entr(ies))\n' "$bp" "$(wc -l < "$bp" | tr -d ' ')"
+  tmp="$bp.tmp.$$"
+  sort -u > "$tmp"
+  {
+    printf '# %s baseline — frozen KNOWN violations. New ones still fail.\n' "$1"
+    printf '#\n'
+    printf '# This is NOT a to-do list and it is NOT permission. Every line was a violation that\n'
+    printf '# existed when the gate was adopted. Fix one by DELETING its line — the gate then guards\n'
+    printf '# that case forever. A growing baseline is a regression; the run prints the count so it\n'
+    printf '# stays visible.\n'
+    printf '#\n'
+    printf '# TRIAGE BEFORE YOU FREEZE (gates.md G3): freezing without triage buries real findings\n'
+    printf '# among false ones. Record the categories here:\n'
+    printf '#   «category 1 — why these are acceptable»\n'
+    printf '#\n'
+    cat "$tmp"
+  } > "$bp"
+  rm -f "$tmp"
+  printf 'baseline written: %s (%d entr(ies))\n' "$bp" "$(grep -cv "^#" "$bp" | tr -d " ")"
 }

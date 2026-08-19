@@ -43,7 +43,8 @@ for pair in $HARNESS_MARKERS; do
   fi
   pairs=$((pairs + 1))
 
-  # Find the marker everywhere except the registry itself and this harness.
+  # Scan CODE only. Markers live at the code site; docs discuss them in prose, and a gate that
+  # flags its own documentation trains people to mute it.
   while IFS= read -r hit; do
     [ -n "$hit" ] || continue
     f="${hit%%:*}"
@@ -52,13 +53,17 @@ for pair in $HARNESS_MARKERS; do
     rel="${f#$REPO_ROOT/}"
 
     [ "$rel" = "$registry" ] && continue
-    case "$rel" in ai-dev-harness/*) continue ;; esac
+    # Never flag the harness's own scripts: they NAME the marker in order to search for it.
+    # A gate that reports itself teaches people to mute it.
+    case "$f" in "$HARNESS_DIR"/*) continue ;; esac
 
     occurrences=$((occurrences + 1))
     if ! grep -qF "$rel" "$reg_abs" 2>/dev/null; then
       gate_violation "$rel" "$lineno" "$marker marker with no row in $registry"
     fi
-  done < <(git -C "$REPO_ROOT" grep -n -I -F "$marker" -- . 2>/dev/null | sed "s|^|$REPO_ROOT/|")
+  done < <(harness_code_files | while IFS= read -r cf; do
+             grep -n -I -F "$marker" "$cf" 2>/dev/null | sed "s|^|$cf:|"
+           done)
 done
 
 [ "$pairs" -eq 0 ] && gate_incomplete "no marker/registry pairs configured"

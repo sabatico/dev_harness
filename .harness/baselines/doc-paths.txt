@@ -1,0 +1,30 @@
+# doc-paths baseline — frozen KNOWN violations. New ones still fail.
+#
+# This is NOT a to-do list and it is NOT permission. Every line was a violation that
+# existed when the gate was adopted. Fix one by DELETING its line — the gate then guards
+# that case forever. A growing baseline is a regression; the run prints the count so it
+# stays visible.
+#
+# TRIAGE BEFORE YOU FREEZE (gates.md G3): freezing without triage buries real findings
+# among false ones. Record the categories here:
+#   INSTALLED-LAYOUT PATHS (all 7 entries, triaged 2026-08-19).
+#   This repo is a BOILERPLATE. Its docs cite paths as they exist in the TARGET project once
+#   scripts/init.sh has copied running-files/ -> docs/ and sops/ -> docs/sops/. So `docs/...`
+#   is CORRECT prose that cannot resolve here by construction; rewriting it kit-relative would
+#   make it wrong in every project cloned from this one.
+#
+#   MEASURED, not assumed: 7 frozen here; a freshly initialised project regenerates this
+#   baseline and gets **0**. If yours is not ~0 after init, your install layout does not match
+#   what the docs claim -- and that mismatch is the finding, not a reason to freeze it.
+#
+#   (An earlier round froze 10, of which 3 were genuinely wrong relative paths, not layout
+#   artefacts. They were fixed at source rather than frozen. That is the G3 rule working:
+#   triage BEFORE you freeze, or real findings get buried among the acceptable ones.)
+#
+sops/decisions-adr.md	../adr/README.md
+sops/quality-review.md	../tickets/bug-register.md
+sops/quality-review.md	../tickets/doc-work.md
+sops/quality-review.md	../tickets/security.md
+sops/quality-review.md	../tickets/user-actions.md
+sops/test-and-coverage.md	docs/deferred-test-registry.md
+sops/test-and-coverage.md	docs/use-case-runbook.md

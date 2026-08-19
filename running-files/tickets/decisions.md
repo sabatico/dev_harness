@@ -6,7 +6,7 @@
 > `DEC` ticket links to that ADR and closes. This keeps the "why" auditable and stops the same
 > question being re-argued later.
 >
-> **Written for the human, in plain language** (see `tickets/README.md`). A question too unformed to
+> **Written for the human, in plain language** (see `README.md`). A question too unformed to
 > decide is a `TBD` (`../tbd-parking-lot.md`) until it ripens into a real choice.
 
 **Status:** ☐ open · ✅ decided (→ ADR) · ✖ dropped

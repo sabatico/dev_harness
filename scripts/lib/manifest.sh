@@ -65,6 +65,7 @@ status_from_exit() {
     0) printf 'ok' ;;
     1) printf 'findings' ;;
     3) printf 'error' ;;
+    4) printf 'skipped' ;;
     *) printf 'error' ;;
   esac
 }

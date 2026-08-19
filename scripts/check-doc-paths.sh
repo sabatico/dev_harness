@@ -29,7 +29,16 @@ gate_head
 # `and/or`, command fragments, and URLs-without-scheme.
 looks_like_path() {
   case "$1" in
+    # Not a path claim at all.
     *" "*|*"("*|*")"*|http*|*"://"*) return 1 ;;
+    # A PLACEHOLDER, not a real path: `/tmp/<name>.log`, `path/to/<thing>`. Flagging these
+    # trains authors to stop backticking examples, which costs more than it catches.
+    *"<"*|*">"*|*"«"*|*"»"*|*'${'*) return 1 ;;
+    # A GLOB describes a set, not a file: `docs/sops/skill-*.md`.
+    *"*"*|*"?"*|*"["*) return 1 ;;
+    # An ABSOLUTE path is a claim about the machine, not about this repo. `/etc/hosts` and
+    # `/tmp/gates.log` are legitimate prose and unresolvable here by design.
+    /*) return 1 ;;
     */) return 0 ;;
     */*.*) return 0 ;;
     *) return 1 ;;
@@ -49,10 +58,23 @@ emit_claims() {
   done < <(harness_doc_files)
 }
 
+# A path claim resolves if EITHER reading is true: relative to the repo root, or relative to
+# the doc that wrote it. Docs legitimately use both, and a gate that only knows one flags
+# correct prose — which is how a gate gets muted.
+path_resolves() {
+  # path_resolves <doc-rel-path> <token>
+  local docdir; docdir="$(dirname "$REPO_ROOT/$1")"
+  case "$2" in
+    /*) [ -e "$REPO_ROOT$2" ] && return 0 ;;
+    *)  [ -e "$REPO_ROOT/$2" ] && return 0
+        [ -e "$docdir/$2" ]    && return 0 ;;
+  esac
+  return 1
+}
+
 if [ "$MODE" = "baseline" ]; then
   emit_claims | while IFS=$'\t' read -r rel tok; do
-    case "$tok" in /*) p="$REPO_ROOT$tok" ;; *) p="$REPO_ROOT/$tok" ;; esac
-    [ -e "$p" ] || printf '%s\t%s\n' "$rel" "$tok"
+    path_resolves "$rel" "$tok" || printf '%s\t%s\n' "$rel" "$tok"
   done | harness_baseline_write "doc-paths"
   exit 0
 fi
@@ -60,8 +82,7 @@ fi
 checked=0
 while IFS=$'\t' read -r rel tok; do
   checked=$((checked + 1))
-  case "$tok" in /*) p="$REPO_ROOT$tok" ;; *) p="$REPO_ROOT/$tok" ;; esac
-  [ -e "$p" ] && continue
+  path_resolves "$rel" "$tok" && continue
   harness_baseline_has "doc-paths" "$rel	$tok" && continue
   lineno="$(grep -n -F "\`$tok\`" "$REPO_ROOT/$rel" 2>/dev/null | head -1 | cut -d: -f1)"
   gate_violation "$rel" "${lineno:--}" "backticked path does not exist: $tok"

@@ -1,6 +1,6 @@
 # Bug Register — «PROJECT» — the ONE triaged list of every known defect
 
-> **Ticket type `BUG`** in the coordination taxonomy (`tickets/README.md`) — but kept in its own
+> **Ticket type `BUG`** in the coordination taxonomy (`README.md`) — but kept in its own
 > long-standing file, since defects have their own severity ladder + escape-analysis loop.
 
 > **The single home for defects**, with one severity ladder and the escape-analysis loop. Distinct
@@ -43,9 +43,15 @@ Escaped bugs are the primary source of new `edge-case-catalog.md` classes.
 | BUG-001 | «P?» | «date» | «who/how» | «one-line defect» | ☐ open | «link to repro / hunt report / ticket» |
 
 ## Closed bugs (append-only; escape analysis inline for P0/P1)
-| ID | Sev | Found → Closed | Summary | Fix (commit) | Escape analysis (P0/P1) |
-|----|-----|----------------|---------|--------------|--------------------------|
-| — | | | | | |
+| ID | Sev | Found → Closed | Summary | Fix (commit) | **Verified by** (the test that went RED) | Escape analysis (P0/P1) |
+|----|-----|----------------|---------|--------------|------------------------------------------|--------------------------|
+| — | | | | | | |
+
+> **"Verified by" is not optional, and it is not the same as "Fix".** *Fixed* is a claim; the only
+> thing that makes it a result is a demonstration that the defect could be reproduced and now cannot.
+> Name the **mutation** (what you broke or reverted to re-create it) and the **test that went red**
+> under it. Without that, a closed bug is indistinguishable from a bug that merely **moved** — and a
+> disappearing symptom is not a diagnosis. Gated by `scripts/check-bug-evidence.sh`.
 
 See also: `sops/bug-hunt.md` (its finds land here) · `sops/edge-case-catalog.md` (escaped bugs seed
 new classes) · `backlog-tickets.md` (scheduling queue) · `sops/quality-review.md` (checks this list).

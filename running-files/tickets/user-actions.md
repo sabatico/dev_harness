@@ -8,7 +8,7 @@
 >
 > **Written for the human, in plain language.** No IDs/acronyms/codenames without an immediate
 > gloss. The test: if the owner would have to ask "what does that mean?", rewrite it first.
-> See `tickets/README.md` for the whole taxonomy and the rules.
+> See `README.md` for the whole taxonomy and the rules.
 
 **Waits-on flag:** 🔴 = the human must act AND AI work is blocked on it (drop-everything) · 🟠 = the human should act, nothing is waiting.
 **Status:** ☐ open · ✅ done · ✖ won't-do

@@ -65,6 +65,8 @@ run_gate() {
        record "$name" ok "$(tail -1 "$log" | sed 's/^[[:space:]]*//')" "$name.log" ;;
     3) printf '  %-22s %sINCOMPLETE%s  %s\n' "$name" "$C_YEL" "$C_0" "$(grep -m1 INCOMPLETE "$log" | sed 's/.*INCOMPLETE//;s/^[[:space:]]*//')"
        record "$name" error "could not run — see $name.log" "$name.log" ;;
+    4) printf '  %-22s %sN/A%s  %s\n' "$name" "$C_DIM" "$C_0" "$(grep -m1 'N/A' "$log" | sed 's/.*N\/A//;s/^[[:space:]]*//')"
+       record "$name" skipped "not configured for this project — covers nothing here" "$name.log" ;;
     *) printf '  %-22s %sFAIL%s\n' "$name" "$C_RED" "$C_0"
        sed 's/^/      /' "$log" | grep -E 'FAIL|violation' | head -12
        record "$name" findings "$(grep -c 'FAIL' "$log" | tr -d ' ') violation(s) — see $name.log" "$name.log" ;;

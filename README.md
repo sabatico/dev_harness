@@ -90,6 +90,8 @@ dev_harness/
 ├── README.md                       ← this guide
 ├── CLAUDE.md                       ← the per-repo constitution template (fill the «slots»)
 ├── CHEAT-SHEET.md                  ← the end-of-act ritual + quality-review steps + "where things go"
+├── TAILORING.md                    ← ⭐ READ FIRST ON A FRESH CLONE — profiles P1–P5, the irreducible
+│                                      core, and the trigger that promotes each optional pillar
 ├── harness.conf.example            ← the ONE file you edit to point the scripts at your project
 ├── ci/
 │   ├── gates.md                    ← the enforcement layer + the security sweep + deploy/rollback + Gate INTEGRITY (G1–G8)
@@ -97,6 +99,8 @@ dev_harness/
 │   └── run-integrity.md            ← multi-stage runs: the manifest, the status vocabulary, COMPLETE/INCOMPLETE
 ├── scripts/                        ← the EXECUTABLE layer — config-driven gates, drop-in, bash 3.2 / BSD-safe
 │   ├── README.md                   ←   what each gate holds + the two-step adoption ritual (G7 logic, G8 wiring)
+│   ├── init.sh                     ←   bootstrap a fresh clone: layout, name substitution, config,
+│   │                                    doc index, baseline; PRINTS what to prune, deletes nothing
 │   ├── run-all-gates.sh            ←   the local CI: tiered, per-gate output capture, skip-is-not-a-pass
 │   ├── hook-fast-gates.sh          ←   the same gates, fired at the moment of the write
 │   ├── check-*.sh                  ←   doc-links · doc-paths · doc-index · markers · bug-evidence · conditional-skips · citations · log-hygiene
@@ -158,7 +162,22 @@ The **quality review** is a periodic, deeper pass that runs across everything si
 
 ## How to bootstrap a new project
 
-1. Copy `CLAUDE.md` to the repo root; fill every `«SLOT»`.
+**Start here: [`TAILORING.md`](TAILORING.md).** The kit ships at full size — every SOP, every running
+file, every gate — and that shape came from a long-lived multi-agent build. On a small project it is
+overhead that gets abandoned in week two, and **an abandoned harness is worse than none**, because the
+repo then claims a rigour it does not have. Pick the smallest profile that fits and let each pillar
+earn its way in.
+
+```sh
+git clone <this repo> my-project && cd my-project
+scripts/init.sh "My Project" P2      # P1 script · P2 library/CLI · P3 app · P4 service · P5 program
+```
+
+`init.sh` lays down `docs/`, substitutes the project name, writes `harness.conf`, generates the doc
+index, and regenerates the path baseline against the real layout. It **prints** what your profile does
+not need and **deletes nothing** — pruning has a blast radius, so it is a human's call. Then:
+
+1. Fill every `«SLOT»` in `CLAUDE.md`.
 2. Copy `running-files/*` into the repo (e.g. under `docs/`); fill the headers.
 3. Keep the `sops/*` either in the repo (`docs/sops/`) or linked from `CLAUDE.md`.
 4. Pick the project's **invariants** (pillar 7) — the 1–3 properties that must never break — and write the guardrail tests for them first.
