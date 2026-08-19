@@ -185,11 +185,11 @@ not need and **deletes nothing** — pruning has a blast radius, so it is a huma
    `scripts/` into the repo, and run `scripts/run-all-gates.sh`. Add your stack's build, test,
    coverage floor, secret-scan and security sweep (dependency-CVE + secret + SAST) to the config.
    Run it locally before every push if hosted CI isn't available.
-6. **Verify each gate twice before trusting it** — G7 (plant a violation, watch it go red) and G8
-   (trigger it through the real path, not by calling the script). A gate you have not watched fail is
-   not a control. Then wire `hook-fast-gates.sh` so the cheap checks fire at the write, and confirm
-   you have **seen one fire** in this session (`ci/control-timing.md` C3 — an unloaded hook is
-   invisible).
+6. **Verify the gates.** `scripts/selftest.sh` does the G7 half for you — it plants a violation per
+   gate and asserts each one goes red, then recovers. Then do the G8 half yourself: wire
+   `hook-fast-gates.sh` into your agent harness and confirm you have **seen one fire** in this
+   session (`ci/control-timing.md` C3 — an unloaded hook is invisible, and calling the script proves
+   only the script).
 7. Write the **enforced vs unenforced** table into `CLAUDE.md` (C5) and keep it current as gates land.
 8. Start the first act. At its end, run the end-of-act ritual. The habit is the harness.
 

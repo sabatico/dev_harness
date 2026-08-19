@@ -152,6 +152,17 @@ harness_doc_files() {
   done
 }
 
+# True when at least one configured code dir exists on disk. A gate whose dirs are ABSENT
+# could not scan (exit 3); a gate whose dirs exist but matched nothing covers nothing (exit 4).
+# Both are distinct from PASS — see gates.md G1.
+harness_code_dirs_exist() {
+  local d
+  for d in $HARNESS_CODE_DIRS; do
+    [ -d "$REPO_ROOT/$d" ] && return 0
+  done
+  return 1
+}
+
 # Emit every source file under HARNESS_CODE_DIRS, one per line.
 harness_code_files() {
   local d e

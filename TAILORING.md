@@ -114,7 +114,8 @@ skim SOPs generally, which costs you the ones that *do* apply.
 4. Cut `CLAUDE.md`'s standing rules to the ones you will enforce. **A rule nobody enforces teaches the
    agent that rules here are decorative**, and that lesson generalises to the rules you meant.
 5. Run `scripts/init.sh` to lay down the config and the registries your profile needs.
-6. Verify one gate end-to-end (G7 logic + G8 wiring) so you know the enforcement layer is real.
+6. Run `scripts/selftest.sh` (proves every gate fails on its own violation), then verify one gate's
+   **wiring** by hand (G8) so you know the enforcement layer is real and not just present.
 7. Write the **enforced vs unenforced** table into `CLAUDE.md` (`ci/control-timing.md` C5), honestly.
 
 ## Growing back up

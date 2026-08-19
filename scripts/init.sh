@@ -155,9 +155,11 @@ cat <<NEXT
   3. Cut CLAUDE.md's standing rules to the ones you will actually enforce. A rule nobody
      enforces teaches the agent that rules here are decorative.
   4. Run:  scripts/run-all-gates.sh
-  5. VERIFY ONE GATE END TO END before trusting any of them:
-        G7 logic  — plant a violation, watch it go red, remove it, watch it pass
-        G8 wiring — trigger it the way production will, not by calling the script
+  5. VERIFY THE GATES before trusting any of them:
+        scripts/selftest.sh   — does the G7 half: plants a violation per gate, asserts each
+                                goes red, then recovers. Run it after touching any gate.
+        G8 wiring             — do this half yourself: trigger a gate the way production
+                                will. Calling the script proves only the script.
   6. Wire scripts/hook-fast-gates.sh into your agent harness, then confirm you have SEEN it
      fire this session (docs/ci/control-timing.md C3 — an unloaded hook is invisible).
   7. Write the enforced-vs-unenforced table into CLAUDE.md (control-timing.md C5), honestly.

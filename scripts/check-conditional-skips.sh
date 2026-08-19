@@ -20,6 +20,8 @@
 # condition mentions an error. Suppress a verified-legitimate case with a trailing
 #     # harness:allow-conditional-skip
 # comment on the skip line, which makes the exception visible and greppable.
+# ⚠ The annotation must sit on the SAME LINE as the offending call — the gate reads line by line,
+# so a comment on the line above is silently ignored. (This tripped its own author.)
 
 GATE_NAME="conditional-skips"
 . "$(cd "$(dirname "$0")" && pwd)/lib/common.sh"
@@ -62,9 +64,11 @@ while IFS= read -r f; do
 
 done < <(harness_code_files)
 
+# Scanning nothing is never a PASS (gates.md G1), and the two ways of scanning nothing are
+# different facts that deserve different answers.
 if [ "$scanned" -eq 0 ]; then
-  gate_note "no test files matched under: $HARNESS_CODE_DIRS (checked *_test.* *.test.* *.spec.* tests/ __tests__/)"
-  gate_note "if you DO have tests, your layout is not covered — fix the pattern rather than accepting this pass"
+  harness_code_dirs_exist || gate_incomplete "no source directories exist yet: $HARNESS_CODE_DIRS"
+  gate_not_applicable "no test files matched under: $HARNESS_CODE_DIRS (looked for *_test.* *.test.* *.spec.* tests/ __tests__/) — if you DO have tests, your layout is not covered and the pattern needs fixing, not accepting"
 fi
 
 gate_finish "$skips skip call(s) across $scanned test file(s)"

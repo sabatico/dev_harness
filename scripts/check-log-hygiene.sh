@@ -13,6 +13,8 @@
 # Suppress a verified-safe case with a trailing
 #     # harness:allow-log  <reason>
 # comment, so every exception is visible and greppable rather than silently deleted.
+# ⚠ The annotation must sit on the SAME LINE as the offending call — the gate reads line by line,
+# so a comment on the line above is silently ignored. (This tripped its own author.)
 
 GATE_NAME="log-hygiene"
 . "$(cd "$(dirname "$0")" && pwd)/lib/common.sh"
@@ -47,6 +49,9 @@ while IFS= read -r f; do
   scanned=$((scanned + 1))
   rel="${f#$REPO_ROOT/}"
 
+  # -i is REQUIRED, not cosmetic: the overwhelmingly common shapes are capitalised
+  # (`log.Printf`, `logger.Warn`, `console.Error`, `Log.Debug`). A case-sensitive match
+  # sees none of them, and the gate reports a confident zero. Found by scripts/selftest.sh.
   while IFS= read -r hit; do
     [ -n "$hit" ] || continue
     lineno="${hit%%:*}"
@@ -60,10 +65,13 @@ while IFS= read -r f; do
       term="$(printf '%s' "$text" | tr 'A-Z' 'a-z' | grep -oE "$SEC_RE" | head -1)"
       gate_violation "$rel" "$lineno" "logging call references '$term' — redact it, or annotate '# harness:allow-log <reason>'"
     fi
-  done < <(grep -nE "$LOG_RE" "$f" 2>/dev/null)
+  done < <(grep -niE "$LOG_RE" "$f" 2>/dev/null)
 
 done < <(harness_code_files)
 
-[ "$scanned" -eq 0 ] && gate_incomplete "no source files found under: $HARNESS_CODE_DIRS"
+if [ "$scanned" -eq 0 ]; then
+  harness_code_dirs_exist || gate_incomplete "no source directories exist yet: $HARNESS_CODE_DIRS (set HARNESS_CODE_DIRS in harness.conf once you have code)"
+  gate_not_applicable "source dirs exist but no files matched HARNESS_CODE_EXTS ($HARNESS_CODE_EXTS)"
+fi
 
 gate_finish "$calls logging call(s) across $scanned file(s)"

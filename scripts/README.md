@@ -7,22 +7,37 @@ It exists because of a measurement worth repeating (see the README's evidence se
 audited session, of ten defects, the count caught by *a rule that was read and being complied with*
 was **zero**. Gates caught three. So the prose sets direction; these scripts hold the line.
 
-## ⛔ STATUS — READ BEFORE YOU TRUST ANY OF THESE
+## Status — verified, and what that does and does not mean
 
-**These are reference implementations. They have not been run against your tree, and a gate you have
-not watched fail is not a control.** That is `gates.md` G7, and it applies to the gates shipped *with*
-the harness exactly as it applies to ones you write.
+Run this first, and after any change to a gate:
 
-Adopting a gate is two steps, not one:
+```sh
+scripts/selftest.sh
+```
 
-1. **G7 — logic.** Plant a violation, watch it exit non-zero, remove it, watch it pass, confirm the
-   restore was byte-identical.
-2. **G8 — wiring.** Trigger it the way production will: through the real hook, the real runner. Calling
-   the script in a terminal proves the script, and the script is not the part that usually breaks.
+For every gate it builds a throwaway fixture project and asserts three things: the clean fixture
+**passes**, a planted violation makes it **fail**, and removing the plant makes it **pass again**.
+That third assertion matters as much as the second — a gate that fails on everything also "catches"
+the plant.
 
-Do this **especially** for a gate that reports a clean tree on its first run. One gate in the field
-was written specifically to catch a class of error, reported clean, and was only discovered to be
-scanning nothing when someone planted a violation and it stayed quiet.
+**All 8 gates currently pass their self-test.** It is not decoration: the first run found
+`check-log-hygiene.sh` completely **blind** — its function match was case-sensitive, so it saw none of
+`log.Printf`, `logger.Warn` or `console.Error`, and reported a confident zero on a line that logged a
+password. Three other gates were fixed the same way (a register format it could not parse, a resolver
+that flagged correct prose, and one that flagged itself).
+
+**What the self-test proves:** each gate can see the specific violation it claims to catch, and does
+not fire on a clean tree.
+
+**What it does NOT prove** (`gates.md` G5, and worth stating because a green here is easy to
+over-read): that a gate catches every real-world variant of its class. `check-log-hygiene.sh` is a
+name-based heuristic and cannot see a secret flowing through a neutrally-named variable;
+`check-citations.sh` proves a pointer exists, never that it points anywhere true. The self-test raises
+the floor. It does not make any of these proofs.
+
+**And it does not prove WIRING.** `selftest.sh` calls the scripts directly, which is exactly the
+verification `ci/control-timing.md` C4 warns is insufficient. Before trusting the write-time hook,
+trigger it the way production does — edit a real file through your agent and watch the block arrive.
 
 ## Setup
 
@@ -40,6 +55,8 @@ that needs it, and the gate says so out loud — an unconfigured check reports I
 
 | Script | Enforces | Notes |
 |---|---|---|
+| `selftest.sh` | **that every other gate here actually fails on its own violation** | run it first, and after touching any gate |
+| `init.sh` | bootstraps a fresh clone into a project skeleton | deletes nothing; prints a prune list |
 | `run-all-gates.sh` | the whole fast tier, then optional suites | tiered: bare, `--full`, `--lint`, `--all` |
 | `hook-fast-gates.sh` | the sub-second gates **at the moment of the write** | see `ci/control-timing.md`; blocking on docs, advisory on code |
 | `check-doc-links.sh` | every markdown link resolves | **blocking** at write time — a dead link is a fact error |
