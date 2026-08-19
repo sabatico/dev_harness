@@ -53,5 +53,38 @@ Owner names a **scope**. Hunt **defects only** unit-by-unit (function/procedure/
 
 > **Tickets vs engineering:** the `tickets/*` files are the human's **coordination** queue (replacing a project board — the *types* are the value). **Engineering work is never a ticket** — it lives in `ONBOARDING.md` + the ADR + `runner.md`/`backlog-tickets.md`. If a ticket and a doc disagree, the doc wins.
 
+## Before you trust a gate (both steps, every time)
+
+1. **Logic** — plant a violation, watch it go **red**, remove it, watch it go green, confirm the
+   restore was byte-identical.
+2. **Wiring** — trigger it **the way production does**: the real hook, the real runner, the real
+   deploy command. Calling the script proves the script, and the script is not the part that breaks.
+
+If you have not **seen a hook fire this session**, assume you do not have one — hook config loads at
+session start and an unprotected session looks identical to a protected one. (`ci/control-timing.md`)
+
+## Reading a multi-stage run (nightly sweep, security suite, e2e)
+
+Read in this order, and stop at the first bad answer:
+
+1. **The manifest** — what each stage *actually did*. It **outranks** the tools' own prose.
+2. **The verdict** — `COMPLETE` or `INCOMPLETE`. INCOMPLETE means a stage never reached its target.
+3. Only then, the findings.
+
+**Never call an INCOMPLETE run clean, green, or passing**, however few findings it produced. Zero
+findings from a stage that scanned nothing is not a pass. Report the gap **first**, in plain words:
+*"the run did not actually test X"*. A `skipped` stage is an honest non-result — still not a pass, so
+name what went uncovered. (`ci/run-integrity.md`)
+
+## The perpendicular pass (after the unit-local test cases)
+
+1. Name the **property** you verified — not the case.
+2. Ask **where else** it must hold: every other resource, verb, entry point.
+3. State what is **NOT** in your work list, in the report. An unstated gap reads as coverage.
+
+The five questions: whose identity did you authorize vs **use** · what did the first step rely on that
+the last step must **re-read** · who else can spend this **budget** · are you proving the **data** or
+the status code · **what is missing**. (`sops/security-properties.md`)
+
 ## Non-negotiables
 Destructive action → explain blast radius + get approval. Secrets never in chat/commits/logs/external models. The project **invariants** never break; the guardrail suite is never weakened.

@@ -1,0 +1,63 @@
+# harness.conf — the ONE file you edit to point the gates at your project.
+#
+# Copy to `harness.conf` at your repo root and fill in. Every path is relative to
+# the repo root. Anything left empty disables the gate that needs it, and the gate
+# says so out loud rather than passing silently — a disabled check is never a pass.
+
+# ── Docs ──────────────────────────────────────────────────────────────────────
+# Directories holding your living documentation. Space-separated.
+HARNESS_DOC_DIRS="docs"
+
+# The index every doc must be registered in. Leave empty to disable check-doc-index.
+HARNESS_DOC_INDEX="docs/documentation-index.md"
+
+# ── Code ──────────────────────────────────────────────────────────────────────
+# Directories holding source you want cited and hygiene-checked. Space-separated.
+HARNESS_CODE_DIRS="src"
+
+# File extensions to treat as source, space-separated, no dots.
+HARNESS_CODE_EXTS="go ts tsx js rs py java rb"
+
+# ── Decision records ──────────────────────────────────────────────────────────
+# Where decision records live, and the filename prefix that identifies one.
+# A "decision record" is whatever you call an ADR / RFC / design doc.
+HARNESS_DECISION_DIR="docs/decisions"
+HARNESS_DECISION_PREFIX="ADR"
+
+# The ledger accounting for each decision's process obligations.
+HARNESS_DECISION_LEDGER="docs/registries/decision-process-ledger.md"
+
+# ── Registers ─────────────────────────────────────────────────────────────────
+HARNESS_BUG_REGISTER="docs/registers/bug-register.md"
+
+# ── Markers → registries ──────────────────────────────────────────────────────
+# The core anti-drift pairing: an inline marker in code MUST have a row in its
+# registry. Format: MARKER:path/to/registry.md — space-separated pairs.
+#
+# Add your own freely. The gate is generic; these are only defaults.
+HARNESS_MARKERS="TODO-REGISTERED:docs/registers/todo-registry.md DEFERRED-TEST:docs/registers/deferred-test-registry.md STUB:docs/registers/stub-registry.md"
+
+# ── Secrets in logs ───────────────────────────────────────────────────────────
+# Identifiers that must never be passed to a logging call. Space-separated,
+# matched case-insensitively as substrings of an argument name.
+HARNESS_SECRET_TERMS="password passwd secret token apikey api_key privatekey private_key seed mnemonic otp pin ssn cardnumber"
+
+# Function-name fragments that count as "a logging call".
+HARNESS_LOG_FUNCS="log logf print println debug info warn error fatal trace"
+
+# ── Tests ─────────────────────────────────────────────────────────────────────
+# Commands for the --full tier. Leave empty to skip (a skip is reported loudly).
+HARNESS_TEST_CMD=""
+HARNESS_COVERAGE_CMD=""
+HARNESS_LINT_CMD=""
+
+# Environment variables that, when unset, cause tests to skip. The never-run-tests
+# gate uses this to tell "gated but runnable here" from "can never run anywhere".
+HARNESS_TEST_ENV_GATES=""
+
+# ── Ratchet baselines ─────────────────────────────────────────────────────────
+# Where frozen baselines live. New violations fail; recorded ones are tolerated.
+HARNESS_BASELINE_DIR=".harness/baselines"
+
+# The branch a ratcheted gate diffs against to find "what you touched".
+HARNESS_BASE_REF="origin/main"

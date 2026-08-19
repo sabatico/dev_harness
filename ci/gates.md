@@ -237,3 +237,35 @@ it, watch it pass, and confirm the removal was byte-identical.
 gates in the case above, one was written *specifically* to catch a class of error, reported a clean
 tree, and was only found to be scanning nothing because its author planted a violation and it did not
 notice.
+
+## G8 · A gate's LOGIC and its WIRING are separate claims — verify both
+
+G7 proves the gate's **logic**: plant a violation, watch it go red. Necessary, and not sufficient.
+
+Three controls failed on one project in a single week, and **none of them had broken logic**. One ran
+too late to matter, one was wired to its own weaker mode while the strict path sat uncalled, and one
+was never loaded by the session that was supposed to be protected by it. G7 passes on all three.
+
+> **Calling the script directly proves the script. The script was never the broken part.**
+
+So adoption of any gate has two verification steps, not one:
+
+1. **Logic** (G7) — plant a violation → red → remove → green → byte-identical restore.
+2. **Wiring** (G8) — trigger it through the **real path**: the actual editor hook, the actual runner,
+   the actual deploy command. Watch it fire *there*.
+
+The second step is the only one that catches "installed but not loaded", "runs after the cost is
+sunk", and "the strict mode exists and nothing calls it". A control that is **installed** is not a
+control that is **running**.
+
+Full treatment, including the write-time/push-time split and the blocking-vs-advisory tiering that
+decides whether a hook survives contact with real work: **`ci/control-timing.md`**.
+
+## Beyond one gate: multi-stage runs
+
+Everything above governs a single gate. A nightly sweep, security suite, or end-to-end run fails in a
+related but nastier way — the stages that worked produce a detailed, plausible report, and the stage
+that scanned nothing contributes silence, so the whole run reads as clean because most of it is.
+
+That needs a manifest, a status vocabulary, and an explicit COMPLETE/INCOMPLETE verdict:
+**`ci/run-integrity.md`**.
