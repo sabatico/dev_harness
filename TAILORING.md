@@ -67,6 +67,29 @@ trigger it was.
 
 ---
 
+## The platform layer — wiring `.claude/` (do this in every profile)
+
+The hooks/agents/rules/skills under `dot-claude/` are profile-independent: even the smallest
+project wants the guard and the banner. To wire (full doctrine: `ci/platform-layer.md`):
+
+1. Copy `dot-claude/` contents into your repo's **`.claude/`** (keep `settings.json` paths matching
+   where you put `scripts/`).
+2. Fill the platform vars in `harness.conf`: `HARNESS_PROTECTED_DBS` (dev DBs whose data must
+   survive), `HARNESS_ARCHIVED_PATHS`, `HARNESS_GENERATED_PATHS` (glob=regen-command pairs),
+   `HARNESS_CORPUS_DIRS`, `HARNESS_SIBLING_REPOS`.
+3. Start a fresh session and **see the ⚡ banner** — no banner means the hooks are not loaded, and
+   nothing else in this section exists yet.
+4. Run `scripts/hook-pretooluse-guard-test.sh` (20+ known-answer rows must pass); adapt its ALLOW
+   rows to your legitimate workflows before adding DENY patterns.
+5. Rename `dot-claude/rules/example-tests.md` for your stack; add one rule file per area you
+   actually have.
+6. Trigger one deny and one doc-gate block through the REAL path before trusting either
+   (`ci/control-timing.md` C3). Agent definitions do NOT hot-reload — restart after adding the
+   librarian, then give it one planted-assumption probe (`ci/platform-layer.md` P5).
+
+What to skip when: a docs-light prototype can drop `hook-read-budget` and the librarian; nobody
+should drop the guard, the banner, or the bash-write doc gates.
+
 ## Stack-neutrality — what to swap, and what never changes
 
 Nothing in `scripts/` hardcodes a language: all paths, extensions, test commands and marker names come

@@ -99,3 +99,15 @@ wrong.
 
 Bash 3.2 compatible (stock macOS — no associative arrays, no `mapfile`) and BSD-safe (no GNU-only
 flags). The harness has to run on the machine the developer actually has, not the one CI has.
+
+## Platform-layer hooks (wired via dot-claude/settings.json — see ci/platform-layer.md)
+
+| Script | Event | Does |
+|---|---|---|
+| `hook-session-start.sh` | SessionStart (incl. `compact`) | Injects derived state + the ⚡ liveness banner (~a page) |
+| `hook-pretooluse-guard.sh` | PreToolUse Bash/Write/Edit | Denies destructive commands + archived/generated-path edits, with the sanctioned alternative in the reason. Anchored to command position; test matrix: `hook-pretooluse-guard-test.sh` |
+| `hook-postbash-docgates.sh` | PostToolUse Bash | Runs the blocking doc gates when a doc was written through Bash (the Write/Edit hook cannot see those) |
+| `hook-read-budget.sh` | PostToolUse Read | Advisory when the MAIN session reads corpus it should delegate to the librarian; hit-logged |
+| `hook-stop-statecheck.sh` | Stop | Advisory when HEAD changed code but no running doc; once per commit; hit-logged |
+| `hook-precompact-log.sh` | PreCompact | One log line per compaction, for attribution |
+| `librarian-sweep.sh` | (used by the librarian agent) | Per-surface hit accounting over every knowledge surface incl. git history and sibling repos |

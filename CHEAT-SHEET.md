@@ -88,3 +88,14 @@ the status code · **what is missing**. (`sops/security-properties.md`)
 
 ## Non-negotiables
 Destructive action → explain blast radius + get approval. Secrets never in chat/commits/logs/external models. The project **invariants** never break; the guardrail suite is never weakened.
+
+## Platform layer (ci/platform-layer.md)
+
+| You want | Run / do |
+|---|---|
+| Prove hooks are live | look for the ⚡ SESSION BRIEF banner at session start — no banner, no hooks |
+| Verify the guard after editing it | `scripts/hook-pretooluse-guard-test.sh` (known-answer matrix) |
+| Sweep every surface for a topic | `scripts/librarian-sweep.sh <term> <alias> …` (0 = evidence, ABSENT = could not look) |
+| Delegate a corpus question | `/ask-librarian <topic>` — 5-part brief, require the sweep accounting table back |
+| See if advisories are firing | `.gate-logs/stop-advisory.log`, `.gate-logs/read-budget.log`, `.gate-logs/compaction.log` |
+| Add an area rule | `.claude/rules/<area>.md` with `paths:` frontmatter, ≤50 lines, pointer to the SOP |

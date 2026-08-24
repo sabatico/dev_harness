@@ -61,3 +61,33 @@ HARNESS_BASELINE_DIR=".harness/baselines"
 
 # The branch a ratcheted gate diffs against to find "what you touched".
 HARNESS_BASE_REF="origin/main"
+
+# ── Platform layer (agent-harness hooks: see ci/platform-layer.md) ────────────
+# Databases whose data must survive everything (dev DBs with real test users,
+# shared local instances). The pre-tool guard denies destructive SQL against these
+# names; clones matching "<name>_*" stay allowed (the verification-clone pattern).
+HARNESS_PROTECTED_DBS=""
+
+# Paths (globs, space-separated) that are ARCHIVED — history, never to be edited.
+HARNESS_ARCHIVED_PATHS=""
+
+# Paths (globs) that are GENERATED — regenerate via their script, never hand-edit.
+# Format: glob=regeneration-command, space-separated. The guard names the command
+# in its refusal so the agent self-corrects instead of retrying.
+HARNESS_GENERATED_PATHS=""
+
+# The main branch other sessions share; force-push to it is denied outright.
+# (Defaults to HARNESS_BASE_REF's branch if empty.)
+
+# Corpus dirs for the read-budget advisory (main agent reading docs it should be
+# delegating to the librarian) and for librarian-sweep.sh surface groups.
+HARNESS_CORPUS_DIRS="docs"
+
+# Bytes of corpus the MAIN session may read directly before the advisory fires
+# (60KB default; subagents are exempt — reading is their job).
+HARNESS_READ_BUDGET_BYTES="61440"
+
+# Sibling repos (relative to the repo root's PARENT) that belong to this product
+# but live outside this repo. librarian-sweep reports them ABSENT when missing —
+# never silently skipped.
+HARNESS_SIBLING_REPOS=""

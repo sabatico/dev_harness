@@ -1,0 +1,91 @@
+{
+  "_comment": "Copy this directory's contents into your repo's .claude/ (see TAILORING.md §Platform layer). Hooks load at SESSION START and hot-reload on config edits; agents/*.md do NOT hot-reload — restart the session after adding one. The SessionStart banner is the liveness proof: no banner, no hooks.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-session-start.sh\"",
+            "timeout": 20,
+            "statusMessage": "session brief"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-pretooluse-guard.sh\"",
+            "timeout": 15,
+            "statusMessage": "guard"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-fast-gates.sh\"",
+            "timeout": 30,
+            "statusMessage": "fast gates"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-postbash-docgates.sh\"",
+            "timeout": 30,
+            "statusMessage": "doc gates (bash writes)"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-read-budget.sh\"",
+            "timeout": 10,
+            "statusMessage": "read budget"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-precompact-log.sh\"",
+            "timeout": 10,
+            "statusMessage": "compaction log"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-stop-statecheck.sh\"",
+            "timeout": 10,
+            "statusMessage": "state check"
+          }
+        ]
+      }
+    ]
+  }
+}

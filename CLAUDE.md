@@ -11,6 +11,19 @@ Led by an AI lead agent + spawned role sub-agents; the human owner («role») gi
 5. Then dive deeper as the task needs — `docs/architecture.md`, the relevant ADRs, `docs/sops/*`. **Touching «X subsystem»?** read «its doc» first. **Doing UI work?** read **`docs/sops/ui-development-guardrails.md`** FIRST (tokens + components, zero inline styles). **Implementing a design mockup pixel-perfect?** read **`docs/sops/mockup-implementation.md`** (structure preservation + extract values + rendered-HTML diff; ask for the structured handoff). **Touching an integration?** read **`docs/third-party-services.md`** first.
 6. **Coordination tickets** (the human's queue — NOT engineering state) live as one typed running file each under **`docs/tickets/`** (index: `docs/tickets/README.md`): **USER** (human-only actions) · **DEC** (pending human decisions → recorded as ADRs) · **FEAT** (blocked-feature *visibility* only) · **DOC** (doc work not doable inline) · **BIZ** (business/organisational) · **BUG** (`docs/tickets/bug-register.md` — defects) · **SEC** (`docs/tickets/security.md` — security hardening, not a live defect) — plus **TBD** (`docs/tbd-parking-lot.md`). **Engineering work is never a ticket** — a feature/tech-debt/residual lives in `ONBOARDING.md` status + the owning ADR + `runner.md`. Unscheduled *engineering* features/bugs sit in **`docs/backlog-tickets.md`**.
 
+⚡ **Hook liveness:** a `SESSION BRIEF` banner appears at session start iff the harness hooks
+loaded. **No banner ⇒ no fast gates, no guard** — run the doc gates by hand after doc edits and
+treat the destructive-action guard as unenforced. (`ci/platform-layer.md` P1.)
+
+**Path-scoped rules in `.claude/rules/` auto-load area detail when you touch matching files** —
+this file stays the map; the rules and linked docs are the law.
+
+**Corpus questions** ("what does the repo already say about X?") → **`/ask-librarian`** (the skill
+carries the 5-part delegation brief: question · task · every id/alias · your ASSUMPTIONS to
+confirm-or-refute · extra surfaces). Do not read the corpus into your own window — a read-budget
+hook advises when you do. Exception: the decision record a function cites, and the record you are
+drafting, are personal reads.
+
 ## ⛔ Standing rules (non-negotiable — never miss these)
 
 - **NEVER run a destructive / irreversible action** (delete/drop/destroy/`rm -rf`/force-push/teardown of real resources, data migrations that drop columns, etc.) **without first explaining exactly what it removes + the blast radius AND getting explicit owner approval.** Prefer reversible/targeted alternatives. Approval in one context does not extend to the next.
