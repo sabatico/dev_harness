@@ -68,8 +68,8 @@ The questions are worthless if asking them is optional. Make the **answer** an a
 
 ```
 operation                       P1   P2   P3   P4   P5   P6   P7   pinned by
-POST /orders/{id}/confirm       ✓    ✓    ✓    ✓    -    ✓    ✓    order_confirm_test.go:TestCrossTenant
-GET  /orders/{id}               ✓    -    ✓    -    ✓    ✓    ✓    order_read_test.go:TestVictimReadback
+POST /orders/{id}/confirm       ✓    ✓    ✓    ✓    -    ✓    ✓    «tests»:CrossTenantConfirm
+GET  /orders/{id}               ✓    -    ✓    -    ✓    ✓    ✓    «tests»:VictimReadback
 ```
 
 **The gate proves the row exists and the test exists. It cannot prove the test is meaningful** — that

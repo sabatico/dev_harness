@@ -4,6 +4,24 @@
 # the repo root. Anything left empty disables the gate that needs it, and the gate
 # says so out loud rather than passing silently — a disabled check is never a pass.
 
+# ── Stack ────────────────────────────────────────────────────────────────────
+# WHICH LANGUAGE THIS PROJECT IS WRITTEN IN — and the single setting that turns the
+# language-neutral gates into language-specific ones.
+#
+# No gate hardcodes a syntax. What a function declaration, a comment, a test file, a skip call, a
+# log call, an error branch and generated code LOOK LIKE all come from a stack pack in
+# scripts/stacks/. Precedence: pack defaults < anything you set in THIS file.
+#
+# Shipped: generic · go · typescript · python. `generic` is a loose union that works everywhere and
+# proves little — fine for day one, wrong to stay on. Writing a pack for another language is ~20
+# lines of config and no code (scripts/stacks/README.md).
+#
+# Proof, not assertion: `scripts/selftest.sh` builds its fixture FROM the pack, so a green run
+# means the gates can see YOUR language's syntax. `--all-stacks` checks every shipped pack.
+HARNESS_STACK="generic"
+
+# Anything below this line overrides the pack. Leave a value out to take the pack's.
+
 # ── Docs ──────────────────────────────────────────────────────────────────────
 # Directories holding your living documentation. Space-separated.
 HARNESS_DOC_DIRS="docs"
@@ -16,7 +34,8 @@ HARNESS_DOC_INDEX="docs/documentation-index.md"
 HARNESS_CODE_DIRS="src"
 
 # File extensions to treat as source, space-separated, no dots.
-HARNESS_CODE_EXTS="go ts tsx js rs py java rb"
+# Comes from the stack pack. Set it only to narrow or extend what the pack declares.
+# HARNESS_CODE_EXTS=""
 
 # ── Decision records ──────────────────────────────────────────────────────────
 # Where decision records live, and the filename prefix that identifies one.
@@ -42,14 +61,29 @@ HARNESS_MARKERS="TODO-REGISTERED:docs/registers/todo-registry.md DEFERRED-TEST:d
 # matched case-insensitively as substrings of an argument name.
 HARNESS_SECRET_TERMS="password passwd secret token apikey api_key privatekey private_key seed mnemonic otp pin ssn cardnumber"
 
-# Function-name fragments that count as "a logging call".
-HARNESS_LOG_FUNCS="log logf print println debug info warn error fatal trace"
+# Function-name fragments that count as "a logging call". Comes from the stack pack; override
+# when your project logs through a wrapper the pack does not know about.
+# HARNESS_LOG_FUNCS=""
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
-# Commands for the --full tier. Leave empty to skip (a skip is reported loudly).
-HARNESS_TEST_CMD=""
-HARNESS_COVERAGE_CMD=""
-HARNESS_LINT_CMD=""
+# Commands for the --full tier. The stack pack proposes its ecosystem's conventional ones; CONFIRM
+# them against how this project actually builds, because a pack cannot know your layout or flags.
+# Empty = skipped, and a skip is reported loudly. It is never a pass.
+# HARNESS_TEST_CMD=""
+# HARNESS_COVERAGE_CMD=""
+# HARNESS_LINT_CMD=""
+
+# ── Language shapes (all from the stack pack — override only what it gets wrong) ──
+# HARNESS_DECL_RE=""         # what a function/method declaration line looks like (ERE)
+# HARNESS_DECL_STRIP_RE=""   # sed -E expression that leaves just the name
+# HARNESS_COMMENT_RE=""      # what a comment line looks like (ERE)
+# HARNESS_DOC_BELOW=0        # 1 when docs go BELOW the declaration (Python docstrings)
+# HARNESS_TEST_GLOBS=""      # ⚠ anchor basename patterns: */test_* not *test_*
+# HARNESS_SKIP_RE=""         # your runner's skip call(s)
+# HARNESS_ERROR_RE=""        # tokens meaning "something went wrong" in a condition
+# HARNESS_EXCLUDE_GLOBS=""   # vendored, generated, build output
+# HARNESS_SCHEMA_GLOBS=""    # schema/migration files (the librarian's ground truth for quantities)
+# HARNESS_CONTRACT_GLOBS=""  # API contract files
 
 # Environment variables that, when unset, cause tests to skip. The never-run-tests
 # gate uses this to tell "gated but runnable here" from "can never run anywhere".

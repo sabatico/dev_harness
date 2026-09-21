@@ -70,6 +70,29 @@ Three consequences run through the whole kit:
 
 ---
 
+## Language neutrality — and how it unfolds back into specifics
+
+Every gate here is language-neutral, and that is a **property of the design, not a compromise in
+it**: what a declaration, a comment, a test file, a skip call, an error branch and generated code
+look like are all variables, never literals in a script.
+
+Generality alone would be a weak gate, though — a regex matching `func|def|fn|function` matches a
+lot and proves little. So the kit ships neutral and **unfolds**: a one-line `HARNESS_STACK` in
+`harness.conf` loads a **stack pack** that replaces every union with exact values for one language.
+
+```sh
+scripts/init.sh "My Project" P3 python     # or: go · typescript · generic
+```
+
+Precedence is **defaults < pack < `harness.conf`** — the pack is a correct starting point, never a
+ceiling. Adding a language is ~20 lines of config and no code (`scripts/stacks/README.md`).
+
+**And the unfolding is proven, not asserted.** `selftest.sh` builds its fixture project *from the
+active pack*, so a green run means the gates can see the syntax of the language you actually write.
+`--all-stacks` runs that proof for every shipped pack; break one pack's declaration pattern and
+exactly one row goes red. This matters because the failure it prevents is the harness's signature
+one: a gate that does not recognise your syntax finds nothing, and reports that as clean.
+
 ## The core ideas, in plain terms
 
 1. **The agent is stateless across sessions; the repo is not.** Everything the next session (human or AI) needs to cold-start lives in **running files**, not in anyone's head. Stale state is treated as a bug.
@@ -105,11 +128,17 @@ dev_harness/
 │   └── run-integrity.md            ← multi-stage runs: the manifest, the status vocabulary, COMPLETE/INCOMPLETE
 ├── scripts/                        ← the EXECUTABLE layer — config-driven gates, drop-in, bash 3.2 / BSD-safe
 │   ├── README.md                   ←   what each gate holds + the two-step adoption ritual (G7 logic, G8 wiring)
-│   ├── init.sh                     ←   bootstrap a fresh clone: layout, name substitution, config,
-│   │                                    doc index, baseline; PRINTS what to prune, deletes nothing
+│   ├── init.sh                     ←   bootstrap a fresh clone: layout, .claude/ platform layer,
+│   │                                    name substitution, config, doc index, baseline;
+│   │                                    PRINTS what to prune, deletes nothing
+│   ├── stacks/                     ←   THE LANGUAGE PACKS — generic · go · typescript · python.
+│   │                                    Every language-shaped fact the gates read lives here, so
+│   │                                    no gate hardcodes a syntax. `HARNESS_STACK` picks one.
 │   ├── run-all-gates.sh            ←   the local CI: tiered, per-gate output capture, skip-is-not-a-pass
 │   ├── hook-fast-gates.sh          ←   the same gates, fired at the moment of the write
 │   ├── check-*.sh                  ←   doc-links · doc-paths · doc-index · markers · bug-evidence · conditional-skips · citations · log-hygiene
+│   ├── selftest.sh                 ←   plants a violation per gate IN YOUR LANGUAGE (--all-stacks)
+│   ├── predicates-test.sh          ←   that the shared skip-scope has not gone over-broad
 │   └── lib/{common,manifest}.sh    ←   the shared exit vocabulary + the manifest/verdict library
 ├── sops/
 │   ├── quality-review.md           ← 5-axis review (quality · tests+coverage · observability · edge-case coverage · doc-claim truth) → lead + independent 2nd → judge → quality-review: commit

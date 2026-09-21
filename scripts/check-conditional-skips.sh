@@ -27,21 +27,28 @@ GATE_NAME="conditional-skips"
 . "$(cd "$(dirname "$0")" && pwd)/lib/common.sh"
 
 harness_need_config
+harness_need_stack
 harness_need_var HARNESS_CODE_DIRS "which directories hold your source"
 
 gate_head
 
-SKIP_RE='(\.Skip|\.Skipf|t\.SkipNow|test\.skip|it\.skip|describe\.skip|pytest\.skip|skipTest|self\.skipTest)'
-ERR_RE='(err[[:space:]]*!=[[:space:]]*nil|err[[:space:]]*==[[:space:]]*nil|!ok\b|catch|except|rescue|\berr\b|\berror\b|Exception|panic|failed|Failed)'
+# WHAT A SKIP AND AN ERROR LOOK LIKE ARE LANGUAGE FACTS, not properties of this gate — they come
+# from the stack pack (stacks/<HARNESS_STACK>.conf). The generic union matches many runners loosely;
+# a pack matches yours exactly. This matters more here than in most gates: an over-broad ERR_RE
+# turns legitimate precondition skips into noise, and a gate that cries wolf gets muted — after
+# which the actual failure it exists to catch (a broken environment printing `ok`) returns silently.
+SKIP_RE="$HARNESS_SKIP_RE"
+ERR_RE="$HARNESS_ERROR_RE"
 
 scanned=0
 skips=0
 
 while IFS= read -r f; do
-  case "$f" in
-    *_test.*|*.test.*|*.spec.*|*test_*|*/tests/*|*/test/*|*/__tests__/*) ;;
-    *) continue ;;
-  esac
+  # This gate SELECTS test files; every other gate excludes them. Same question,
+  # so it must be the same answer — it now comes from lib/common.sh. (The pattern
+  # that used to live here had `*test_*` unanchored, which also matched a source
+  # file called `latest_events.py`; the shared predicate anchors it to `*/test_*`.)
+  harness_is_test_file "$f" || continue
   scanned=$((scanned + 1))
   rel="${f#$REPO_ROOT/}"
 
@@ -68,7 +75,7 @@ done < <(harness_code_files)
 # different facts that deserve different answers.
 if [ "$scanned" -eq 0 ]; then
   harness_code_dirs_exist || gate_incomplete "no source directories exist yet: $HARNESS_CODE_DIRS"
-  gate_not_applicable "no test files matched under: $HARNESS_CODE_DIRS (looked for *_test.* *.test.* *.spec.* tests/ __tests__/) — if you DO have tests, your layout is not covered and the pattern needs fixing, not accepting"
+  gate_not_applicable "no test files matched under: $HARNESS_CODE_DIRS (HARNESS_TEST_GLOBS = $HARNESS_TEST_GLOBS, stack '$HARNESS_STACK') — if you DO have tests, your globs are wrong and need fixing, not accepting"
 fi
 
 gate_finish "$skips skip call(s) across $scanned test file(s)"

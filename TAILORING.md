@@ -97,25 +97,54 @@ project wants the guard and the banner. To wire (full doctrine: `ci/platform-lay
 What to skip when: a docs-light prototype can drop `hook-read-budget` and the librarian; nobody
 should drop the guard, the banner, or the bash-write doc gates.
 
-## Stack-neutrality — what to swap, and what never changes
+## Stack-neutrality — one setting, and what never changes
 
-Nothing in `scripts/` hardcodes a language: all paths, extensions, test commands and marker names come
-from `harness.conf`. What you change per project:
+Nothing in `scripts/` hardcodes a language. Every language-shaped fact — what a function
+declaration looks like, what a comment looks like, which files are tests, what "skip" is called,
+what an error branch looks like, what is vendored or generated — is a variable, and a **stack pack**
+(`scripts/stacks/<name>.conf`) fills them all in at once:
+
+```sh
+HARNESS_STACK="go"        # in harness.conf; or: scripts/init.sh "My Project" P3 go
+```
+
+Shipped: `generic` · `go` · `typescript` · `python`. Precedence is **pack < `harness.conf`**, so a
+pack is a correct starting point you can still override — it cannot know your directory layout or
+your runner's flags.
+
+> **`generic` is the shipping state, not the operating state.** It is a union regex: it matches a
+> lot and therefore proves little. On a Go codebase it misses every method with a receiver; on a
+> Python one, a gate that only looks *above* a declaration reports every function as undocumented,
+> because Python's docs are a docstring *below* it. **Adopt a real pack in your first act.**
+
+**A pack is proven, not asserted.** `scripts/selftest.sh` builds its fixture project *from the
+active pack*, so a green run means the gates can see declarations, comments, skips and log calls in
+**your** language:
+
+```sh
+scripts/selftest.sh                # your project's pack
+scripts/selftest.sh --all-stacks   # every shipped pack — the language-neutrality claim, checked
+```
+
+A language we do not ship is about twenty lines of config and no code —
+`scripts/stacks/README.md` has the variable table and the fixture contract.
+
+What you still set per project, because no pack can know it:
 
 | Config | Set it to |
 |---|---|
-| `HARNESS_CODE_DIRS` / `HARNESS_CODE_EXTS` | wherever your source is, whatever it is written in |
-| `HARNESS_TEST_CMD` / `HARNESS_COVERAGE_CMD` / `HARNESS_LINT_CMD` | your stack's commands — `go test ./...`, `pytest`, `npm test`, `cargo test`, `dotnet test` |
+| `HARNESS_CODE_DIRS` | wherever your source actually lives |
+| `HARNESS_TEST_CMD` / `HARNESS_COVERAGE_CMD` / `HARNESS_LINT_CMD` | confirm the pack's proposal against how this project really builds |
 | `HARNESS_DECISION_PREFIX` | `ADR`, `RFC`, `DR` — whatever you call a decision record |
 | `HARNESS_MARKERS` | your own marker types; the gate is generic |
 | `HARNESS_SECRET_TERMS` | the identifier names that matter in your domain |
 
-The dependency-CVE / SAST tools in `ci/gates.md` have a per-language equivalent (`govulncheck`,
-`pip-audit`, `npm audit`, `cargo audit`, `bundler-audit`); substitute and keep the rule that **HIGH+
-fails**.
+The dependency-CVE / SAST tools in `ci/gates.md` are a menu of per-ecosystem equivalents
+(`govulncheck`, `pip-audit`, `npm audit`, `cargo audit`, `bundler-audit`); substitute yours and keep
+the rule that **HIGH+ fails**.
 
 **What never changes across stacks or profiles:** the exit vocabulary (`0` pass, `1` fail, **`3`
-could-not-run**), G1 (refuse to report green over an empty scan), G7+G8 (watch a gate fail, then watch
+could-not-run**, `4` N/A), G1 (refuse to report green over an empty scan), G7+G8 (watch a gate fail, then watch
 it fire through the real path), and *a skip is not a pass*. Those are properties of controls, not of
 languages.
 

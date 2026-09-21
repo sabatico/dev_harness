@@ -45,7 +45,9 @@ scanned=0
 calls=0
 
 while IFS= read -r f; do
-  case "$f" in *_test.*|*.test.*|*.spec.*|*/vendor/*|*/node_modules/*) continue ;; esac
+  # One shared answer to "test file?" / "vendored?" — see lib/common.sh.
+  harness_is_test_file "$f" && continue
+  harness_is_vendored  "$f" && continue
   scanned=$((scanned + 1))
   rel="${f#$REPO_ROOT/}"
 

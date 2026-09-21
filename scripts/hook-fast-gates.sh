@@ -37,6 +37,11 @@
 # calls it the system.
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
+# Source the shared config so the ADVISORY branch below covers YOUR language rather than a list
+# baked into this hook. A hardcoded extension list is a silent opt-out for every language not on
+# it: the hook simply says nothing, which is indistinguishable from the hook saying "fine".
+# shellcheck disable=SC1091
+. "$HERE/lib/common.sh" 2>/dev/null || true
 
 payload="$(cat)"
 
@@ -73,12 +78,18 @@ case "$file" in
     exit 0
     ;;
 
-  # ── ADVISORY: source ────────────────────────────────────────────────────────
-  *.go|*.ts|*.tsx|*.js|*.rs|*.py|*.java|*.rb)
-    out="$(bash "$HERE/check-citations.sh" 2>&1 | grep -F "$(basename "$file")" | head -3)"
-    [ -n "$out" ] && printf 'advisory (enforced at push, not now):\n%s\n' "$out"
-    exit 0
-    ;;
 esac
+
+# ── ADVISORY: source ──────────────────────────────────────────────────────────
+# Extensions come from HARNESS_CODE_EXTS (stack pack / harness.conf), not from this file.
+for ext in ${HARNESS_CODE_EXTS:-}; do
+  case "$file" in
+    *".$ext")
+      out="$(bash "$HERE/check-citations.sh" 2>&1 | grep -F "$(basename "$file")" | head -3)"
+      [ -n "$out" ] && printf 'advisory (enforced at push, not now):\n%s\n' "$out"
+      exit 0
+      ;;
+  esac
+done
 
 exit 0

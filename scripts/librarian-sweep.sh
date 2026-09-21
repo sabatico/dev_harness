@@ -31,7 +31,11 @@ CAP="${SWEEP_CAP:-8}"
 total_hits=0; absent=0
 sweep() { # label, then an enumeration command
   local label="$1"; shift
-  local files; files="$(eval "$*" 2>/dev/null | grep -vE 'node_modules|/target/|/dist/|\.git/' || true)"
+  # Noise filter from HARNESS_EXCLUDE_GLOBS, not a baked-in list: a sweep that reports hits from
+  # vendored code wastes the librarian's window, and one that prunes the WRONG directories reports
+  # a confident 0 on a surface it never looked at.
+  local files ex; ex="$(printf '%s' "${HARNESS_EXCLUDE_GLOBS:-}" | sed 's/[*]//g; s/  */|/g; s/^|//; s/|$//')"
+  files="$(eval "$*" 2>/dev/null | grep -vE "\.git/${ex:+|$ex}" || true)"
   if [ -z "$files" ]; then
     printf '  ⚠ %-34s ABSENT — enumerated 0 files (path missing or filter ate everything)\n' "$label"
     absent=$((absent+1)); return
@@ -53,8 +57,13 @@ echo "── decisions & docs ──"
 for d in ${HARNESS_DOC_DIRS:-docs}; do sweep "docs: $d/" "find $d -name '*.md'"; done
 sweep "root docs (CLAUDE/README/etc)" "ls ./*.md"
 echo "── contracts & constraints (ground truth for quantities) ──"
-sweep "migrations / schema"           "find . -path ./node_modules -prune -o -name '*.sql' -print"
-sweep "API contracts (openapi/proto)" "find . -path ./node_modules -prune -o \\( -name 'openapi.*' -o -name '*.proto' \\) -print"
+# WHAT a schema or an API contract looks like is a stack fact — HARNESS_SCHEMA_GLOBS and
+# HARNESS_CONTRACT_GLOBS (stack pack / harness.conf). Hardcoding *.sql meant a project whose ground
+# truth was a .prisma or .graphql file got a confident "0 hits" on the surface that holds its
+# quantities — the exact surface the librarian exists to consult.
+name_expr() { local first=1 g; for g in $1; do [ $first -eq 1 ] && printf -- "-name '%s'" "$g" || printf -- " -o -name '%s'" "$g"; first=0; done; }
+sweep "migrations / schema"           "find . -path ./node_modules -prune -o \\( $(name_expr "${HARNESS_SCHEMA_GLOBS:-*.sql}") \\) -print"
+sweep "API contracts"                 "find . -path ./node_modules -prune -o \\( $(name_expr "${HARNESS_CONTRACT_GLOBS:-openapi.* *.proto}") \\) -print"
 echo "── code (comments carry the WHY) ──"
 for d in ${HARNESS_CODE_DIRS:-src}; do
   sweep "code: $d/"        "find $d -type f \\( $(printf -- "-name '*.%s' -o " ${HARNESS_CODE_EXTS:-go ts tsx js rs py} | sed 's/ -o $//') \\)"
@@ -64,7 +73,7 @@ echo "── harness config ──"
 sweep ".claude rules/skills/agents"   "find .claude/rules .claude/skills .claude/agents -name '*.md'"
 echo "── siblings (outside this repo, inside this product) ──"
 for sib in ${HARNESS_SIBLING_REPOS:-}; do
-  if [ -d "../$sib" ]; then sweep "sibling: $sib" "find ../$sib -type f \\( -name '*.md' -o -name '*.kt' -o -name '*.swift' -o -name '*.ts' \\)"
+  if [ -d "../$sib" ]; then sweep "sibling: $sib" "find ../$sib -type f \\( -name '*.md' -o $(name_expr "$(for e in ${HARNESS_CODE_EXTS:-md}; do printf '*.%s ' "$e"; done)") \\)"
   else printf '  ⚠ %-34s ABSENT — ../%s not checked out on this machine\n' "sibling: $sib" "$sib"; absent=$((absent+1)); fi
 done
 echo "── git history (commit messages carry reasoning found nowhere else) ──"

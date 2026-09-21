@@ -20,12 +20,53 @@
 #
 # Step 3 matters as much as step 2: a gate that fails on everything also "catches" the plant.
 #
-#   scripts/selftest.sh          # all gates
-#   scripts/selftest.sh markers  # one gate
+# ── AND IT IS PARAMETERISED BY YOUR LANGUAGE ─────────────────────────────────
+#
+# The fixture is built FROM THE ACTIVE STACK PACK (scripts/stacks/<HARNESS_STACK>.conf), not from a
+# language chosen by whoever wrote this file. That is the whole point of the pack mechanism: a
+# green run here proves the gates can see declarations, comments, skips and log calls **in the
+# language you actually write**. A suite that only ever proved them in Go would be a suite that
+# says nothing to a Python project — while printing the same reassuring green.
+#
+#   scripts/selftest.sh                  # the pack harness.conf selects
+#   scripts/selftest.sh markers          # one gate
+#   scripts/selftest.sh --stack python   # one named pack
+#   scripts/selftest.sh --all-stacks     # every pack shipped in scripts/stacks/
 
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-ONLY="${1:-}"
+
+ONLY=""; WANT_STACK=""; ALL_STACKS=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --all-stacks) ALL_STACKS=1 ;;
+    --stack)      WANT_STACK="${2:-}"; shift ;;
+    --stack=*)    WANT_STACK="${1#--stack=}" ;;
+    -h|--help)    sed -n '2,40p' "$0"; exit 0 ;;
+    *)            ONLY="$1" ;;
+  esac
+  shift
+done
+
+# Which pack is in play. Explicit flag wins; otherwise read the project's own harness.conf, so a
+# bare `scripts/selftest.sh` in a real project tests THAT project's language.
+resolve_stack() {
+  local cfg; cfg="$(git rev-parse --show-toplevel 2>/dev/null || pwd)/harness.conf"
+  if [ -n "$WANT_STACK" ]; then printf '%s' "$WANT_STACK"; return; fi
+  if [ -f "$cfg" ]; then
+    local p; p="$(sed -n 's/^[[:space:]]*HARNESS_STACK=["'"'"']\{0,1\}\([A-Za-z0-9_-]\{1,\}\).*/\1/p' "$cfg" | tail -1)"
+    [ -n "$p" ] && { printf '%s' "$p"; return; }
+  fi
+  printf 'generic'
+}
+STACK="$(resolve_stack)"
+PACK="$HERE/stacks/$STACK.conf"
+if [ ! -f "$PACK" ]; then
+  echo "no such stack pack: $PACK (see scripts/stacks/README.md)" >&2; exit 2
+fi
+# shellcheck disable=SC1090
+. "$PACK"
+FIX_EXT="${HARNESS_FIX_SRC_NAME##*.}"
 
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
   R=$'\033[31m'; G=$'\033[32m'; Y=$'\033[33m'; D=$'\033[2m'; B=$'\033[1m'; Z=$'\033[0m'
@@ -39,17 +80,19 @@ build_fixture() {
   mkdir -p "$FX/docs/tickets" "$FX/src" "$FX/tests"
   ( cd "$FX" && git init -q . && git config user.email t@example.com && git config user.name t )
 
-  cat > "$FX/harness.conf" <<'CONF'
+  # The fixture config names the pack under test. CODE_EXTS is pinned to the fixture's own
+  # extension so the gates scan exactly what we planted and nothing else.
+  cat > "$FX/harness.conf" <<CONF
+HARNESS_STACK="$STACK"
 HARNESS_DOC_DIRS="docs"
 HARNESS_DOC_INDEX="docs/documentation-index.md"
 HARNESS_CODE_DIRS="src tests"
-HARNESS_CODE_EXTS="go"
+HARNESS_CODE_EXTS="$FIX_EXT"
 HARNESS_DECISION_DIR="docs/adr"
 HARNESS_DECISION_PREFIX="ADR"
 HARNESS_BUG_REGISTER="docs/tickets/bug-register.md"
 HARNESS_MARKERS="DEFERRED-TEST:docs/deferred-test-registry.md"
 HARNESS_SECRET_TERMS="password token secret"
-HARNESS_LOG_FUNCS="log print"
 HARNESS_BASELINE_DIR=".harness/baselines"
 HARNESS_BASE_REF="origin/main"
 CONF
@@ -64,14 +107,14 @@ CONF
 EOF
   cat > "$FX/docs/ONBOARDING.md" <<'EOF'
 # ONBOARDING
-State lives here. Source is in `src/app.go`.
+State lives here.
 See the [bug register](tickets/bug-register.md).
 EOF
-  cat > "$FX/docs/deferred-test-registry.md" <<'EOF'
+  cat > "$FX/docs/deferred-test-registry.md" <<EOF
 # Deferred tests
 | Code site | Owed | Unblock |
 |---|---|---|
-| `src/app.go` | provider round-trip | provider lands |
+| \`src/$HARNESS_FIX_SRC_NAME\` | provider round-trip | provider lands |
 EOF
   cat > "$FX/docs/tickets/bug-register.md" <<'EOF'
 # Bug register
@@ -85,26 +128,10 @@ EOF
 |----|-----|---------|-----|--------------------------------------|-----------------|
 | BUG-001 | P1 | guard bypass | abc1234 | reverted the guard; TestGuard went red | design phase missed it |
 EOF
-  cat > "$FX/src/app.go" <<'EOF'
-package app
-
-// Guard rejects empty input so callers cannot construct an unnamed record.
-// ADR-001 §3 — we fail closed rather than defaulting, because a default here is unauditable.
-func Guard(s string) bool {
-	// DEFERRED-TEST: provider round-trip
-	return s != ""
-}
-EOF
-  cat > "$FX/tests/app_test.go" <<'EOF'
-package app
-
-// TestGuard pins the ADR-001 §3 fail-closed behaviour.
-func TestGuard(t *testing.T) {
-	if !Guard("x") {
-		t.Fatal("expected true")
-	}
-}
-EOF
+  # ⬇ THE LANGUAGE-SHAPED HALF, entirely from the pack — nothing below this comment
+  # knows what language the fixture is written in.
+  printf "$HARNESS_FIX_GOOD" > "$FX/src/$HARNESS_FIX_SRC_NAME"
+  printf "$HARNESS_FIX_TEST" > "$FX/tests/$HARNESS_FIX_TEST_NAME"
 }
 
 run_gate() { ( cd "$FX" && bash "$HERE/$1" >/dev/null 2>&1 ); echo $?; }
@@ -142,19 +169,54 @@ check() {
 
 # ── the plants: one per gate, each the exact thing the gate claims to catch ──
 plant_doc_links()   { printf '\nSee [the missing one](nope-does-not-exist.md).\n' >> "$FX/docs/ONBOARDING.md"; }
-plant_doc_paths()   { printf '\nThe handler lives in `src/nope-does-not-exist.go` today.\n' >> "$FX/docs/ONBOARDING.md"; }
+plant_doc_paths()   { printf '\nThe handler lives in `src/nope-does-not-exist.%s` today.\n' "$FIX_EXT" >> "$FX/docs/ONBOARDING.md"; }
 plant_doc_index()   { printf '# Orphan\nNot registered anywhere.\n' > "$FX/docs/orphan.md"; }
-plant_markers()     { printf 'package app\n\n// Helper does a thing.\n// ADR-001 §3 — why.\nfunc Helper() {\n\t// DEFERRED-TEST: unregistered\n}\n' > "$FX/src/helper.go"; }
+plant_markers()     { printf "$HARNESS_FIX_MARKER" > "$FX/src/helper.$FIX_EXT"; }
 plant_bug_evidence(){ printf '| BUG-003 | P1 | another | def5678 | | |\n' >> "$FX/docs/tickets/bug-register.md"; }
-plant_cond_skips()  { printf '\nfunc TestSetup(t *testing.T) {\n\tdb, err := open()\n\tif err != nil {\n\t\tt.Skip("no db")\n\t}\n\t_ = db\n}\n' >> "$FX/tests/app_test.go"; }
-plant_citations()   { printf 'package app\n\nfunc Undocumented(x int) int {\n\treturn x * 2\n}\n' > "$FX/src/undocumented.go"; }
-# The annotation must sit on the OFFENDING LINE, not above it — the gate reads one line at a time.
-# This is the plant STRING for log-hygiene's own self-test, not a log call. Annotating rather than
-# weakening the gate is the point: the exception stays visible and greppable, and the gate stays
-# sharp enough to have caught this line in the first place (it did).
-plant_log_hygiene() { printf '\n// Login logs the attempt.\n// ADR-001 §3 — why.\nfunc Login(password string) {\n\tlog.Printf("attempt with password=%%s", password)\n}\n' >> "$FX/src/app.go"; } # harness:allow-log self-test fixture
+plant_cond_skips()  { printf "$HARNESS_FIX_SKIP" >> "$FX/tests/$HARNESS_FIX_TEST_NAME"; }
+plant_citations()   { printf "$HARNESS_FIX_UNCITED" > "$FX/src/undocumented.$FIX_EXT"; }
+# The log-hygiene plant is a SOURCE SNIPPET IN THE PACK, never a live log call in this file: the
+# gate scans the harness's own scripts, so a real one here would make the suite flag itself. (It
+# did, once — the fix was to annotate the line; the fix now is that the line lives in a .conf.)
+plant_log_hygiene() { printf "$HARNESS_FIX_LOG" >> "$FX/src/$HARNESS_FIX_SRC_NAME"; }
 
-printf '%s══ harness self-test ══%s  every gate must FAIL on its own violation\n\n' "$B" "$Z"
+# ── --all-stacks: prove the MECHANISM, not just one language ─────────────────
+# Re-invokes this script once per shipped pack. This is what makes the language-neutrality claim
+# checkable rather than aspirational: if a gate can only see Go, exactly one row below goes red.
+if [ "$ALL_STACKS" -eq 1 ]; then
+  rc=0
+  for pk in "$HERE"/stacks/*.conf; do
+    nm="$(basename "$pk" .conf)"
+    printf '%s══ stack: %s ══%s\n' "$B" "$nm" "$Z"
+    bash "$0" --stack "$nm" ${ONLY:+"$ONLY"} || rc=1
+    printf '\n'
+  done
+  if [ "$rc" -ne 0 ]; then
+    printf '%sAt least one stack pack failed.%s A pack that cannot pass the self-test describes a\n' "$R" "$Z"
+    printf 'language the gates cannot actually see — fix the pack, or stop claiming the language.\n'
+    exit 1
+  fi
+  printf '%severy shipped stack pack verified%s — the gates see declarations, comments, skips and\n' "$G" "$Z"
+  printf 'log calls in each of them, not just in whichever language this kit was written in.\n'
+  exit 0
+fi
+
+printf '%s══ harness self-test ══%s  every gate must FAIL on its own violation\n' "$B" "$Z"
+printf '   stack: %s%s%s (scripts/stacks/%s.conf) — the fixture is written in THIS language\n\n' "$B" "$STACK" "$Z" "$STACK"
+
+# The shared file predicates run FIRST, because they decide what every gate below
+# SKIPS. The checks after this one prove a gate fires on a violation it can see;
+# nothing there would notice a predicate that had quietly moved violations out of
+# view — an over-broad exclusion makes a gate greener and quieter at once, which
+# is the one failure shape this suite is otherwise blind to.
+if [ -f "$HERE/predicates-test.sh" ]; then
+  if bash "$HERE/predicates-test.sh" >/dev/null 2>&1; then
+    printf '  %s✓%s predicates          file-exclusion matrix (skip-scope is not over-broad)\n' "$G" "$Z"
+  else
+    printf '  %s✗%s predicates          file-exclusion matrix FAILED — run scripts/predicates-test.sh\n' "$R" "$Z"
+    FAIL=$((FAIL + 1)); FAILED_GATES="$FAILED_GATES predicates"
+  fi
+fi
 
 check check-doc-links.sh        "doc-links"         plant_doc_links
 check check-doc-paths.sh        "doc-paths"         plant_doc_paths

@@ -21,9 +21,9 @@ That third assertion matters as much as the second — a gate that fails on ever
 the plant.
 
 **All 8 gates currently pass their self-test.** It is not decoration: the first run found
-`check-log-hygiene.sh` completely **blind** — its function match was case-sensitive, so it saw none of
-`log.Printf`, `logger.Warn` or `console.Error`, and reported a confident zero on a line that logged a
-password. Three other gates were fixed the same way (a register format it could not parse, a resolver
+`check-log-hygiene.sh` completely **blind** — its function match was case-sensitive, so it saw none of the
+capitalised forms every ecosystem actually uses, and reported a confident zero on a line that
+logged a password. Three other gates were fixed the same way (a register format it could not parse, a resolver
 that flagged correct prose, and one that flagged itself).
 
 **What the self-test proves:** each gate can see the specific violation it claims to catch, and does
@@ -47,8 +47,9 @@ cp -r scripts <your-repo>/scripts
 scripts/run-all-gates.sh
 ```
 
-`harness.conf` is the only file you edit. Nothing in `scripts/` hardcodes a language, directory
-layout, or project name; everything comes from that config. A setting left empty **disables** the gate
+`harness.conf` is the only file you edit. Nothing here hardcodes a language, directory layout or
+project name: the language-shaped facts come from a **stack pack** (`stacks/<name>.conf`, selected
+by `HARNESS_STACK`) and everything else from the config. See `stacks/README.md`. A setting left empty **disables** the gate
 that needs it, and the gate says so out loud — an unconfigured check reports INCOMPLETE, never PASS.
 
 ## What is here
@@ -70,6 +71,8 @@ that needs it, and the gate says so out loud — an unconfigured check reports I
 | `lib/common.sh` | the shared exit vocabulary, config loading, ratchet helpers, the tree hash | source it from any new gate |
 | `hook-pretooluse-guard-test.sh` | **that the guard denies what it claims, and allows its known false positives** | known-answer matrix; reports unexercised rows as skipped, not passes |
 | `lib/manifest.sh` | `ci/run-integrity.md` R1–R4 in ~90 lines | for multi-stage jobs |
+| `stacks/*.conf` | **the language-shaped facts every gate reads** | `HARNESS_STACK` picks one; `stacks/README.md` |
+| `predicates-test.sh` | that "is this a test file / vendored?" has not gone over-broad | known-answer matrix; an over-broad exclusion makes gates quieter, not louder |
 
 ## The exit vocabulary — honour it in every gate you add
 

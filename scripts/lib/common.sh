@@ -38,11 +38,37 @@ harness_repo_root() {
 REPO_ROOT="$(harness_repo_root)"
 HARNESS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# ── LANGUAGE NEUTRALITY, AND HOW IT UNFOLDS BACK INTO SPECIFICS ───────────────
+#
+# No gate in this kit knows what language you write. Every language-shaped fact — what a function
+# declaration looks like, what a comment looks like, which files are tests, what "skip" is called,
+# what an error branch looks like, what is vendored or generated — is a VARIABLE, defaulted below
+# to a deliberately loose union that matches most C-family and Python-family syntax.
+#
+# A loose default is a weak gate, though: a union regex matches a lot and therefore proves little
+# about YOUR code. So the generality is the shipping state, not the operating state. A **stack
+# pack** (`stacks/<name>.conf`) unfolds the union back into exact values for one language, and
+# `HARNESS_STACK` in harness.conf selects it:
+#
+#     generic  ->  DECL_RE matches func|def|fn|function, comments match // # -- *
+#     go       ->  DECL_RE matches `func` with receivers, tests are *_test.go, skip is t.Skip
+#
+# Precedence, deliberately: **defaults < stack pack < harness.conf**. The pack gives you a correct
+# starting point for your language; anything you set in harness.conf still wins, because a pack
+# cannot know your layout. Packs are data, not rules — write one for a language we do not ship in
+# about twenty lines (`stacks/README.md`).
+#
+# The proof that a pack is right is not that it looks right: `scripts/selftest.sh` builds its
+# fixture project FROM THE ACTIVE PACK, so running it proves the gates can see declarations,
+# comments, skips and log calls **in your language** — not in the kit author's.
+
+HARNESS_STACK="generic"
+
 # Defaults, so a gate never dereferences an unset var under `set -u`.
 HARNESS_DOC_DIRS=""
 HARNESS_DOC_INDEX=""
 HARNESS_CODE_DIRS=""
-HARNESS_CODE_EXTS="go ts tsx js rs py java rb"
+HARNESS_CODE_EXTS=""
 HARNESS_DECISION_DIR=""
 HARNESS_DECISION_PREFIX="ADR"
 HARNESS_DECISION_LEDGER=""
@@ -57,17 +83,81 @@ HARNESS_TEST_ENV_GATES=""
 HARNESS_BASELINE_DIR=".harness/baselines"
 HARNESS_BASE_REF="origin/main"
 
+# ── the language-shaped vars ──────────────────────────────────────────────────
+# Declared empty here ONLY so `set -u` is safe. The authoritative union values live in exactly one
+# place — stacks/generic.conf — which is always loaded as the base, so there is no second copy of
+# them here to drift. (Two definitions of the same list is the drift this kit exists to prevent;
+# it would be a poor look to ship it in the file that explains why.)
+HARNESS_DECL_RE=""
+HARNESS_DECL_STRIP_RE=""
+HARNESS_COMMENT_RE=""
+HARNESS_DOC_BELOW=0
+HARNESS_TEST_GLOBS=""
+HARNESS_SKIP_RE=""
+HARNESS_ERROR_RE=""
+HARNESS_EXCLUDE_GLOBS=""
+HARNESS_SCHEMA_GLOBS=""
+HARNESS_CONTRACT_GLOBS=""
+
+# ── config loading ────────────────────────────────────────────────────────────
+#
+# The pack must load BEFORE harness.conf so harness.conf's values win. But the pack NAME lives in
+# harness.conf, so we read that one assignment out first rather than sourcing the file twice —
+# sourcing twice would run any side effects twice, and a config that is not idempotent would then
+# behave differently for gates than for hooks.
 harness_load_config() {
-  local cfg="$REPO_ROOT/harness.conf"
-  if [ -f "$cfg" ]; then
+  local cfg="$REPO_ROOT/harness.conf" pack
+
+  # The generic pack is ALWAYS the base, config or not — so a repo with no harness.conf still has
+  # working language defaults, and there is only one copy of them anywhere.
+  # shellcheck disable=SC1090
+  [ -f "$HARNESS_DIR/stacks/generic.conf" ] && . "$HARNESS_DIR/stacks/generic.conf"
+
+  if [ ! -f "$cfg" ]; then HARNESS_CONFIG_FOUND=0; return; fi
+  HARNESS_CONFIG_FOUND=1
+
+  # Read the pack NAME out of harness.conf without sourcing it: the pack must load BEFORE
+  # harness.conf so harness.conf wins, and sourcing the file twice would run any side effect twice.
+  pack="$(sed -n 's/^[[:space:]]*HARNESS_STACK=["'"'"']\{0,1\}\([A-Za-z0-9_-]\{1,\}\).*/\1/p' "$cfg" | tail -1)"
+  [ -n "$pack" ] || pack="generic"
+  HARNESS_STACK="$pack"
+  if [ "$pack" = "generic" ]; then
+    HARNESS_STACK_FOUND=1
+  elif [ -f "$HARNESS_DIR/stacks/$pack.conf" ]; then
     # shellcheck disable=SC1090
-    . "$cfg"
-    HARNESS_CONFIG_FOUND=1
+    . "$HARNESS_DIR/stacks/$pack.conf"
+    HARNESS_STACK_FOUND=1
   else
-    HARNESS_CONFIG_FOUND=0
+    HARNESS_STACK_FOUND=0
   fi
+
+  # shellcheck disable=SC1090
+  . "$cfg"
 }
+HARNESS_STACK_FOUND=1
 harness_load_config
+
+# A named pack that does not exist is a CONFIG ERROR, not a silent fallback to the loose union:
+# the gates would still run, still print green, and still be checking something other than what the
+# project declared. Any gate that cares calls this.
+harness_need_stack() {
+  [ "${HARNESS_STACK_FOUND:-1}" -eq 1 ] || \
+    gate_incomplete "HARNESS_STACK=\"$HARNESS_STACK\" names no pack: $HARNESS_DIR/stacks/$HARNESS_STACK.conf does not exist (see stacks/README.md)"
+}
+
+# Turn a space-separated glob list into a case-statement pattern: 'a b' -> 'a|b'.
+harness_globs_to_pattern() { printf '%s' "$*" | tr ' ' '|'; }
+
+# True when $1 matches any glob in $2 (a space-separated list).
+harness_matches_glob() {
+  local f="$1" g
+  shift
+  for g in $*; do
+    # shellcheck disable=SC2254
+    case "$f" in $g) return 0 ;; esac
+  done
+  return 1
+}
 
 # ── output ────────────────────────────────────────────────────────────────────
 
@@ -191,6 +281,35 @@ harness_changed_files() {
   git -C "$REPO_ROOT" diff --name-only "$base"...HEAD 2>/dev/null
   git -C "$REPO_ROOT" diff --name-only HEAD 2>/dev/null
   git -C "$REPO_ROOT" ls-files --others --exclude-standard 2>/dev/null
+}
+
+# ── the two questions every code gate asks ────────────────────────────────────
+#
+# "Is this a test file?" and "is this vendored/generated?" are asked by most gates here, and for a
+# while each answered them itself. They drifted, which is how a Python repo ended up with every
+# test function reported as an uncited declaration. One answer, defined once.
+#
+# The ANSWER is here; the LIST is config (HARNESS_TEST_GLOBS / HARNESS_EXCLUDE_GLOBS), because what
+# a test file looks like is a fact about your language, not about this gate.
+#
+# ⚠ ANCHOR BASENAME PATTERNS TO A SEPARATOR. `*/test_*` and not `*test_*`: the bare form matches any
+# path merely CONTAINING "test_", so a source file named `latest_events.py` is silently exempted
+# from every gate that uses this — a hole that reads as a clean scan. The shipped globs are
+# anchored; keep yours anchored when you add to them.
+
+harness_is_test_file() {
+  # harness_is_test_file <path>  — true (0) when the path is a test file.
+  # The LIST lives in HARNESS_TEST_GLOBS (stack pack / harness.conf); the shared ANSWER lives here.
+  # Keeping the list out of the code is what makes this kit language-neutral; keeping the answer in
+  # one place is what stops three gates disagreeing about it.
+  harness_matches_glob "$1" "$HARNESS_TEST_GLOBS"
+}
+
+harness_is_vendored() {
+  # harness_is_vendored <path>  — true (0) for third-party or generated code. Not ours to annotate,
+  # and a gate that demands edits to it teaches people that the gate is noise.
+  # List: HARNESS_EXCLUDE_GLOBS (stack pack / harness.conf). Answer: here, once.
+  harness_matches_glob "$1" "$HARNESS_EXCLUDE_GLOBS"
 }
 
 # ── ratchet baselines ─────────────────────────────────────────────────────────
