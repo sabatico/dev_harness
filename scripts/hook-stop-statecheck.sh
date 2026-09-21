@@ -7,7 +7,7 @@
 # per offending commit (stamped). The hit-log makes the rule's violation rate MEASURABLE; review it
 # after two weeks before ever considering promotion to blocking.
 #
-# Wire on Stop (no matcher). SEMPARO_STOPCHECK_REF-style env override exists so the positive branch
+# Wire on Stop (no matcher). The HARNESS_STOPCHECK_REF env override exists so the positive branch
 # is TESTABLE against a known commit — a guard whose firing path was never watched is not a guard.
 set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0

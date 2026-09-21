@@ -112,7 +112,8 @@ project's first eval found a stale services-inventory row, an alias blindness in
 
 ## P7. Wiring order for a new project
 
-1. Copy `dot-claude/` → `.claude/`, fill `harness.conf` (incl. the platform vars), copy scripts.
+1. Run `scripts/init.sh` — it installs `dot-claude/` → `.claude/` per file and seeds the platform
+   vars in `harness.conf`. (Retrofitting an existing repo instead? Do that copy by hand.)
 2. Start a session; **see the banner** (P1). No banner = fix wiring before trusting anything.
 3. Run `hook-pretooluse-guard-test.sh`; adapt the ALLOW rows to your workflows.
 4. Write one path-scoped rule per area you actually have (the rules dir); keep each ≤50 lines.

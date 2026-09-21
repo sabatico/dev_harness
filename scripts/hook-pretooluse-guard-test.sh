@@ -49,7 +49,23 @@ t ALLOW Bash 'git checkout main' '' 'checkout branch'
 t ALLOW Bash 'terraform plan' '' 'terraform plan'
 t ALLOW Bash 'terraform apply -var enable_x=false' '' 'targeted toggle'
 
+# ── must DENY: the guard CANNOT RUN (fail-closed) ────────────────────────────
+# The guard's own empty-scan case. Without these rows the fail-closed branches are exactly the kind
+# of never-watched code path this matrix exists to catch — and their failure mode is a silent ALLOW.
+nopy="${TMPDIR:-/tmp}/harness-guardtest-nopy.$$"
+mkdir -p "$nopy" && printf '#!/bin/sh\nexit 127\n' > "$nopy/python3" && chmod +x "$nopy/python3"
+out="$(printf '{"tool_name":"Bash","tool_input":{"command":"terraform destroy"}}' \
+       | PATH="$nopy:$PATH" bash "$GUARD" 2>/dev/null)"
+if printf '%s' "$out" | grep -q '"deny"'; then pass=$((pass+1));
+else fail=$((fail+1)); echo "FAIL  want=DENY got=ALLOW  no python3 must fail CLOSED"; fi
+rm -rf "$nopy"
+
+out="$(printf 'not json at all' | bash "$GUARD" 2>/dev/null)"
+if printf '%s' "$out" | grep -q '"deny"'; then pass=$((pass+1));
+else fail=$((fail+1)); echo "FAIL  want=DENY got=ALLOW  unparseable payload must fail CLOSED"; fi
+
 # ── conf-dependent rows (exercised only when harness.conf sets the vars) ─────
+skipped=0
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 # shellcheck disable=SC1091
 [ -f "$ROOT/harness.conf" ] && . "$ROOT/harness.conf"
@@ -59,11 +75,19 @@ if [ -n "${HARNESS_PROTECTED_DBS:-}" ]; then
   t DENY  Bash "psql -c \"DROP DATABASE ${db}\"" '' 'drop protected db'
   t ALLOW Bash "psql -c \"DROP DATABASE ${db}_clone1\"" '' 'drop clone'
   t ALLOW Bash "echo TRUNCATE ${db} prose" '' 'sql words no client'
+else
+  skipped=$((skipped+4)); echo "  SKIP  4 protected-DB rows — HARNESS_PROTECTED_DBS is empty in harness.conf"
 fi
 if [ -n "${HARNESS_ARCHIVED_PATHS:-}" ]; then
   g="${HARNESS_ARCHIVED_PATHS%% *}"
   t DENY Edit '' "/x/${g#\*}" 'edit archived path'
+else
+  skipped=$((skipped+1)); echo "  SKIP  1 archived-path row — HARNESS_ARCHIVED_PATHS is empty in harness.conf"
 fi
 
-echo "guard-test: $pass pass, $fail fail"
-[ "$fail" -eq 0 ] && echo "self-proof: OK (all known-answer verdicts correct)" || exit 1
+# A skip is not a pass (common.sh's exit vocabulary, applied to this matrix). Printing only
+# "N pass, 0 fail" over silently-unexercised rows is the same lie the gates refuse to tell.
+echo "guard-test: $pass pass, $fail fail, $skipped skipped (unexercised — NOT passes)"
+[ "$skipped" -gt 0 ] && echo "  those rows cover the guard branches your harness.conf does not configure; set the vars to exercise them"
+[ "$fail" -eq 0 ] && echo "self-proof: OK ($pass known-answer verdicts correct)" || exit 1
+exit 0

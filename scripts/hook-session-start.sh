@@ -29,6 +29,21 @@ bounded() { ( "$@" ) & local p=$!; ( sleep 8; kill -9 "$p" 2>/dev/null ) & local
 
 echo "⚡ SESSION BRIEF (scripts/hook-session-start.sh — hooks ARE loaded this session; if you never saw this banner, they are NOT: run the gates by hand)"
 echo
+
+# The banner proves the hooks LOADED. It must not also imply they can RUN: this script needs only
+# git, while the guard and both doc-gate hooks shell out to python3, and hook-postbash-docgates
+# needs shasum. A missing prerequisite would otherwise leave a session that banners "protected"
+# while the controls behind it are inert — the liveness proof lying in the reassuring direction.
+missing=""
+for t in python3 shasum; do command -v "$t" >/dev/null 2>&1 || missing="$missing $t"; done
+if [ -n "$missing" ]; then
+  echo "⛔ MISSING HARNESS PREREQUISITE(S):$missing"
+  echo "   The banner proves hooks loaded, NOT that they work. Without python3 the destructive-action"
+  echo "   guard DENIES every Bash/Write/Edit (fail-closed, by design) and the write-time doc gates"
+  echo "   are inert. Install the tool(s), or remove the affected hooks from .claude/settings.json so"
+  echo "   the gap is a recorded decision instead of a silent one."
+  echo
+fi
 echo "── git ──"
 bounded git log --oneline -5 2>/dev/null | sed 's/^/  /'
 dirty="$(bounded git status --porcelain 2>/dev/null)"
@@ -47,7 +62,20 @@ if [ -f .gate-receipt ]; then
 fi
 if [ -n "${HARNESS_BUG_REGISTER:-}" ] && [ -f "${HARNESS_BUG_REGISTER}" ]; then
   echo "── open P0/P1 (${HARNESS_BUG_REGISTER}, derived) ──"
-  p01="$(grep -E '^\| (BUG|SEC)-[0-9]+' "$HARNESS_BUG_REGISTER" 2>/dev/null | grep -E '\*\*OPEN' | grep -E '\| *(\**P[01])' || true)"
+  # ⚠ THESE PATTERNS MUST MATCH YOUR REGISTER'S ACTUAL VOCABULARY. The status match is deliberately
+  # broad (☐ / open / OPEN / **OPEN** / ▶ / in progress) because the failure mode is silent: a
+  # filter that matches nothing prints "none open at P0/P1" over a live P0, which reads as good
+  # news. If you re-shape the register, plant a P0 row and confirm it appears HERE before trusting
+  # this line — the same G7 ritual the gates get. (Found exactly this way: the original filter
+  # required "**OPEN" and the shipped template writes "☐ open".)
+  # SECTION-SCOPED, not whole-file: the Closed table carries the same `| ID | Sev |` shape, so a
+  # whole-file grep would resurrect every historical P0 as if it were live — the brief's loudest
+  # line, permanently wrong. Read only from an "Open" heading to the next heading.
+  p01="$(awk '
+      /^#{1,3}[[:space:]].*[Oo]pen/ { inopen=1; next }
+      /^#{1,3}[[:space:]]/          { inopen=0 }
+      inopen && /^\|[[:space:]]*(BUG|SEC)-[0-9]+/ && /\|[[:space:]]*\**P[01]\**[[:space:]]*\|/ { print }
+    ' "$HARNESS_BUG_REGISTER" 2>/dev/null || true)"
   if [ -n "$p01" ]; then printf '%s\n' "$p01" | cut -c1-160 | sed 's/^/  /'; else echo "  none open at P0/P1"; fi
   echo
 fi

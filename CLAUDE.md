@@ -13,7 +13,7 @@ Led by an AI lead agent + spawned role sub-agents; the human owner («role») gi
 
 ⚡ **Hook liveness:** a `SESSION BRIEF` banner appears at session start iff the harness hooks
 loaded. **No banner ⇒ no fast gates, no guard** — run the doc gates by hand after doc edits and
-treat the destructive-action guard as unenforced. (`ci/platform-layer.md` P1.)
+treat the destructive-action guard as unenforced. (`docs/ci/platform-layer.md` P1.)
 
 **Path-scoped rules in `.claude/rules/` auto-load area detail when you touch matching files** —
 this file stays the map; the rules and linked docs are the law.
@@ -33,24 +33,46 @@ drafting, are personal reads.
 - **Verify before you report.** Never report a result you have not seen. A guard test proves nothing until you have watched it **fail** (break it, see red, restore byte-identically). A scan reporting zero must be tested against a known positive. A red must be reproduced before it is attributed. **A disappearing symptom is not a diagnosis.**
 - **Recall is not a source — four SHAPES always get a lookup, no matter how sure you feel.** A remembered specific arrives feeling exactly as certain as one just read, so a rule conditioned on *doubt* can never fire. The trigger is the **shape of what you are about to write**: **a file path or name** → from `ls`/`grep` output in this session, never typed from memory; **a quantity** (count, threshold, cap, version) → from the schema constraint or code constant first, prose second; **what a document SAYS** → **quote it**, because quoting forces the read and paraphrasing lets memory answer; **a result** → the raw output (and verbosely — a bare `ok` can be a *skipped* suite, and `$?` after a pipe is the pipe's). **If you cannot say which file a fact came from, you are recalling it.** Auto-memory and sub-agent output are pointers, never sources.
 - **Before you START on a topic, read what already says something about it — including everything that POINTS AT it.** Not the primary document alone: **a decision drifts in the places that QUOTE it, and a document can contradict itself** — neither is visible when you read one file. Sweep the decision record *plus* every doc, comment and test referencing it, and put the primary's stated PROBLEM next to its stated DECISION. **If they disagree, that disagreement outranks the task you were given.**
-- **Code and the decision that governs it are BOUND, both ways.** A function you touch names the **decision record and section** in its doc comment; you **read** those before changing it; and when the body changes you **re-read the comment** and either fix it or date a confirmation that it still holds. **Comments say WHY, not what** — the code already says what, and **the next reader is another agent with no memory of this session**, for whom WHY is the only thing unrecoverable from source. Gate it on *touched* functions and ratchet (see `ci/gates.md` G3).
+- **Code and the decision that governs it are BOUND, both ways.** A function you touch names the **decision record and section** in its doc comment; you **read** those before changing it; and when the body changes you **re-read the comment** and either fix it or date a confirmation that it still holds. **Comments say WHY, not what** — the code already says what, and **the next reader is another agent with no memory of this session**, for whom WHY is the only thing unrecoverable from source. Gate it on *touched* functions and ratchet (see `docs/ci/gates.md` G3).
 - **Coverage is part of Done:** every slice **measures** coverage on its new/changed code and hits «target band, e.g. 80–100%». A test you can't write yet (missing harness/dep) is **DEFERRED, never dropped** — tag the site `DEFERRED-TEST:`, register it, and write it the moment the dependency lands.
 - **Git:** «branch/PR policy». End commits with the agreed co-author trailer.
 - **Spend:** sub-«$N» de-risk validation is never a blocker — just do it, then clean up (per the destructive-action rule).
 - **Owner communication (`docs/sops/owner-communication.md`):** every owner-facing report ends in plain language (no IDs/acronyms/codenames without an immediate gloss); no ticket/card created without one plain sentence in chat; a weekly ~10-line plain-language digest refreshes the singleton digest card/page. If the owner would have to ask "what does that mean?" — rewrite first.
 - **"Quality review" = run the SOP (`docs/sops/quality-review.md`):** review ALL code since the last `quality-review:` commit across **5 axes** (code quality / tests+coverage / observability / **edge-case & abnormal-usage coverage** — "did we cover all the unexpected gaps?" / **claims-vs-code truth audit** — every "still to do"/"not built"/"blocked by" claim in the running docs verified against the code, WHOLE-docs scope); lead leads + an **independent second reviewer**; lead **judges** each finding; resolve; verify green; commit with the `quality-review:` prefix.
-- **"Bug hunt" = run the SOP (`docs/sops/bug-hunt.md`) — DIFFERENT from a quality review:** the owner names a **scope** (whole codebase / a directory / a feature / a delta). It hunts **defects ONLY** — function by function, procedure by procedure, UI by UI, seam by seam — through the full lens stack (logic·correctness · the `edge-case-catalog.md` abnormal-usage families incl. the back-and-forth-skips-a-check class · hostile input data, family I · adversarial/security incl. authz/IDOR/replay/enumeration/invariants). **NOT interested in log coverage, code quality/tuning, or coverage %** (that's the quality review). **Per unit, invent even nastier user actions / wronger data specific to that unit, try them, and come back with proposed additional cases** → owner/lead ruling → approved ⇒ cross-author tests + fold into the catalog. Confirmed defects → **`docs/tickets/bug-register.md`** rows (P0/P1 get an escape analysis); security-hardening findings (not live defects) → **`docs/tickets/security.md`** (`SEC`); coverage map + report → `bug-hunt-log.md`; commit with the `bug-hunt:` prefix. **File the ticket at discovery UNLESS the issue is quickly fixable inline, in scope, same act** — then the fix is the record (a defect still gets its register row even when fixed inline).
+- **"Bug hunt" = run the SOP (`docs/sops/bug-hunt.md`) — DIFFERENT from a quality review:** the owner names a **scope** (whole codebase / a directory / a feature / a delta). It hunts **defects ONLY** — function by function, procedure by procedure, UI by UI, seam by seam — through the full lens stack (logic·correctness · the `docs/sops/edge-case-catalog.md` abnormal-usage families incl. the back-and-forth-skips-a-check class · hostile input data, family I · adversarial/security incl. authz/IDOR/replay/enumeration/invariants). **NOT interested in log coverage, code quality/tuning, or coverage %** (that's the quality review). **Per unit, invent even nastier user actions / wronger data specific to that unit, try them, and come back with proposed additional cases** → owner/lead ruling → approved ⇒ cross-author tests + fold into the catalog. Confirmed defects → **`docs/tickets/bug-register.md`** rows (P0/P1 get an escape analysis); security-hardening findings (not live defects) → **`docs/tickets/security.md`** (`SEC`); coverage map + report → `docs/bug-hunt-log.md`; commit with the `bug-hunt:` prefix. **File the ticket at discovery UNLESS the issue is quickly fixable inline, in scope, same act** — then the fix is the record (a defect still gets its register row even when fixed inline).
 - **Every bug found anywhere → a `docs/tickets/bug-register.md` row at discovery time** (P0–P3 ladder; anything that breaks a project invariant = automatic P0). **P0/P1 close only with an escape analysis** (which phase should have caught it → the harness patch that stops the class → the cross-author regression test). Security-hardening findings that are NOT live defects → a `docs/tickets/security.md` (`SEC`) row instead.
 - **Maintain state — no stale docs (check at the end of EVERY act, before yielding):** update ALL of these "running files" for anything the work changed (mandatory, exactly like ONBOARDING — don't wait for "session end"):
   - **`docs/ONBOARDING.md`** — status + decided/open + milestone + a session-log line (**≤10 lines — an INDEX, not an archive**; details live in the owning doc).
   - **`docs/runner.md`** (the active wave runner) — flip every touched item's status + add new items.
   - **`docs/feature-catalog.md`** — flip the status / add the row for any capability added/changed/removed.
   - **`docs/use-case-runbook.md`** — update changed flows + add a story for any new capability.
-  - **`docs/build-tracker.md`** — reflect progress.
   - *(if touched)* **`docs/tickets/*`** (the typed coordination tickets — close/update touched USER/DEC/FEAT/DOC/BIZ rows; create new ones at discovery per `docs/tickets/README.md`, incl. **`docs/tickets/bug-register.md`** for every defect + **`docs/tickets/security.md`** for SEC items), **`docs/backlog-tickets.md`** (move/close engineering tickets), **`docs/bug-hunt-log.md`** (after a hunt), **`docs/tbd-parking-lot.md`** (add deferrals + fire resurface triggers), **`docs/third-party-services.md`** (new/changed integration).
 
+## 🚦 Enforced vs unenforced (C5 — keep this HONEST and current)
+
+The most useful table in this file. It reads as an admission of weakness; it functions as a
+targeting system — it tells you **where not to relax**. Note which column the un-undoable rules are
+in. Move a rule left as gates land; never move one left aspirationally.
+
+| Held by a script (it WILL stop you) | Held only by your attention (NOTHING will stop you) |
+|---|---|
+| doc links + backticked doc paths (blocking, at the write) | **never destroy without owner approval** ¹ |
+| doc-index registration · marker⇄registry pairing | **never commit or log a secret** ² |
+| closed-bug evidence · conditional skips · citations | verify before you report |
+| «your build / test / coverage floor / lint» | builder ≠ test author |
+| destructive-command guard (PreToolUse) ¹ | plain language to the owner |
+| the push receipt (`--verify-receipt`) | «…» |
+
+¹ The guard covers the named patterns only (infra destroy, repo `rm -rf`, broad `git add`,
+checkout-over-uncommitted, force-push, protected-DB SQL). Everything else destructive is column 2.
+² `check-log-hygiene.sh` is a name-based heuristic over log calls — a floor, not a proof, and it
+sees nothing outside logging.
+
+**Re-audit this table whenever a gate lands or a rule is added.** A harness that *implies* uniform
+coverage invites uniform, and therefore misplaced, confidence.
+
 ## ✅ Definition of Done (a slice is not done until ALL are true)
-1. It works — the happy path **and the abnormal-usage cases**: the slice's `edge-case-catalog.md` checklist is instantiated (Handled / N/A-why / DEFERRED), with hostile-input (family I) handled on every field, client and server.
+1. It works — the happy path **and the abnormal-usage cases**: the slice's `docs/sops/edge-case-catalog.md` checklist is instantiated (Handled / N/A-why / DEFERRED), with hostile-input (family I) handled on every field, client and server.
 2. Tests authored by a different role/model, measured to the coverage target (or deferred-and-registered); the tester **attacked the edge-case checklist and proposed its own additional cases**.
 3. Build + tests + **all gates** green — *watched*, not assumed.
 4. Observability: meaningful outcomes are logged/traced; no secret material in logs.

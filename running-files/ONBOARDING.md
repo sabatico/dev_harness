@@ -23,8 +23,13 @@
 - **Decided / locked:** «pointers to the ADRs + settled choices.»
 - **Open questions:** «what still needs a decision, and who owns it.»
 
-## 6. Active milestone (VOLATILE)
-«The current goal + its slices. Links to `runner.md` for the live tracker.»
+<!-- ⚠ KEEP THE WORD "Next" IN THE HEADING BELOW. scripts/hook-session-start.sh greps for it to
+     inject "what happens next" into every session's brief, and takes everything under the
+     heading verbatim — so this note lives ABOVE it, outside what gets injected. Rename the
+     heading and the brief silently prints an empty section: a control reporting nothing
+     instead of reporting a gap, which is the one failure this kit refuses to ship. -->
+## 6. Next — active milestone (VOLATILE)
+«The current goal + its slices, most immediate first. Links to `runner.md` for the live tracker.»
 
 ## 7. How to work here (stable)
 «Build/test/run commands, the gotchas, the DoD pointer.»

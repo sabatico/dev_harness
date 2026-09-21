@@ -6,7 +6,12 @@ A portable, project-agnostic operating system for software projects **led by an 
 
 ---
 
-## The 10 pillars
+## The pillars
+
+Ten numbered ideas; the lettered ones (8b–8d, 9b, 10b) are later additions that each earned their
+place by a failure the parent pillar did not catch, and they are kept lettered so the original
+numbering stays stable across projects that already cite it.
+
 
 | # | Pillar | The one-line rule | Files |
 |---|--------|-------------------|-------|
@@ -23,8 +28,8 @@ A portable, project-agnostic operating system for software projects **led by an 
 | 8d | **A run that scanned nothing is not a clean run** | Multi-stage jobs record what each stage **actually did** in a manifest that outranks the tool output, and end in an explicit **COMPLETE / INCOMPLETE** verdict. A detector whose output is a zero proves it can still fire, every run. | `ci/run-integrity.md`, `scripts/lib/manifest.sh` |
 | 9 | **Adversarial quality** | Abnormal-usage + hostile-input coverage is owned at build/test/review; a defect-only **bug hunt** sweeps on demand; every escape patches the process. Reviews & hunts file findings as `BUG`/`SEC` tickets unless fixable inline. | `sops/edge-case-catalog.md`, `sops/bug-hunt.md`, `running-files/tickets/bug-register.md`, `running-files/tickets/security.md` |
 | 9b | **The perpendicular axis** | Unit-local testing asks *"is this unit correct?"*. A separate pass asks *"does this PROPERTY hold **everywhere**, and what is NOT in my work list?"* — the class that was **30% of one project's defect register**. Answers are declared per operation and gated from the contract. | `sops/security-properties.md` |
-| 10b | **The platform layer** | The agent platform's own primitives carry the rules prose can't: a PreToolUse **guard** denies the un-undoable BEFORE it runs; a SessionStart **banner** proves hooks loaded (an unprotected session is otherwise invisible); path-scoped **rules** load on touch; SOPs are **skills**; retrieval is **delegated** to a read-only librarian agent that answers in verbatim quotes with per-surface hit accounting. | `ci/platform-layer.md`, `dot-claude/`, `scripts/hook-*.sh`, `scripts/librarian-sweep.sh` |
 | 10 | **One truth + a human-readable surface** | One home per fact — boards/trackers COORDINATE, files DECIDE; counts are generated, claims are audited; the owner gets plain language + a weekly digest; agents get their rules as task-type **skills**, not memory. | `sops/owner-communication.md`, `sops/agent-skills.md`, `ci/gates.md` |
+| 10b | **The platform layer** | The agent platform's own primitives carry the rules prose can't: a PreToolUse **guard** denies the un-undoable BEFORE it runs; a SessionStart **banner** proves hooks loaded (an unprotected session is otherwise invisible); path-scoped **rules** load on touch; SOPs are **skills**; retrieval is **delegated** to a read-only librarian agent that answers in verbatim quotes with per-surface hit accounting. | `ci/platform-layer.md`, `dot-claude/`, `scripts/hook-*.sh`, `scripts/librarian-sweep.sh` |
 
 ---
 
@@ -107,7 +112,7 @@ dev_harness/
 │   ├── check-*.sh                  ←   doc-links · doc-paths · doc-index · markers · bug-evidence · conditional-skips · citations · log-hygiene
 │   └── lib/{common,manifest}.sh    ←   the shared exit vocabulary + the manifest/verdict library
 ├── sops/
-│   ├── quality-review.md           ← 4-axis review (quality · tests+coverage · observability · edge-case coverage) → lead + independent 2nd → judge → quality-review: commit
+│   ├── quality-review.md           ← 5-axis review (quality · tests+coverage · observability · edge-case coverage · doc-claim truth) → lead + independent 2nd → judge → quality-review: commit
 │   ├── test-and-coverage.md        ← cross-authored tests + coverage-as-Done + deferred-test discipline + the edge-case enrichment loop
 │   ├── edge-case-catalog.md        ← the growing catalog of unexpected user/data behavior (families A–I); instantiated per feature at build/test/review
 │   ├── bug-hunt.md                 ← the defect-only adversarial sweep (invent-nastier duty); DIFFERENT from a quality review
@@ -174,9 +179,15 @@ git clone <this repo> my-project && cd my-project
 scripts/init.sh "My Project" P2      # P1 script · P2 library/CLI · P3 app · P4 service · P5 program
 ```
 
-`init.sh` lays down `docs/`, substitutes the project name, writes `harness.conf`, generates the doc
-index, and regenerates the path baseline against the real layout. It **prints** what your profile does
-not need and **deletes nothing** — pruning has a blast radius, so it is a human's call. Then:
+`init.sh` lays down `docs/`, **installs the platform layer into `.claude/`** (hooks, the
+destructive-action guard, path-scoped rules, the librarian), substitutes the project name, writes
+`harness.conf` including the platform vars, generates the doc index, and regenerates the path
+baseline against the real layout. It **prints** what your profile does not need and **deletes
+nothing** — pruning has a blast radius, so it is a human's call.
+
+**Prerequisites:** `git`, `bash` 3.2+, `python3` and `shasum`. The hooks parse their payloads with
+`python3`; the SessionStart banner reports a missing one in capitals, and the guard denies rather
+than allowing blind. Then:
 
 1. Fill every `«SLOT»` in `CLAUDE.md`.
 2. Copy `running-files/*` into the repo (e.g. under `docs/`); fill the headers.
@@ -187,10 +198,11 @@ not need and **deletes nothing** — pruning has a blast radius, so it is a huma
    coverage floor, secret-scan and security sweep (dependency-CVE + secret + SAST) to the config.
    Run it locally before every push if hosted CI isn't available.
 6. **Verify the gates.** `scripts/selftest.sh` does the G7 half for you — it plants a violation per
-   gate and asserts each one goes red, then recovers. Then do the G8 half yourself: wire
-   `hook-fast-gates.sh` into your agent harness and confirm you have **seen one fire** in this
-   session (`ci/control-timing.md` C3 — an unloaded hook is invisible, and calling the script proves
-   only the script).
+   gate and asserts each one goes red, then recovers. `scripts/hook-pretooluse-guard-test.sh` does
+   the same for the guard, and names the rows your config leaves unexercised. Then do the G8 half
+   yourself: **restart your session, see the ⚡ banner**, and watch one hook fire on a real edit
+   (`ci/control-timing.md` C3 — an unloaded hook is invisible, and calling the script proves only
+   the script).
 7. Write the **enforced vs unenforced** table into `CLAUDE.md` (C5) and keep it current as gates land.
 8. Start the first act. At its end, run the end-of-act ritual. The habit is the harness.
 

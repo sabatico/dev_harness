@@ -8,7 +8,6 @@
    - `feature-catalog.md` (add/flip rows)
    - `use-case-runbook.md` (changed flows + new stories)
    - `tickets/*` (USER/DEC/FEAT/DOC/BIZ + `tickets/bug-register.md` BUG + `tickets/security.md` SEC) / `backlog-tickets.md` / `bug-hunt-log.md` / `tbd-parking-lot.md` / `third-party-services.md` (if touched)
-   - `build-tracker.md`
 3. **Commit** with a clear message.
 
 ## Building anything
@@ -26,7 +25,7 @@
 - Verify its claims yourself.
 
 ## "Quality review" (on request / at milestones)
-`git log --grep='^quality-review:' -1` = baseline → diff since → **4 axes** (code quality · tests+coverage · observability · **edge-case/abnormal-usage coverage** — "did we cover the unexpected?") → **lead + independent 2nd reviewer** → **lead judges** (accept / reject-with-reason / defer) → resolve → green → commit `quality-review:` (= new baseline).
+`git log --grep='^quality-review:' -1` = baseline → diff since → **5 axes** (code quality · tests+coverage · observability · **edge-case/abnormal-usage coverage** — "did we cover the unexpected?" · **claims-vs-code truth audit** — every "still to do"/"blocked by" claim in the running docs checked against the code, ⚠ WHOLE-docs scope, not diff-scoped) → **lead + independent 2nd reviewer** → **lead judges** (accept / reject-with-reason / defer) → resolve → green → commit `quality-review:` (= new baseline).
 
 ## "Bug hunt" (on request — DIFFERENT from a quality review)
 Owner names a **scope**. Hunt **defects only** unit-by-unit (function/procedure/UI/seam) through logic · edge-case families · hostile input (family I) · adversarial/security (authz/IDOR/replay/invariants). **NOT** logs/quality/coverage. **Per unit, invent even nastier cases → propose back** → approved ⇒ tests + catalog. Confirmed defect → `tickets/bug-register.md` (P0/P1 + escape analysis); security-hardening (not a defect) → `tickets/security.md` (`SEC`); **fix inline only if quick + in scope, else file the ticket**; map+report → `bug-hunt-log.md`; commit `bug-hunt:`.

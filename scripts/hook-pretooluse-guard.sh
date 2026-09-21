@@ -33,6 +33,27 @@ PROTECTED_DBS="${HARNESS_PROTECTED_DBS:-}"
 ARCHIVED="${HARNESS_ARCHIVED_PATHS:-}"
 GENERATED="${HARNESS_GENERATED_PATHS:-}"
 
+# deny() emits the decision WITHOUT python3, because the one case that must never fail silently is
+# python3 being absent. Reasons are therefore constrained to JSON-safe plain text: no double quotes,
+# no backslashes, no newlines. (Keep that true of every reason string below.)
+deny() {
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"%s"}}\n' "$1"
+  exit 0
+}
+
+# ⛔ FAIL CLOSED. This is the only control in the harness that fires BEFORE damage, and its payload
+# parser is python3. If python3 is missing or the payload will not parse, the guard cannot judge —
+# and a guard that cannot judge must not wave the command through. Silent-allow is precisely the
+# "reports the reassuring answer over an empty scan" failure this kit exists to unlearn (gates.md
+# G1), and it is invisible: the SessionStart banner still prints, so the session LOOKS protected.
+#
+# So: deny, and name the two sanctioned exits in the reason. This is a broken-install state, not a
+# recurring false positive — it fires once, the owner fixes it or removes the hook ON PURPOSE, and
+# either way the hole stops being invisible. hook-session-start.sh reports the same fact in the
+# banner so the cause is visible before the first deny lands.
+command -v python3 >/dev/null 2>&1 || deny \
+  "GUARD CANNOT RUN: python3 is not on PATH, so the destructive-action guard cannot parse this tool call and is denying rather than allowing blind. Fix the install (python3 is a harness prerequisite) or, if you accept an unguarded session, remove the PreToolUse hook from .claude/settings.json so the gap is recorded rather than silent."
+
 payload="$(cat)"
 eval "$(printf '%s' "$payload" | python3 -c '
 import json,sys,shlex
@@ -41,15 +62,12 @@ ti=d.get("tool_input") or {}
 print("TOOL="+shlex.quote(d.get("tool_name","")))
 print("CMD="+shlex.quote(ti.get("command","")))
 print("FP="+shlex.quote(ti.get("file_path","")))
-' 2>/dev/null)" || exit 0
+' 2>/dev/null)" || true
 
-deny() {
-  python3 - "$1" <<'PY'
-import json,sys
-print(json.dumps({"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":sys.argv[1]}}))
-PY
-  exit 0
-}
+[ -n "${TOOL:-}" ] || deny \
+  "GUARD CANNOT RUN: the tool payload did not parse, so the destructive-action guard could not judge this call and is denying rather than allowing blind. Re-run the command; if it repeats, the hook payload shape has changed and scripts/hook-pretooluse-guard.sh needs updating (its known-answer matrix is scripts/hook-pretooluse-guard-test.sh)."
+CMD="${CMD:-}"
+FP="${FP:-}"
 
 # Command-position prefix: start of line, or after a separator that can begin a new command.
 ANCH='(^|[;&|`]|\(\s*|&&|\|\|)[[:space:]]*'

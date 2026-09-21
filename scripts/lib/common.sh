@@ -199,6 +199,65 @@ harness_changed_files() {
 # violations are frozen and tolerated, NEW ones fail. Without this, every rule is
 # a big-bang migration and therefore never gets adopted.
 
+# ── the push receipt (gates.md G4) ────────────────────────────────────────────
+#
+# "Gates passed" and "gates passed on THIS code" are different claims. The receipt binds them: the
+# runner writes a tree hash when everything is green, and anything that re-checks it recomputes the
+# same hash and compares.
+#
+# G4 names two details that decide whether this works, and both are load-bearing:
+#   · UNTRACKED-but-not-ignored files are included. A tracked-only hash misses the file you just
+#     wrote, which is exactly the code most likely to be unverified.
+#   · ONE shared function does the hashing for writer and checker. Two implementations drift, and
+#     the first symptom is a check that refuses the very run that created the receipt.
+#
+# And G1's hashing corollary: a digest over an EMPTY enumeration is not random, it is the stable
+# hash of nothing — so a receipt written while enumeration was broken would MATCH a later check
+# made while it was still broken, and the whole mechanism would pass having verified no files.
+# harness_tree_hash therefore refuses to emit a digest for an empty file list.
+
+harness_tree_hash() {
+  # Prints the digest on stdout, or exits 3 (INCOMPLETE) if it enumerated nothing.
+  local files n
+  files="$( { git -C "$REPO_ROOT" ls-files 2>/dev/null
+              git -C "$REPO_ROOT" ls-files --others --exclude-standard 2>/dev/null; } | sort -u )"
+  n="$(printf '%s\n' "$files" | grep -c . || true)"
+  if [ "${n:-0}" -eq 0 ]; then
+    printf 'tree-hash enumerated ZERO files — the enumeration is broken, not the tree.\n' >&2
+    printf 'Refusing to emit a digest: the hash of nothing is STABLE and would verify forever.\n' >&2
+    return 3
+  fi
+  printf '%s\n' "$files" \
+    | while IFS= read -r f; do [ -f "$REPO_ROOT/$f" ] && shasum -a 256 "$REPO_ROOT/$f"; done \
+    | shasum -a 256 | cut -d' ' -f1
+}
+
+harness_receipt_path() { printf '%s/.gate-receipt' "$REPO_ROOT"; }
+
+harness_receipt_write() {
+  # harness_receipt_write <what-ran>
+  local h; h="$(harness_tree_hash)" || return 3
+  {
+    printf 'tree-sha256 %s\n' "$h"
+    printf 'written-at  %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf 'covered     %s\n' "$1"
+    printf 'head        %s\n' "$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo none)"
+  } > "$(harness_receipt_path)"
+}
+
+harness_receipt_verify() {
+  # 0 = receipt matches the tree; 1 = stale; 3 = no receipt / could not hash.
+  local rp h rec; rp="$(harness_receipt_path)"
+  [ -f "$rp" ] || { printf 'no .gate-receipt — the gates have not been run on this tree.\n' >&2; return 3; }
+  h="$(harness_tree_hash)" || return 3
+  rec="$(awk '$1=="tree-sha256"{print $2}' "$rp")"
+  [ "$h" = "$rec" ] && return 0
+  printf 'RECEIPT STALE: the tree changed since the gates passed.\n' >&2
+  printf '  receipt: %s\n  now:     %s\n' "$rec" "$h" >&2
+  printf 'The green run you are relying on was for different code. Re-run the gates.\n' >&2
+  return 1
+}
+
 harness_baseline_path() {
   printf '%s/%s/%s.txt' "$REPO_ROOT" "$HARNESS_BASELINE_DIR" "$1"
 }

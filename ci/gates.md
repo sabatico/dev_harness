@@ -2,22 +2,36 @@
 
 The SOPs are honor-system until CI enforces them. These are the gates every project should wire so the rules can't quietly erode. Make them **required status checks** on the default branch.
 
-> **No hosted CI? Run them locally.** Hosted CI (paid minutes) is not required for the value. Wire every gate into **one script** (`scripts/run-all-gates` — a fast tier that's cheap enough to run constantly, plus `--full` for the suites and `--security` for the sweep) and run it **before every push**. State plainly in `CLAUDE.md` that CI is local, keep the workflow file below as a dormant reference for when hosted CI becomes affordable, and make the runner **say what it skipped** (missing toolchain/service) — a skip is not a pass.
+> **No hosted CI? Run them locally.** Hosted CI (paid minutes) is not required for the value. Wire every gate into **one script** (`scripts/run-all-gates.sh` — a fast tier cheap enough to run constantly, plus `--full` for the suites, `--lint`, `--all`, and `--verify-receipt` for G4) and run it **before every push**. The security sweep below is a separate, slower cadence — not a tier of the fast runner. State plainly in `CLAUDE.md` that CI is local, keep the workflow file below as a dormant reference for when hosted CI becomes affordable, and make the runner **say what it skipped** (missing toolchain/service) — a skip is not a pass.
 
 ## The gates
-| Gate | What it enforces | Fails when |
-|------|------------------|-----------|
-| **build** | it compiles | build error |
-| **test** | the suite passes | any test fails |
-| **coverage floor** | coverage-is-Done | new/changed code below the target band (per-layer floors) |
-| **lint / format** | style + the UI no-inline-styles rule | a violation |
-| **secret-scan** | no secrets committed | a key/token/credential pattern in the diff |
-| **observability / log-hygiene** | no sensitive value in a log/console call | a forbidden token at a log call site (allow a justified `// loghygiene:allow <reason>`) |
-| **deferred-test registry** | no silent coverage gaps | a `DEFERRED-TEST:` marker with no row in the registry |
-| **stub registry** | no silent incomplete integration | a `STUB:NAME` / `TBD:` marker with no registry row |
-| **security sweep** | known-vuln deps, committed secrets, static-analysis smells | a HIGH+ dependency CVE, a secret in the tree, or a SAST finding (see below) |
-| **doc-claims** | countable doc claims match reality | a hand-typed count in a running file ("through ADR-N", "N endpoints") disagrees with the computed truth (see the claims-checker pattern) |
-| **state-snapshot** | the generated facts block is current | regenerating the block would change it (someone forgot to re-run the script) |
+
+**⚠ Read the "Ships?" column first.** This is C5 (`control-timing.md`) applied to the harness
+itself: a kit that lists eleven gates without saying which three are prose invites exactly the
+uniform confidence C5 warns about. **✅ = a script in `scripts/` runs it today** (and
+`scripts/selftest.sh` proves it fails on its own violation). **📄 = doctrine only — the pattern is
+specified here, the script is yours to write.** Nothing is stopping you until you write it.
+
+| Gate | Ships? | What it enforces | Fails when |
+|------|--------|------------------|-----------|
+| **build** | ✅ via `HARNESS_TEST_CMD`-style config (`--full`) | it compiles | build error |
+| **test** | ✅ via `HARNESS_TEST_CMD` (`--full`) | the suite passes | any test fails |
+| **coverage floor** | ✅ via `HARNESS_COVERAGE_CMD` (`--full`) | coverage-is-Done | new/changed code below the target band (per-layer floors) |
+| **lint / format** | ✅ via `HARNESS_LINT_CMD` (`--lint`) | style + the UI no-inline-styles rule | a violation |
+| **secret-scan** | 📄 use `gitleaks`/`trufflehog` — see the security sweep | no secrets committed | a key/token/credential pattern in the diff |
+| **observability / log-hygiene** | ✅ `check-log-hygiene.sh` | no sensitive value in a log/console call | a forbidden token at a log call site (allow a justified `harness:allow-log <reason>` **on the offending line**) |
+| **deferred-test registry** | ✅ `check-markers.sh` | no silent coverage gaps | a `DEFERRED-TEST:` marker with no row in the registry |
+| **stub registry** | ✅ `check-markers.sh` (same gate, another pair) | no silent incomplete integration | a `STUB:NAME` / `TBD:` marker with no registry row |
+| **security sweep** | 📄 wire your stack's tools | known-vuln deps, committed secrets, static-analysis smells | a HIGH+ dependency CVE, a secret in the tree, or a SAST finding (see below) |
+| **doc-claims** | 📄 the claims-checker pattern below | countable doc claims match reality | a hand-typed count in a running file ("through ADR-N", "N endpoints") disagrees with the computed truth (see the claims-checker pattern) |
+| **state-snapshot** | 📄 the facts-block pattern below | the generated facts block is current | regenerating the block would change it (someone forgot to re-run the script) |
+
+**Also shipping, and not in the table above because they are harness-hygiene rather than
+product gates:** `check-doc-links.sh` (every markdown link resolves — blocking at write time),
+`check-doc-paths.sh` (every bare backticked path exists, ratcheted), `check-doc-index.sh` (every
+doc is registered), `check-bug-evidence.sh` (a closed bug names its mutation + the test that went
+red), `check-conditional-skips.sh` (no test skips from an error branch), `check-citations.sh` (a
+function you touched cites its decision record). `scripts/README.md` has the full list.
 
 ## The marker-and-registry pattern (reused for each "make the unfinished visible" gate)
 1. Code site carries a marker: `DEFERRED-TEST:`, `STUB:PROVIDER`, `TBD:`, `TBD-UI:`.
@@ -45,11 +59,12 @@ jobs:
       - run: «build»
       - run: «test --coverage»          # + assert the coverage floor
       - run: «lint»                      # incl. no-inline-styles for UI
-      - run: ./scripts/secret-scan.sh
-      - run: ./scripts/check-log-hygiene.sh
-      - run: ./scripts/list-deferred-tests.sh --check
-      - run: ./scripts/list-stubs.sh --check
+      - run: ./scripts/run-all-gates.sh   # the fast tier: docs, markers, citations, log-hygiene
+      - run: «secret-scan»                # gitleaks / trufflehog — you supply this one
 ```
+⚠ `run-all-gates.sh` is the whole fast tier; do not list the individual `check-*.sh` scripts here
+or a new gate silently stays out of CI. Anything in angle brackets is yours to fill — the skeleton
+names no script this kit does not ship.
 
 > Keep the check scripts tiny and greppable — agents maintain them, so they must be obvious. The gate is only as good as it is unhallucinatable.
 >
@@ -179,8 +194,9 @@ silence.
 **Freeze what exists, refuse what is new:**
 
 ```
-scripts/<gate>-baseline.txt     # one frozen violation per line, with a header saying WHY
+.harness/baselines/<gate>.txt   # one frozen violation per line, under a header saying WHY
 ```
+(`HARNESS_BASELINE_DIR` in `harness.conf`; written by a gate's `--write-baseline` mode.)
 
 Rules that keep a baseline honest:
 - Every line is a **known** violation at a known date — never a way to silence a new one.

@@ -1,5 +1,15 @@
 .DS_Store
 *.local
+.claude/settings.local.json   # per-machine permission grants — never shared
+
+# Hook advisory logs (hook-stop-statecheck, hook-read-budget, hook-precompact-log).
+# Untracked-and-unignored would put these in every `git status` AND invalidate the push
+# receipt's working-tree hash (gates.md G4 deliberately hashes untracked files), which is
+# the shared-checkout collision class sops/agents-and-roles.md documents.
+.gate-logs/
+
+# The push receipt: a hash of the verified tree. Per-machine, per-moment — never shared.
+.gate-receipt
 
 # init.sh writes these per-project; the KIT's own copies are committed deliberately
 # (harness.conf makes the kit self-hosting; the baseline records its installed-layout paths).

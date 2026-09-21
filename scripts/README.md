@@ -57,7 +57,7 @@ that needs it, and the gate says so out loud — an unconfigured check reports I
 |---|---|---|
 | `selftest.sh` | **that every other gate here actually fails on its own violation** | run it first, and after touching any gate |
 | `init.sh` | bootstraps a fresh clone into a project skeleton | deletes nothing; prints a prune list |
-| `run-all-gates.sh` | the whole fast tier, then optional suites | tiered: bare, `--full`, `--lint`, `--all` |
+| `run-all-gates.sh` | the whole fast tier, then optional suites; writes the G4 push receipt on green | tiered: bare, `--full`, `--lint`, `--all`; `--verify-receipt` re-checks the tree |
 | `hook-fast-gates.sh` | the sub-second gates **at the moment of the write** | see `ci/control-timing.md`; blocking on docs, advisory on code |
 | `check-doc-links.sh` | every markdown link resolves | **blocking** at write time — a dead link is a fact error |
 | `check-doc-paths.sh` | every **bare backticked** path exists | ratcheted; links are only half the surface |
@@ -67,7 +67,8 @@ that needs it, and the gate says so out loud — an unconfigured check reports I
 | `check-conditional-skips.sh` | no test skips from an **error branch** | heuristic; suppress with `harness:allow-conditional-skip` |
 | `check-citations.sh` | a function you touched cites the decision governing it | ratcheted vs `HARNESS_BASE_REF`; `--measure` first |
 | `check-log-hygiene.sh` | no secret-shaped identifier reaches a log call | name-based heuristic — a floor, not a proof |
-| `lib/common.sh` | the shared exit vocabulary, config loading, ratchet helpers | source it from any new gate |
+| `lib/common.sh` | the shared exit vocabulary, config loading, ratchet helpers, the tree hash | source it from any new gate |
+| `hook-pretooluse-guard-test.sh` | **that the guard denies what it claims, and allows its known false positives** | known-answer matrix; reports unexercised rows as skipped, not passes |
 | `lib/manifest.sh` | `ci/run-integrity.md` R1–R4 in ~90 lines | for multi-stage jobs |
 
 ## The exit vocabulary — honour it in every gate you add
@@ -75,13 +76,41 @@ that needs it, and the gate says so out loud — an unconfigured check reports I
 ```
 0  PASS        the check ran and found nothing wrong
 1  FAIL        the check ran and found something wrong
-3  INCOMPLETE  the check COULD NOT RUN — missing config, missing tool, no target
+3  INCOMPLETE  the check SHOULD have run and could not — missing tool, absent target, no harness.conf
+4  N/A         the check is deliberately not configured here (its setting is empty in an EXISTING
+               harness.conf). Reported as `skipped`: never a pass, always listed — but it does not
+               force the run to INCOMPLETE.
 ```
+
+**3 vs 4 is the whole point of having four codes.** Collapsing them either hides a real hole
+(everything becomes N/A) or trains people to ignore the verdict (everything becomes INCOMPLETE).
+`lib/common.sh` gives you `gate_incomplete` and `gate_not_applicable` — use the right one.
 
 **`3` is the one that matters.** A check that scanned nothing must never exit `0`. Every expensive
 failure this harness is built around comes from "nothing was checked" rendering as "nothing was
 wrong". If you add a gate and skip this, you have added a control that lies in the reassuring
 direction.
+
+## The push receipt (G4) — "gates passed" vs "gates passed on THIS code"
+
+`run-all-gates.sh` writes `.gate-receipt` when a run is COMPLETE with zero findings, and only then:
+a receipt over an INCOMPLETE run would certify a tree the gates never covered.
+
+```sh
+scripts/run-all-gates.sh                   # green → writes the receipt
+scripts/run-all-gates.sh --verify-receipt  # 0 = still this tree · 1 = stale · 3 = no receipt
+```
+
+Wire `--verify-receipt` into a pre-push hook and the gap between verifying and pushing closes. Two
+details from G4 are load-bearing and are implemented in **one** shared function
+(`harness_tree_hash` in `lib/common.sh`): untracked-but-unignored files are **included** (the file
+you just wrote is the code most likely to be unverified), and writer and checker hash **identically**
+— two implementations drift, and the first symptom is a hook refusing the run that created it.
+
+It also honours G1's hashing corollary: **it refuses to emit a digest over an empty enumeration.**
+The hash of nothing is stable, so a receipt written while enumeration was broken would happily match
+a later check made while it was still broken — passing, having verified no files at all.
+
 
 ## Measure before you enforce
 

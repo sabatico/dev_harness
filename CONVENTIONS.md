@@ -18,7 +18,7 @@ How we write code and docs here, so a swarm of agents (and humans) produce one c
 
 ## Commits & branches
 - «Branch policy — e.g. trunk-based with short-lived branches, or direct-to-main during early buildup.»
-- Commit messages: imperative subject, a body that says *why* for anything non-obvious. Special prefixes the harness uses: **`quality-review:`** (a review baseline).
+- Commit messages: imperative subject, a body that says *why* for anything non-obvious. Special prefixes the harness uses: **`quality-review:`** (a review baseline — the next review diffs from it) and **`bug-hunt:`** (a hunt baseline — a later delta hunt scopes from it). Both are scoping anchors, so the prefix is load-bearing, not decoration.
 - «Co-author / attribution trailer, if any.»
 
 ## Naming

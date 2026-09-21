@@ -72,15 +72,22 @@ trigger it was.
 The hooks/agents/rules/skills under `dot-claude/` are profile-independent: even the smallest
 project wants the guard and the banner. To wire (full doctrine: `ci/platform-layer.md`):
 
-1. Copy `dot-claude/` contents into your repo's **`.claude/`** (keep `settings.json` paths matching
-   where you put `scripts/`).
-2. Fill the platform vars in `harness.conf`: `HARNESS_PROTECTED_DBS` (dev DBs whose data must
+1. **`scripts/init.sh` already did this** — it installs `dot-claude/` into `.claude/` file by file
+   (keeping anything of yours that was already there, and naming what it kept) and writes the
+   platform vars into `harness.conf`. This used to be a manual step, and the predictable result
+   was projects whose `CLAUDE.md` asserted the rules auto-loaded while no `.claude/` existed at
+   all. If you are retrofitting an existing repo rather than running `init.sh`, copy
+   `dot-claude/` into `.claude/` by hand and keep `settings.json`'s paths pointing at `scripts/`.
+2. Fill the platform vars `init.sh` left empty: `HARNESS_PROTECTED_DBS` (dev DBs whose data must
    survive), `HARNESS_ARCHIVED_PATHS`, `HARNESS_GENERATED_PATHS` (glob=regen-command pairs),
-   `HARNESS_CORPUS_DIRS`, `HARNESS_SIBLING_REPOS`.
+   `HARNESS_SIBLING_REPOS`. Each one switches on a guard branch that is otherwise unexercised —
+   `hook-pretooluse-guard-test.sh` reports those rows as *skipped*, never as passes.
 3. Start a fresh session and **see the ⚡ banner** — no banner means the hooks are not loaded, and
    nothing else in this section exists yet.
-4. Run `scripts/hook-pretooluse-guard-test.sh` (20+ known-answer rows must pass); adapt its ALLOW
-   rows to your legitimate workflows before adding DENY patterns.
+4. Run `scripts/hook-pretooluse-guard-test.sh` (20+ known-answer rows must pass, and it names the
+   rows it could not exercise); adapt its ALLOW rows to your legitimate workflows before adding
+   DENY patterns. Note the guard **fails CLOSED**: without `python3` it denies everything rather
+   than allowing blind, and the banner says why.
 5. Rename `dot-claude/rules/example-tests.md` for your stack; add one rule file per area you
    actually have.
 6. Trigger one deny and one doc-gate block through the REAL path before trusting either

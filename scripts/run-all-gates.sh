@@ -35,6 +35,8 @@ for a in "$@"; do
     --full) WANT_FULL=1 ;;
     --lint) WANT_LINT=1 ;;
     --all)  WANT_FULL=1; WANT_LINT=1 ;;
+    # G4: is the last green run still about THIS code? Wire this into a pre-push hook.
+    --verify-receipt) harness_receipt_verify; exit $? ;;
     -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
   esac
 done
@@ -139,5 +141,19 @@ if [ "$fails" -gt 0 ]; then
   printf '%sDo not push.%s %s gate(s) found violations.\n' "$C_RED" "$C_0" "$fails"
   exit 1
 fi
-printf '%sAll gates green.%s\n' "$C_GRN" "$C_0"
+
+# Green — bind the verdict to the tree it was computed over (gates.md G4). Only on a COMPLETE run
+# with no findings: a receipt over an INCOMPLETE run would certify a tree the gates never covered.
+tiers="fast"
+[ "$WANT_FULL" -eq 1 ] && tiers="$tiers,suites"
+[ "$WANT_LINT" -eq 1 ] && tiers="$tiers,lint"
+if harness_receipt_write "$tiers"; then
+  printf '%sAll gates green.%s  receipt written (.gate-receipt, covers: %s)\n' "$C_GRN" "$C_0" "$tiers"
+  printf '%s  The receipt certifies THIS tree. Verify before pushing: scripts/run-all-gates.sh --verify-receipt%s\n' "$C_DIM" "$C_0"
+else
+  printf '%sAll gates green%s — but the receipt could NOT be written (see above).\n' "$C_GRN" "$C_0"
+  printf '%s  Treat this run as unbound to the tree: "gates passed" and "gates passed on this code"\n' "$C_YEL"
+  printf '  are different claims, and only the second one protects a push.%s\n' "$C_0"
+  exit 3
+fi
 exit 0
