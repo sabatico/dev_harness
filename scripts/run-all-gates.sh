@@ -130,6 +130,13 @@ run_gate image-pins                "$HERE/check-image-pins.sh" --check
 run_gate image-pins-matrix         "$HERE/check-image-pins-test.sh"
 # The second-opinion dispatcher: a missing outside reviewer must never break a run (README).
 run_gate second-opinion-matrix     "$HERE/second-opinion-test.sh"
+# OPTIONAL, LOCAL-ONLY gate: a maintainer may keep a personal-data check (scripts/check-no-pii.sh +
+# its test) that is gitignored, not shipped. It runs when present; a clone without it is not "incomplete".
+if [ -f "$HERE/check-no-pii.sh" ]; then
+  manifest_expect no-pii
+  run_gate no-pii                  "$HERE/check-no-pii.sh"
+  [ -f "$HERE/check-no-pii-test.sh" ] && { manifest_expect no-pii-matrix; run_gate no-pii-matrix "$HERE/check-no-pii-test.sh"; }
+fi
 
 # ── suites ────────────────────────────────────────────────────────────────────
 if [ "$WANT_FULL" -eq 1 ]; then

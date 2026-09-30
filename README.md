@@ -269,3 +269,7 @@ or `off`; nothing else changes.
 - **A per-repo agent constitution (`CLAUDE.md`) and worktree-isolated parallel agents** — the genuinely agent-era parts.
 
 See `sops/` for the operating procedures and `running-files/` for the templates.
+
+## License
+
+Apache License 2.0 — see `LICENSE`. Contributions are welcome: `CONTRIBUTING.md` says how.
