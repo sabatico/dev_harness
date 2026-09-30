@@ -37,7 +37,8 @@ GENERATED="${HARNESS_GENERATED_PATHS:-}"
 # python3 being absent. Reasons are therefore constrained to JSON-safe plain text: no double quotes,
 # no backslashes, no newlines. (Keep that true of every reason string below.)
 deny() {
-  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"%s"}}\n' "$1"
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"%s %s"}}\n' "$1" \
+    "(If you were WRITING ABOUT this command rather than running it, the guard cannot tell prose from execution: a markdown code span and a shell command substitution use the same backtick. Name the flag in plain words instead of quoting the command, rather than disabling the hook.)"
   exit 0
 }
 
@@ -69,6 +70,17 @@ print("FP="+shlex.quote(ti.get("file_path","")))
 CMD="${CMD:-}"
 FP="${FP:-}"
 
+# WRITING ABOUT A DANGEROUS COMMAND TRIPS THIS, and that is deliberate.
+# The anchor below counts a backtick as a command separator, because in shell it is
+# one - a backtick-quoted string substitutes and executes. A markdown code span uses
+# the same character, so a sentence documenting the force-push form is, to this
+# guard, indistinguishable from running it. The tempting fix is to skip heredoc
+# bodies; that is a real bypass, because an interpreter fed a heredoc runs whatever
+# is inside one. So the guard stays strict and the deny messages tell you to rephrase
+# instead - name the flag in plain words rather than quoting the command. A guard
+# that errs toward blocking prose is worth far more than one that can be slipped past
+# by wrapping the command in a heredoc.
+#
 # Command-position prefix: start of line, or after a separator that can begin a new command.
 ANCH='(^|[;&|`]|\(\s*|&&|\|\|)[[:space:]]*'
 

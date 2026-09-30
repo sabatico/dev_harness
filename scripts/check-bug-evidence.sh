@@ -32,7 +32,12 @@ REG="$REPO_ROOT/$HARNESS_BUG_REGISTER"
 
 gate_head
 
-ID_RE='^\|[[:space:]]*[A-Z][A-Z]*-[0-9][0-9]*[[:space:]]*\|'
+# The trailing [a-z]* is load-bearing. Registers routinely number a related-but-distinct
+# defect BUG-005b, and without it such a row does not match, is silently SKIPPED, and the
+# gate reports a plausible-looking PASS over a row it never inspected — the exact failure
+# mode this gate exists to prevent, aimed at itself. Found in DLPprobe: two fixed bugs with
+# suffixed ids sat in the Closed table unchecked while the count read "5 closed bug(s)".
+ID_RE='^\|[[:space:]]*[A-Z][A-Z]*-[0-9][0-9]*[a-z]*[[:space:]]*\|'
 TEST_RE='[Tt]est|[Ss]pec|_test|\.test'
 EVID_RE='[Mm]utation|[Rr]everted|[Rr]eproduc|went red|[Ww]ent RED|verified red|saw red|RED'
 
@@ -78,12 +83,12 @@ fi
 
 # ── shape 2: "### BUG-NNN" sections ──────────────────────────────────────────
 if [ "$shape" = "none" ]; then
-  sections="$(grep -cE '^###[[:space:]]+[A-Z]+-[0-9]+' "$REG" 2>/dev/null || echo 0)"
+  sections="$(grep -cE '^###[[:space:]]+[A-Z]+-[0-9]+[a-z]*' "$REG" 2>/dev/null || echo 0)"
   if [ "$sections" -gt 0 ]; then
     shape="section"
     tmp="${TMPDIR:-/tmp}/harness-bugsec.$$"
     awk '
-      /^###[[:space:]]+[A-Z]+-[0-9]+/ { if (id != "") print id "\t" start "\t" body; id=$0; start=NR; body=""; next }
+      /^###[[:space:]]+[A-Z]+-[0-9]+[a-z]*/ { if (id != "") print id "\t" start "\t" body; id=$0; start=NR; body=""; next }
       { gsub(/\t/," "); body = body " " $0 }
       END { if (id != "") print id "\t" start "\t" body }
     ' "$REG" > "$tmp"
