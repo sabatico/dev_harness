@@ -31,7 +31,7 @@ t ALLOW Read '/repo/src/environment.ts'                       'Read a file merel
 t ALLOW Bash 'cat .env.example'                               'cat .env.example'
 t ALLOW Bash 'set -a; . ./.env; set +a; aws s3 ls'            'source .env in-process'
 t ALLOW Bash 'export AWS_ACCESS_KEY_ID=$(grep "^AWS_S3_KEY=" .env | cut -d= -f2)'  'load one value via $( )'
-t ALLOW Bash 'grep -q STRIPE_KEY .env && echo present'        'grep -q yes/no'
+t ALLOW Bash 'grep -q PAYMENT_API_KEY .env && echo present'        'grep -q yes/no'
 t ALLOW Bash 'grep -c KEY .env'                               'grep -c count'
 t ALLOW Bash 'ls -la .env && git check-ignore -v .env'        'ls + check-ignore'
 t ALLOW Bash 'git commit -m "never cat .env into chat"'       'prose in a commit message'

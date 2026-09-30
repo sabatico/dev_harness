@@ -148,6 +148,21 @@ HARNESS_GENERATED_PATHS=""      # glob=regen-command pairs — never hand-edited
 HARNESS_CORPUS_DIRS="docs"      # what the read-budget advisory and librarian-sweep consider corpus
 HARNESS_READ_BUDGET_BYTES="61440"
 HARNESS_SIBLING_REPOS=""        # repos beside this one that belong to the same product
+
+# ── Second opinion (scripts/second-opinion.sh) — the harness never REQUIRES an outside API ─────────
+# Where the harness asks for an independent reviewer (cross-author tests, a second review of a diff,
+# an adversarial design debate), THIS decides who that is:
+#   external  outside models, tried in order; the first that answers wins, failures fall through.
+#   local     a Claude subagent (HARNESS_LOCAL_REVIEWER) with an adversarial brief — same model family,
+#             so weaker (shared blind spots), but always available. The default.
+#   off       no second opinion: a checklist self-review, stated as such.
+HARNESS_SECOND_OPINION="local"
+HARNESS_LOCAL_REVIEWER="red-team"      # .claude/agents/red-team.md — or nominate your own agent
+# external only — space-separated  name=command  pairs. Each command reads the prompt on stdin and
+# prints the answer (a small wrapper script around a provider CLI/API). API keys stay in the
+# environment or a gitignored .env, read by the WRAPPER — never written here. Example:
+#   HARNESS_EXTERNAL_REVIEWERS="modelA=scripts/models/model-a.sh modelB=scripts/models/model-b.sh"
+HARNESS_EXTERNAL_REVIEWERS=""
 CONF
 
 # ── 5. doc index ─────────────────────────────────────────────────────────────

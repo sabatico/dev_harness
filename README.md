@@ -238,6 +238,26 @@ than allowing blind. Then:
 
 ---
 
+## Second-opinion reviewers — outside models are optional, never required
+
+Several rules here ask for an **independent pair of eyes**: tests written by a different model/agent
+than the code, a second reviewer on each diff, an adversary that attacks a design before it is built.
+The source project used outside AI providers for that. **This kit calls no outside API by itself** — no
+gate, hook or script fails because a provider key is missing. Instead, one setting in `harness.conf`
+decides who the second reviewer is, and new projects start on the setting that always works:
+
+| `HARNESS_SECOND_OPINION` | Who reviews | Strength |
+|---|---|---|
+| `local` *(default)* | a Claude subagent with an adversarial brief (`HARNESS_LOCAL_REVIEWER`, default `red-team`, see `dot-claude/agents/red-team.md`) — or any agent you nominate | Same model family, so it shares some blind spots: weaker than a different family, far better than none. Its output is labelled "same-family review". |
+| `external` | outside models listed in `HARNESS_EXTERNAL_REVIEWERS` as `name=command` pairs, tried in order; the first that answers wins, a failing or missing one falls through, and if all fail it drops to `local` | Strongest — a different family catches what the author's family misses. |
+| `off` | nobody; a checklist self-review, stated as such | Weakest; for throwaway prototypes. |
+
+`scripts/second-opinion.sh` is the one entry point: it reads the prompt on stdin, tries the chain, and
+always reports who answered (record it — a review whose author you cannot name is not evidence). To add
+an outside model, write a small wrapper that reads the prompt on stdin and prints the answer, keep its
+API key in the environment or a gitignored `.env`, and list it. To cancel outside models, set `local`
+or `off`; nothing else changes.
+
 ## Where this aligns with established practice (so it's not just our invention)
 - **ADRs** — Michael Nygard's Architecture Decision Records.
 - **Living docs / runbooks** — SRE + ops practice (Google SRE workbook).

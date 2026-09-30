@@ -100,7 +100,7 @@ run_cmd() {
 printf '%sfast tier%s\n' "$C_B" "$C_0"
 manifest_expect doc-links doc-paths doc-index markers bug-evidence conditional-skips citations log-hygiene \
   guard-matrix read-budget-matrix claim-check-matrix bug-register-rotation bug-rotation-matrix \
-  onboarding-limits onboarding-rotation-matrix secret-read-matrix image-pins image-pins-matrix
+  onboarding-limits onboarding-rotation-matrix secret-read-matrix image-pins image-pins-matrix second-opinion-matrix
 
 run_gate doc-links         "$HERE/check-doc-links.sh"
 run_gate doc-paths         "$HERE/check-doc-paths.sh"
@@ -128,6 +128,8 @@ run_gate onboarding-rotation-matrix "$HERE/rotate-onboarding-test.sh"
 run_gate secret-read-matrix        "$HERE/hook-pretooluse-secretread-test.sh"
 run_gate image-pins                "$HERE/check-image-pins.sh" --check
 run_gate image-pins-matrix         "$HERE/check-image-pins-test.sh"
+# The second-opinion dispatcher: a missing outside reviewer must never break a run (README).
+run_gate second-opinion-matrix     "$HERE/second-opinion-test.sh"
 
 # ── suites ────────────────────────────────────────────────────────────────────
 if [ "$WANT_FULL" -eq 1 ]; then

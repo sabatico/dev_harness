@@ -17,7 +17,7 @@ R="$T/root"; P="$R"
 mkdir -p "$P/docs/decisions" "$P/docs/ai" "$P/docs/registers" "$P/scripts"
 printf 'HARNESS_DECISION_DIR="docs/decisions"\nHARNESS_DECISION_PREFIX="ADR"\nHARNESS_BUG_REGISTER="docs/registers/bug-register.md"\nHARNESS_CORPUS_DIRS="docs"\n' > "$R/harness.conf"
 echo "# fake CLAUDE.md" > "$R/CLAUDE.md"
-printf 'ADR-001 alpha\n\nThe release requires two KeyKeepers to approve before any key material leaves the enclave.\n' > "$P/docs/decisions/ADR-001-alpha.md"
+printf 'ADR-001 alpha\n\nA release requires two approvers to sign before any key material leaves the vault.\n' > "$P/docs/decisions/ADR-001-alpha.md"
 printf 'ADR-005 epsilon\n' > "$P/docs/decisions/ADR-005-epsilon.md"
 printf '# ADR log\n- ADR-002 was withdrawn in the spike and never re-filed.\n' > "$P/docs/decisions/README.md"
 { echo '| id | title |'; for i in 001 002 003 005 006 007 008 009 010; do echo "| BUG-$i | a bug |"; done; } > "$P/docs/registers/bug-register.md"
@@ -25,7 +25,7 @@ printf 'line one\nA vector store returns the *plausible neighbour*. That is the 
 mkdir -p "$P/src/internal/http" "$P/src/cmd/pii-rotate"
 seq 1 200 | sed 's/^/l/' > "$P/src/internal/http/release_handlers.go"
 printf 'package main\n// WithKeyring: active MUST be in the ring, or sign() uses an empty key.\n' > "$P/src/cmd/pii-rotate/main.go"
-printf 'Owners may name up to three KeyKeepers and never fewer than two at any time.\n' > "$P/docs/ai/other.md"
+printf 'Owners may name up to three approvers and never fewer than two at any time.\n' > "$P/docs/ai/other.md"
 export HARNESS_ROOT_OVERRIDE="$R" HARNESS_LOG_DIR="$T/logs" HARNESS_DECISION_DIR="docs/decisions" HARNESS_BUG_REGISTER="docs/registers/bug-register.md" HARNESS_CORPUS_DIRS="docs"
 pass=0; fail=0; n=0
 
@@ -87,7 +87,7 @@ row 'verbatim quote with markdown/curly/space differences' NONE "The [notes]($L)
 row 'verbatim quote across an ellipsis' NONE "The [notes]($L) say \"A vector store returns the plausible neighbour … That is the same output distribution as the failure\"."
 row 'verbatim blockquote under a cited line' NONE "As [notes]($L) put it:
 > A vector store returns the *plausible neighbour*. That is the same output distribution as the failure."
-row 'quote from an ADR cited by id'   NONE 'ADR-001 says "The release requires two KeyKeepers to approve before any key material leaves the enclave."'
+row 'quote from an ADR cited by id'   NONE 'ADR-001 says "A release requires two approvers to sign before any key material leaves the vault."'
 row 'fabricated quote but a web source in the paragraph' NONE "The [notes]($L) and [the study](https://example.com) say \"embeddings always win on recall for any corpus size\"."
 row 'quote with no repo citation (user words)' NONE 'You said "implement it all here and then generalize it one level up".'
 row 'short quote under the word floor' NONE "The [notes]($L) say \"always cheaper\"."
@@ -102,7 +102,7 @@ row 'bad link in an EARLIER turn is not re-judged' NONE 'All clear now.'
 row 'bare filename:line that exists in a subdir' NONE 'See `release_handlers.go:120`.'
 row 'partial path that exists by suffix'  NONE 'See `cmd/pii-rotate/main.go:1`.'
 row 'IP:port is not a file'               NONE 'The DB is at `192.168.65.1:5432`.'
-row 'real quote from a DIFFERENT corpus file than the one cited' NONE "The [notes]($L) and the register agree: \"Owners may name up to three KeyKeepers and never fewer than two\"."
+row 'real quote from a DIFFERENT corpus file than the one cited' NONE "The [notes]($L) and the register agree: \"Owners may name up to three approvers and never fewer than two\"."
 ROW_PROMPT='please do all as recommended except five and eight, thanks' \
 row "the owner's own words, quoted"       NONE "Per [notes]($L) and your ruling \"all as recommended except five and eight\" I will proceed."
 ROW_TOOL='Opting out removes any existing stored knowledge base data for this repository.' \

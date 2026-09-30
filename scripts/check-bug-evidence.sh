@@ -35,7 +35,7 @@ gate_head
 # The trailing [a-z]* is load-bearing. Registers routinely number a related-but-distinct
 # defect BUG-005b, and without it such a row does not match, is silently SKIPPED, and the
 # gate reports a plausible-looking PASS over a row it never inspected — the exact failure
-# mode this gate exists to prevent, aimed at itself. Found in DLPprobe: two fixed bugs with
+# mode this gate exists to prevent, aimed at itself. Found in a sibling project: two fixed bugs with
 # suffixed ids sat in the Closed table unchecked while the count read "5 closed bug(s)".
 ID_RE='^\|[[:space:]]*[A-Z][A-Z]*-[0-9][0-9]*[a-z]*[[:space:]]*\|'
 TEST_RE='[Tt]est|[Ss]pec|_test|\.test'

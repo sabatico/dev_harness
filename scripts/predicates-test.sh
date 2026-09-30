@@ -45,12 +45,12 @@ t /r/pkg/test/fixture.go              TEST   # by directory
 t /r/web/__tests__/render.js          TEST
 
 # ── source that must STAY IN SCOPE (the rows an over-broad pattern breaks) ───
-t /r/dlpprobe/lib/latest_events.py    src    # contains "test_" — the anchoring bug
+t /r/sampleapp/lib/latest_events.py    src    # contains "test_" — the anchoring bug
 t /r/src/contest_scoring.go           src    # contains "test"
 t /r/src/attestation.py               src
 t /r/src/protest.rb                   src
-t /r/dlpprobe/lib/wsprobe.py          src
-t /r/dlpprobe/blueprints/ws.py        src
+t /r/sampleapp/lib/wsprobe.py          src
+t /r/sampleapp/blueprints/ws.py        src
 t /r/src/testimony.ts                 src    # starts with "test" but is not test_
 
 # ── vendored / generated ─────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ v /r/web/dist/bundle.min.js           VENDOR
 v /r/.venv/lib/site-packages/flask.py VENDOR
 
 # ── ours, and must stay ours ─────────────────────────────────────────────────
-v /r/dlpprobe/lib/receipt.py          ours
+v /r/sampleapp/lib/receipt.py          ours
 v /r/src/vendors/supplier.py          ours   # "vendors", not "vendor" — not third-party
 v /r/src/build_plan.py                ours   # "build_" is not a build/ directory
 

@@ -147,4 +147,5 @@ flags). The harness has to run on the machine the developer actually has, not th
 | `librarian-presweep.sh` | (injected by the forked `/ask-librarian` skill) | Extracts terms from the brief (TERMS: line, ids, `code`, "phrases"), ERE-escapes them, runs the sweep before the librarian starts; always exits 0 |
 | `rotate-bug-register.sh` | (gate: `--check`) | Moves long-closed rows — incl. FIXED rows left in the open table — VERBATIM to the archive; ids conserved. Matrix: `rotate-bug-register-test.sh` |
 | `rotate-onboarding.sh` | (gate: `--limits`; `--check` once floors are set) | Log-entry diet + order; rotates old log entries / dated handover blocks VERBATIM past TWO floors (newest N AND younger than D days). Matrix: `rotate-onboarding-test.sh` |
+| `second-opinion.sh` | (called by agents/SOPs) | One entry point for an independent reviewer: tries the configured outside models, falls back to the local `red-team` agent, never fails the run; names who answered. Matrix: `second-opinion-test.sh` |
 | `harness-eval.sh` | (owner-run, spends money) | Task-embedded retrieval probes (`harness-eval-probes.json`): does the main agent look a fact up or answer from memory? |

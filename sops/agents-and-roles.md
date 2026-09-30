@@ -85,3 +85,9 @@ after it had started, and both cost a full round trip.
 - Everything in `CLAUDE.md`'s recall-is-not-a-source rule applies to **what you tell an agent** exactly
   as it applies to what you tell the owner. A path, a quantity, what a document says, a result: look
   it up before it goes in a brief.
+
+## Who the independent reviewer is
+
+Configured per project, never assumed: `HARNESS_SECOND_OPINION` in `harness.conf` (local | external |
+off) and `scripts/second-opinion.sh` — see the README section "Second-opinion reviewers". An outside
+model is optional; a missing key falls back to the local `red-team` agent and the run continues.
