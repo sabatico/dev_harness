@@ -22,7 +22,9 @@ cd "$ROOT" || exit 2
 [ "${1:-}" = "--check" ] && shift
 BF="${HARNESS_BASELINE_DIR:-.harness/baselines}/image-pins.txt"
 BASELINE="$(cat "$BF" 2>/dev/null || true)"
-files="$(git ls-files 2>/dev/null | grep -E '(^|/)(Dockerfile[^/]*|docker-compose[^/]*\.ya?ml|[^/]+\.(sh|ya?ml|tf))$|^scripts/hooks/' | grep -v node_modules)"
+files="$(git ls-files 2>/dev/null | grep -E '(^|/)(Dockerfile[^/]*|docker-compose[^/]*\.ya?ml|[^/]+\.(sh|ya?ml|tf))$|^scripts/hooks/' | grep -v node_modules | grep -v 'check-image-pins-test\.sh$')"
+# ^ the gate's own matrix is excluded: its fixtures ARE floating pulls on purpose. (It passed while the
+#   test was untracked; the first commit turned the gate red on itself — 2026-09-29.)
 [ -n "$files" ] || { echo "✗ enumerated 0 files — a zero here would be a lie"; exit 1; }
 python3 - "$BASELINE" $files <<'PY'
 import re, sys
