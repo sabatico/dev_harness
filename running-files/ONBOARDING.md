@@ -34,11 +34,17 @@
 ## 7. How to work here (stable)
 «Build/test/run commands, the gotchas, the DoD pointer.»
 
-## 8. Session log (append-only, NEWEST FIRST — ⚠ LOG DIET: an entry is ≤10 LINES and is an INDEX, not an archive)
+## 8. Session log (append-only, NEWEST FIRST — ⚠ LOG DIET: an entry is ≤10 LINES **AND ≤2 KB** and is an INDEX, not an archive)
 Details live in the doc that owns them (the ADR, the bug-register row, the SOP, the commit) — the
 log says what happened + where to look. A 2,000-word log line is write-only memory nobody re-reads,
-and it burns every future session's context. The header "Last session" line: ≤3 sentences.
-- **«date» (id)** — «what this act did: built/fixed/decided, the verification result (tests/gates green), and any deferrals. ≤10 lines. One entry per act.»
-- **«date» (id)** — «…prior act…»
+and it burns every future session's context. **Every entry gets its own `###` heading with a date**:
+on the source project 388 entries sat as one flat bullet list and reached 664 KB unnoticed — no
+heading meant no boundary. `scripts/rotate-onboarding.sh --limits` gates the diet and the order;
+entries past the retention floors rotate VERBATIM to the session-log archive (the script header says
+how, and how a §6 handover block marks itself as still standing).
 
-> **Maintenance rule:** append a §8 line and refresh §4/§5/§6 at the end of **every** act, before yielding. Stable sections (§1–§3, §7) change rarely.
+### 2026-01-01 — «what this act did» (example entry — replace)
+«Built/fixed/decided, the verification result (tests/gates green), any deferrals, and WHERE the
+detail lives. ≤10 lines AND ≤2 KB. One entry per act.»
+
+> **Maintenance rule:** append a §8 entry and refresh §4/§5/§6 at the end of **every** act, before yielding. Stable sections (§1–§3, §7) change rarely.

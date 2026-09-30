@@ -98,7 +98,9 @@ run_cmd() {
 
 # ── fast tier ─────────────────────────────────────────────────────────────────
 printf '%sfast tier%s\n' "$C_B" "$C_0"
-manifest_expect doc-links doc-paths doc-index markers bug-evidence conditional-skips citations log-hygiene
+manifest_expect doc-links doc-paths doc-index markers bug-evidence conditional-skips citations log-hygiene \
+  guard-matrix read-budget-matrix claim-check-matrix bug-register-rotation bug-rotation-matrix \
+  onboarding-limits onboarding-rotation-matrix secret-read-matrix image-pins image-pins-matrix
 
 run_gate doc-links         "$HERE/check-doc-links.sh"
 run_gate doc-paths         "$HERE/check-doc-paths.sh"
@@ -108,6 +110,24 @@ run_gate bug-evidence      "$HERE/check-bug-evidence.sh"
 run_gate conditional-skips "$HERE/check-conditional-skips.sh"
 run_gate citations         "$HERE/check-citations.sh"
 run_gate log-hygiene       "$HERE/check-log-hygiene.sh"
+# The platform layer's own self-proofs (added 2026-09-29, generalised from a live project). An
+# unguarded guard rots: on that project the destroy-guard's known-answer matrix said "run this after
+# ANY edit" — a prose rule — and no gate ran it. Each matrix below pins a hook or rotation both ways
+# (what it must catch AND the legitimate cases it must leave alone). ci/platform-layer.md §Self-proofs.
+run_gate guard-matrix              "$HERE/hook-pretooluse-guard-test.sh"
+run_gate read-budget-matrix        "$HERE/hook-read-budget-test.sh"
+run_gate claim-check-matrix        "$HERE/hook-stop-claimcheck-test.sh"
+# Rotation as gates: "move the row / archive the entry" was a prose step on the source project, and the
+# register reached 523 KB (86 closed rows left in the open table) while the handover file hit its budget.
+run_gate bug-register-rotation     "$HERE/rotate-bug-register.sh" --check
+run_gate bug-rotation-matrix       "$HERE/rotate-bug-register-test.sh"
+run_gate onboarding-limits         "$HERE/rotate-onboarding.sh" --limits
+run_gate onboarding-rotation-matrix "$HERE/rotate-onboarding-test.sh"
+# Security baseline (sops/security-baseline.md): #26 an agent never prints .env values or dumps the env;
+# #5 no NEW third-party image pulled at a floating tag (ratchet over $HARNESS_BASELINE_DIR/image-pins.txt).
+run_gate secret-read-matrix        "$HERE/hook-pretooluse-secretread-test.sh"
+run_gate image-pins                "$HERE/check-image-pins.sh" --check
+run_gate image-pins-matrix         "$HERE/check-image-pins-test.sh"
 
 # ── suites ────────────────────────────────────────────────────────────────────
 if [ "$WANT_FULL" -eq 1 ]; then

@@ -97,6 +97,31 @@ project wants the guard and the banner. To wire (full doctrine: `ci/platform-lay
 What to skip when: a docs-light prototype can drop `hook-read-budget` and the librarian; nobody
 should drop the guard, the banner, or the bash-write doc gates.
 
+### Code intelligence (LSP) — one plugin per stack, as a trial
+
+Grep is a text search; a language server answers "where is this defined / who calls it" exactly, and
+the official plugins also push compiler diagnostics into context after each edit. Enable the one(s)
+for your stack at PROJECT scope, so the choice is recorded in `.claude/settings.json`:
+
+```bash
+claude plugin install gopls-lsp@claude-plugins-official --scope project
+```
+
+Also available: `rust-analyzer-lsp`, `typescript-lsp`, `pyright-lsp`, `clangd-lsp`, `jdtls-lsp`,
+`kotlin-lsp`, `ruby-lsp`, `php-lsp`, `swift-lsp`, `csharp-lsp`, `lua-lsp`. The language-server binary
+must be on PATH (`go install golang.org/x/tools/gopls@latest`, `rustup component add rust-analyzer` …).
+Treat it as a two-week trial: diagnostics cost tokens on every edit; keep it if they catch more than
+they cost. Add nothing else on speculation — the one ablation study found removing 80% of an agent's
+tools raised success from 80% to 100%.
+
+### Rule-vs-control audit — once, then whenever CLAUDE.md grows
+
+For each rule in the constitution, write down its control: gated, guard-enforced, advisory hook, or
+"attention only". A rule with no control is not wrong, but it is a HOPE — label it so in the file
+(the source project did: `*(gated)*`, `*(guard-enforced)*`, "rides on your attention"). Then, per
+unlabelled rule: build the check, or accept and label it, or delete it. The study behind P8
+(`ci/platform-layer.md`) found only 4.4% of security rules in 481 CLAUDE.md files had a real control.
+
 ## Stack-neutrality — one setting, and what never changes
 
 Nothing in `scripts/` hardcodes a language. Every language-shaped fact — what a function

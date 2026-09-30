@@ -25,6 +25,17 @@
             "statusMessage": "guard"
           }
         ]
+      },
+      {
+        "matcher": "Read|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-pretooluse-secretread.sh\"",
+            "timeout": 10,
+            "statusMessage": "secret-read guard"
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -51,7 +62,7 @@
         ]
       },
       {
-        "matcher": "Read",
+        "matcher": "Read|Bash|Agent|Task|Skill",
         "hooks": [
           {
             "type": "command",
@@ -83,9 +94,16 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-stop-statecheck.sh\"",
             "timeout": 10,
             "statusMessage": "state check"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-stop-claimcheck.sh\"",
+            "timeout": 20,
+            "statusMessage": "claim check"
           }
         ]
       }
     ]
-  }
+  },
+  "_comment_lsp": "Code intelligence (added 2026-09-29): enable your stack's official LSP plugin at PROJECT scope, e.g. `claude plugin install gopls-lsp@claude-plugins-official --scope project` (also rust-analyzer-lsp, typescript-lsp, pyright-lsp …). It writes an enabledPlugins entry here. The language-server binary must be on PATH (gopls, rust-analyzer, …). See TAILORING.md §Code intelligence."
 }

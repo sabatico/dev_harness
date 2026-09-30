@@ -119,5 +119,83 @@ project's first eval found a stale services-inventory row, an alias blindness in
 4. Write one path-scoped rule per area you actually have (the rules dir); keep each ≤50 lines.
 5. Trigger one real deny and one real doc-gate block through the production path — a control you
    have not watched fire is not a control (control-timing C3).
-6. After the first week: read the stop-advisory and read-budget hit logs (under the gate-logs dir the hooks create); tune or delete
-   what never fires.
+6. After the first week: read the stop-advisory, read-budget and claim-check logs (in `HARNESS_LOG_DIR`,
+   default .harness-logs — NOT a directory your gate run clears); tune or delete what never fires.
+
+---
+
+## P8. Measured additions (2026-09-29) — what a follow-up review of a live project added
+
+A second review of the source project (after a survey of the top Claude Code harnesses and the one
+empirical study of them — marmelab's *State of AI Harness Engineering 2026*: the same model through
+eight harnesses scored 68% → 88%; "only 4.4% of security rules are backed by a real control") found
+that the platform layer's weakest parts were the ones that MEASURE it. Everything below ships as
+config-driven scripts with a known-answer matrix, and each matrix was mutation-checked (break the
+thing, watch the matrix go RED) before it was trusted.
+
+**Self-proofs are gates.** The destroy-guard's own matrix said "run this after ANY edit" — a prose
+rule — and no gate ran it, while lesser guards were gated. `run-all-gates.sh` now runs every hook
+matrix (`guard-matrix`, `read-budget-matrix`, `claim-check-matrix`) and the rotation matrices.
+
+**The read-budget measured the wrong thing** (`scripts/hook-read-budget.sh`): it counted whole-file
+size per Read (a 3-line read of a 523 KB register "cost" 523 KB, so every correct targeted read tripped
+it), it never saw Bash reads (auto mode reads through `cat`/`sed`), and it logged into a directory the
+source project's gate run deleted. Now: bytes actually returned (`tool_response.file.content`); Bash
+corpus reads at what the agent receives (≤ `BASH_MAX_OUTPUT_LENGTH`, default 30000 chars, else a 2 KB
+preview — observed: 269.6 KB of output arrived as a file path + the first 2 KB); librarian delegations
+logged, so the log answers "read directly vs. delegated"; `HARNESS_LOG_DIR`.
+
+**The librarian's sweep is injected, not requested** (`dot-claude/skills/ask-librarian/SKILL.md` +
+`scripts/librarian-presweep.sh`). P5's eval found every probe skipped the per-surface sweep. A skill
+with `context: fork` + `agent: librarian` runs its injected shell block before the prompt exists, so
+the sweep output lands in the LIBRARIAN's window, never the caller's. Two traps found live: the skill's
+arguments are substituted as RAW TEXT into that block (so the brief goes through a quoted heredoc),
+and the loader matched the block opener MID-SENTENCE inside an HTML comment and tried to execute the
+comment plus the brief (a permission check refused it). In a forked skill with `agent`, the command
+must be pre-approved in `allowed-tools` or the invocation aborts, even in auto mode.
+
+**A claim check for chat** (`scripts/claim-check.py`, Stop hook). Every doc gate fires on a FILE;
+answers from memory land in CHAT. Three shapes are mechanically checkable: a linked or `file:line` path
+(resolved exactly, then by suffix across the repo + `HARNESS_SIBLING_REPOS`), a decision/bug id at or
+below the highest existing number that appears nowhere, and a quotation ATTRIBUTED to a repo source that
+appears nowhere the agent could have read it (cited file, corpus, the session's tool output and user
+messages, the whole repo incl. code comments). Its design rule is **silent unless definitely false**,
+and that rule had to be MEASURED: the first version raised 50 flags on 673 real turns, nearly all
+false (the owner's own words in quotes, tool output, bare filenames, an IP:port, quote marks paired
+across code spans); the calibrated version raised 0 on 1,093. Read that honestly: it is a tripwire.
+The owner's "answers from memory" mostly live in shapes with no mechanical form (paraphrased rulings,
+wrong numbers) — which is what the eval below measures. The source project's owner then switched it to **block** mode
+(the model must correct a definitely-false claim once before finishing) — safe only because the
+calibration showed zero false flags; start in advise mode and switch on the same evidence.
+
+**A task-embedded retrieval eval** (`scripts/harness-eval.sh` + `scripts/harness-eval-probes.json`).
+P5 measures the librarian when CALLED; this measures whether the main agent CALLS anything. A direct
+question always triggers a lookup, so each probe is an ordinary task where one repo fact is incidental;
+fresh headless sessions (plan mode) run it and the scorer reads the transcript: looked up / right /
+wrong / what the claim check flags. It spends money — owner-triggered, never gated. The standalone CLI
+must be logged in (`claude`, `/login`); a run that returns "Not logged in" is refused as a measurement.
+
+**Post-compaction warning** (`scripts/hook-session-start.sh`, `source == compact`): facts read before a
+compaction survive only as paraphrase; the brief says so at the one moment it is certainly true.
+
+**Rotation as gates** (`scripts/rotate-bug-register.sh`, `scripts/rotate-onboarding.sh`). "Move the
+row when it is fixed" and "archive old log entries" were prose steps; on the source project 86 closed
+rows sat in the OPEN table (register 523 KB, 13 open bugs) and the handover file hit its budget. Both
+now move text VERBATIM (ids and lines conserved, proven by their matrices), gate a `--check`/`--limits`,
+and keep TWO floors for history — the newest N AND everything younger than D days — so cleaning never
+cuts a handover thin; a handover block that is still live carries a keep marker (script header).
+
+**Quiet gate output for agents** — already this kit's `run_gate` shape (one line per gate, failures
+only, logs to a per-run dir). On the source project the gates TEE'd ~265 KB, so an agent saw only the
+2 KB preview of the START and never the verdict at the bottom. Keep it that way.
+
+**Code intelligence**: the official LSP plugins (`rust-analyzer-lsp`, `gopls-lsp`, `typescript-lsp`,
+`pyright-lsp` …) — see TAILORING §Code intelligence. They replace grep for definition/references and
+push compiler diagnostics after edits (a per-edit token cost; the source project's owner kept them
+permanently after one session).
+
+**Traps these scripts encode** (each is a comment where it bites): macOS bash 3.2 mis-parses a heredoc
+nested in `$( )`/`<( )` whose body holds a backtick; one apostrophe inside a `python3 -c '…'` block
+makes the whole hook fail to PARSE — and a hook that fails to parse is silent; a script that treats an
+unknown flag as "do the default write" (`--help` performed a real rotation); `CLAUDECODE=1` is also set
+in IDE terminals, so "am I talking to an agent" also needs a non-tty stdout.

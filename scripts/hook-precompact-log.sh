@@ -13,6 +13,6 @@ try:
   d=json.load(sys.stdin); print(d.get("session_id","?")[:8], d.get("trigger") or d.get("matcher") or "?")
 except Exception: print("? ?")' 2>/dev/null)"
 dirty=$(git status --porcelain 2>/dev/null | grep -c . || echo 0)
-mkdir -p .gate-logs 2>/dev/null || true
-echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) session=${info%% *} trigger=${info##* } dirty_paths=${dirty} head=$(git rev-parse --short HEAD 2>/dev/null)" >> .gate-logs/compaction.log
+mkdir -p "${HARNESS_LOG_DIR:-.harness-logs}" 2>/dev/null || true
+echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) session=${info%% *} trigger=${info##* } dirty_paths=${dirty} head=$(git rev-parse --short HEAD 2>/dev/null)" >> "${HARNESS_LOG_DIR:-.harness-logs}"/compaction.log
 exit 0

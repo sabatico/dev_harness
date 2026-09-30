@@ -27,7 +27,22 @@ cd "$ROOT" || exit 0
 
 bounded() { ( "$@" ) & local p=$!; ( sleep 8; kill -9 "$p" 2>/dev/null ) & local k=$!; wait "$p" 2>/dev/null; local rc=$?; kill -9 "$k" 2>/dev/null; return $rc; }
 
+# Which SessionStart fired (startup|resume|clear|compact) — from the payload, never guessed.
+payload=""; [ -t 0 ] || payload="$(cat)"
+source_evt="$(printf '%s' "$payload" | python3 -c 'import json,sys
+try: print(json.load(sys.stdin).get("source",""))
+except Exception: print("")' 2>/dev/null)"
+
 echo "⚡ SESSION BRIEF (scripts/hook-session-start.sh — hooks ARE loaded this session; if you never saw this banner, they are NOT: run the gates by hand)"
+# AFTER COMPACTION: every fact read before this point now survives only as the summary's paraphrase,
+# and a paraphrase of a quote reads exactly like knowledge — this is where "answers from memory" are
+# made. Said at the one moment it is certainly true. (Generalised 2026-09-29 from a live project.)
+if [ "$source_evt" = "compact" ]; then
+  echo
+  echo "── ⚠ CONTEXT WAS JUST COMPACTED ──"
+  echo "  Everything before this point is a SUMMARY. File paths, numbers, and what a decision record says"
+  echo "  are UNVERIFIED until looked up again this session. Re-read, or /ask-librarian, before asserting one."
+fi
 echo
 
 # The banner proves the hooks LOADED. It must not also imply they can RUN: this script needs only

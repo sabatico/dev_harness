@@ -136,10 +136,15 @@ flags). The harness has to run on the machine the developer actually has, not th
 
 | Script | Event | Does |
 |---|---|---|
-| `hook-session-start.sh` | SessionStart (incl. `compact`) | Injects derived state + the ⚡ liveness banner (~a page) |
+| `hook-session-start.sh` | SessionStart (incl. `compact`) | Injects derived state + the ⚡ liveness banner (~a page); after a `compact`, warns that pre-compaction facts are paraphrase until re-looked-up |
 | `hook-pretooluse-guard.sh` | PreToolUse Bash/Write/Edit | Denies destructive commands + archived/generated-path edits, with the sanctioned alternative in the reason. Anchored to command position; test matrix: `hook-pretooluse-guard-test.sh` |
 | `hook-postbash-docgates.sh` | PostToolUse Bash | Runs the blocking doc gates when a doc was written through Bash (the Write/Edit hook cannot see those) |
-| `hook-read-budget.sh` | PostToolUse Read | Advisory when the MAIN session reads corpus it should delegate to the librarian; hit-logged |
+| `hook-read-budget.sh` | PostToolUse Read\|Bash\|Agent\|Task\|Skill | Counts corpus bytes the MAIN session actually received (Read content, Bash stdout at the 30000-char/2 KB-preview ceiling) and logs librarian delegations; advisory past the budget. Matrix: `hook-read-budget-test.sh` |
 | `hook-stop-statecheck.sh` | Stop | Advisory when HEAD changed code but no running doc; once per commit; hit-logged |
 | `hook-precompact-log.sh` | PreCompact | One log line per compaction, for attribution |
+| `hook-stop-claimcheck.sh` + `claim-check.py` | Stop | Checks the reply's linked/`file:line` paths, decision/bug ids and ATTRIBUTED quotes; silent unless definitely false; advise or block (`HARNESS_CLAIMCHECK_MODE`). Matrix: `hook-stop-claimcheck-test.sh` |
 | `librarian-sweep.sh` | (used by the librarian agent) | Per-surface hit accounting over every knowledge surface incl. git history and sibling repos |
+| `librarian-presweep.sh` | (injected by the forked `/ask-librarian` skill) | Extracts terms from the brief (TERMS: line, ids, `code`, "phrases"), ERE-escapes them, runs the sweep before the librarian starts; always exits 0 |
+| `rotate-bug-register.sh` | (gate: `--check`) | Moves long-closed rows — incl. FIXED rows left in the open table — VERBATIM to the archive; ids conserved. Matrix: `rotate-bug-register-test.sh` |
+| `rotate-onboarding.sh` | (gate: `--limits`; `--check` once floors are set) | Log-entry diet + order; rotates old log entries / dated handover blocks VERBATIM past TWO floors (newest N AND younger than D days). Matrix: `rotate-onboarding-test.sh` |
+| `harness-eval.sh` | (owner-run, spends money) | Task-embedded retrieval probes (`harness-eval-probes.json`): does the main agent look a fact up or answer from memory? |

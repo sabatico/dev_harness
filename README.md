@@ -137,6 +137,7 @@ dev_harness/
 │   ├── run-all-gates.sh            ←   the local CI: tiered, per-gate output capture, skip-is-not-a-pass
 │   ├── hook-fast-gates.sh          ←   the same gates, fired at the moment of the write
 │   ├── check-*.sh                  ←   doc-links · doc-paths · doc-index · markers · bug-evidence · conditional-skips · citations · log-hygiene
+│   ├── claim-check.py · rotate-*.sh · harness-eval.sh ← platform-layer self-measurement (ci/platform-layer.md P8)
 │   ├── selftest.sh                 ←   plants a violation per gate IN YOUR LANGUAGE (--all-stacks)
 │   ├── predicates-test.sh          ←   that the shared skip-scope has not gone over-broad
 │   └── lib/{common,manifest}.sh    ←   the shared exit vocabulary + the manifest/verdict library

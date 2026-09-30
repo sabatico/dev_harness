@@ -125,3 +125,25 @@ HARNESS_READ_BUDGET_BYTES="61440"
 # but live outside this repo. librarian-sweep reports them ABSENT when missing —
 # never silently skipped.
 HARNESS_SIBLING_REPOS=""
+
+# ── Platform-layer additions (2026-09-29, generalised from a live project) ─────────────────────
+# Hook instrumentation logs (read-budget, claim-check, stop-advisory, compaction). NEVER point this at a
+# directory your gate run clears: the advisories exist to accumulate weeks of hit-rate.
+HARNESS_LOG_DIR=".harness-logs"
+
+# Stop-hook claim check (scripts/claim-check.py): advise = a message the human sees + a log line;
+# block = the model corrects itself once before finishing. Start with advise; decide after two weeks
+# of $HARNESS_LOG_DIR/claim-check.log. Bug ids use this prefix (decision ids use HARNESS_DECISION_PREFIX).
+HARNESS_CLAIMCHECK_MODE="advise"
+HARNESS_BUG_PREFIX="BUG"
+
+# Bug-register rotation (scripts/rotate-bug-register.sh): archive for long-closed rows.
+# Default: <HARNESS_BUG_REGISTER without .md>-archive.md
+HARNESS_BUG_ARCHIVE=""
+
+# Onboarding / handover file rotation (scripts/rotate-onboarding.sh). Unset HARNESS_ONBOARDING = N/A.
+# The two headings are the PREFIXES of the session-log section and the what-happens-next section.
+HARNESS_ONBOARDING=""
+HARNESS_ONB_LOG_HEADING="## 8."
+HARNESS_ONB_NEXT_HEADING="## 6."
+HARNESS_ONB_ARCHIVE=""

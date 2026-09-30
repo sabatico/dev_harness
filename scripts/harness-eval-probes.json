@@ -1,0 +1,14 @@
+{
+  "_why": "Task-embedded retrieval probes for scripts/harness-eval.sh. A direct question always triggers a lookup, so each probe is an ORDINARY task in which one repo fact is incidental. Rules for writing one: (1) read the truth from CODE or a migration, never prose, and record file:line in `source`; (2) pick a fact with a plausible wrong value a model would produce from memory; (3) `retrieval` = regex any tool input touching the source must match; `correct` / `wrong` = regexes over the final answer; (4) keep the prompt plan-only (the runner uses plan mode). Replace the example below with 4-6 probes from YOUR project; re-verify truths when the code moves.",
+  "probes": [
+    {
+      "id": "example-session-ttl",
+      "prompt": "Plan only, no edits, at most 6 lines: the copy for the 'you have been signed out' notice, stating exactly how long an idle session lasts as the server enforces it.",
+      "truth": "EXAMPLE — replace: sessionIdleTTL = 30 * time.Minute",
+      "source": "EXAMPLE — replace: src/auth/session.go:42",
+      "retrieval": "auth/session|sessionIdleTTL",
+      "correct": "\\b30\\b[ -]?min|thirty[ -]min",
+      "wrong": "\\b(5|10|15|60)[ -]?min|\\b(1|one|24)[ -]?hours?"
+    }
+  ]
+}
