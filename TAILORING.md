@@ -109,9 +109,10 @@ claude plugin install gopls-lsp@claude-plugins-official --scope project
 
 Also available: `rust-analyzer-lsp`, `typescript-lsp`, `pyright-lsp`, `clangd-lsp`, `jdtls-lsp`,
 `kotlin-lsp`, `ruby-lsp`, `php-lsp`, `swift-lsp`, `csharp-lsp`, `lua-lsp`. The language-server binary
-must be on PATH (`go install golang.org/x/tools/gopls@latest`, `rustup component add rust-analyzer` …).
-Treat it as a two-week trial: diagnostics cost tokens on every edit; keep it if they catch more than
-they cost. Add nothing else on speculation — the one ablation study found removing 80% of an agent's
+must be on PATH (`go install golang.org/x/tools/gopls@latest`, `rustup component add rust-analyzer`,
+`npm install -g typescript typescript-language-server` …); each stack pack names its plugin.
+Diagnostics cost some tokens on every edit; the source project's owner kept the plugins permanently after
+one session (Go, Rust, then TypeScript). Add nothing else on speculation — the one ablation study found removing 80% of an agent's
 tools raised success from 80% to 100%.
 
 ### Rule-vs-control audit — once, then whenever CLAUDE.md grows

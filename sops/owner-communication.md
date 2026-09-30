@@ -17,6 +17,12 @@ Two failure modes this SOP prevents, both observed in the field:
   owner needs to care. Sub-agents never create cards at all — only the lead, after review.
 - The test: *if the owner would have to ask "what does that mean?", rewrite it first.*
 
+- **Plain English, not a wall of terms.** Use a technical word only when it is needed, and explain it
+  in the same sentence. A reader who has not followed the session must understand every line.
+- **Every question carries its context in 2–3 short sentences, no more:** what it is, why it matters,
+  and what you recommend. Never a bare few-word question ("BUG-236 — which model?"): on the source
+  project the owner had to come back and ask what such questions meant, and made this a standing rule.
+
 ## 2. The weekly digest (the owner's one-glance view)
 
 At the first session of each week, refresh a **singleton digest** (ONE pinned card/page, body
