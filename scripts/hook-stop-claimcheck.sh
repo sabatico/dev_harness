@@ -5,9 +5,10 @@
 # Advisory by default (HARNESS_CLAIMCHECK_MODE=block makes the model self-correct once).
 # Test: scripts/hook-stop-claimcheck-test.sh (a fast-tier gate).
 set -uo pipefail
+# HERE before any cd: with a relative $0 (a matrix, a hand run) the cd would orphan it.
+HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="${HARNESS_ROOT_OVERRIDE:-$(git rev-parse --show-toplevel 2>/dev/null)}" || exit 0
 cd "$ROOT" || exit 0
-HERE="$(cd "$(dirname "$0")" && pwd)"
 set -a; [ -f harness.conf ] && . ./harness.conf; set +a
 HARNESS_ROOT_OVERRIDE="$ROOT" python3 "$HERE/claim-check.py" 2>/dev/null
 exit 0

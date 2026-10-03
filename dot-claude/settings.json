@@ -16,7 +16,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash|Write|Edit",
+        "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit",
         "hooks": [
           {
             "type": "command",
@@ -71,6 +71,17 @@
             "statusMessage": "read budget"
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-repeat-check.sh\"",
+            "timeout": 10,
+            "statusMessage": "repeat check"
+          }
+        ]
       }
     ],
     "PreCompact": [
@@ -100,10 +111,30 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-stop-claimcheck.sh\"",
             "timeout": 20,
             "statusMessage": "claim check"
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-stop-verifycheck.sh\"",
+            "timeout": 20,
+            "statusMessage": "verify check"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hook-repeat-check.sh\"",
+            "timeout": 10,
+            "statusMessage": "repeat check"
           }
         ]
       }
     ]
   },
-  "_comment_lsp": "Code intelligence (added 2026-09-29): enable your stack's official LSP plugin at PROJECT scope, e.g. `claude plugin install gopls-lsp@claude-plugins-official --scope project` (also rust-analyzer-lsp, typescript-lsp, pyright-lsp …). It writes an enabledPlugins entry here. The language-server binary must be on PATH (gopls, rust-analyzer, …). See TAILORING.md §Code intelligence."
+  "_comment_lsp": "Code intelligence (added 2026-09-29): enable your stack's official LSP plugin at PROJECT scope, e.g. `claude plugin install gopls-lsp@claude-plugins-official --scope project` (also rust-analyzer-lsp, typescript-lsp, pyright-lsp …). It writes an enabledPlugins entry here. The language-server binary must be on PATH (gopls, rust-analyzer, …). See TAILORING.md §Code intelligence.",
+  "_comment_sandbox": "Unattended runs (headless, scheduled, cloud, or any session nobody is watching): turn on Claude Code's built-in Bash sandbox. It runs on macOS (Seatbelt, nothing to install), Linux and WSL2 (it relies on two system packages; /sandbox shows what is missing); native Windows is not supported. Add  \"sandbox\": {\"enabled\": true, \"failIfUnavailable\": true}  here, then narrow sandbox.network.allowedDomains and sandbox.filesystem.allowWrite to what the project needs. Leave sandbox.autoAllowBashIfSandboxed off unless you have read what it auto-approves. Interactive check: /sandbox. The guard still runs inside the sandbox: the sandbox limits WHERE a command can reach, the guard decides WHETHER an un-undoable one runs. See sops/security-baseline.md, Unattended runs."
 }

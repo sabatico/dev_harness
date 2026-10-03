@@ -45,15 +45,34 @@
 | 19 | Verify webhook signatures | CODE + test: the provider's verify call; a tampered-signature test | — |
 | 20 | Hard spending caps (AI + cloud) | OWNER ACTION: budget alarms + provider hard caps; record them in the third-party-services running file | `running-files/third-party-services.md` |
 | 21 | Rate-limit AI endpoints | CODE: a per-user + global limiter on any route that spends model tokens | — |
-| 22 | Treat anything a model reads as untrusted | DOC (constitution) + bound the blast radius with 23/26 — no prompt makes a denied action allowed | constitution rule text |
-| 23 | No model runs tools/SQL/shell without limits | GATED: a PreToolUse guard with a known-answer matrix; least-privilege permissions | `hook-pretooluse-guard.sh` + matrix (gated) |
+| 22 | Treat anything a model reads as untrusted | DOC (constitution) + outside text FENCED as `<untrusted>` in every agent brief + bound the blast radius with 23/26 — no prompt makes a denied action allowed | constitution rule text; `sops/agent-skills.md` rule 10 |
+| 23 | No model runs tools/SQL/shell without limits | GATED: a PreToolUse guard that judges the DEOBFUSCATED command (wrappers stripped, flags as sets) with a known-answer matrix, and that refuses edits to its own wiring; least-privilege permissions; the OS sandbox for unattended runs (below) | `hook-pretooluse-guard.sh` + `guard-check.py` + matrix (gated) |
 | 24 | Check AI-suggested packages exist | GATED (security tier): every NEW dependency must exist in its registry and be established; `ignore-scripts` on installs | — (proposal on the source project) |
 | 25 | Read every CLAUDE.md/SKILL.md/MCP config like code | GATED (review): CODEOWNERS over `CLAUDE.md`, `.claude/**`, `.mcp.json`, hooks, skills | `dot-claude/` layout |
 | 26 | Production credentials out of the agent's reach | GATED: an agent cannot print `.env` values or dump the environment; prod keys never live in a dev `.env` | `hook-pretooluse-secretread.sh` + matrix (gated) |
 | 27 | Generic errors, no stack traces | GATED: a grep gate — no `err.Error()` / `%v` of an error / stack reaches a response (argued exceptions listed) | — (per stack; the source project's Go gate is the template) |
 | 28 | Strip secrets and PII from logs | GATED: a log-hygiene gate over every logging call | `check-log-hygiene.sh` |
-| 29 | Log who did what | CODE + GATED: an append-only audit trail + a gate that every write path is covered | — |
+| 29 | Log who did what | CODE + GATED: an append-only audit trail + a gate that every write path is covered (for the AGENT itself: every guard deny is logged — rule, tool, session) | `guard.log` in `HARNESS_LOG_DIR` (agent side only) |
 | 30 | Back up the DB AND test a restore | CODE (IaC retention) + a scheduled, recorded **restore drill** — a backup never restored is a hope | — |
+
+## Unattended runs: turn on the OS sandbox
+
+The guard decides WHETHER an un-undoable command runs; it cannot limit WHERE an allowed command
+reaches. When nobody is watching the session — headless runs, scheduled or cloud agents, a long
+auto-mode job — add Claude Code's built-in Bash sandbox, which confines commands at the operating-system
+level. The harness-engineering source study (Barbaste et al. 2026, arXiv 2609.00006, Recommendation 10)
+puts OS-level isolation plus policy-as-code plus per-agent audit trails as the baseline for automated
+or shared contexts; the guard and its deny log are the other two.
+
+- Supported on macOS (built in) and on Linux and WSL2 (two system packages; `/sandbox` shows what is
+  missing). Native Windows is not supported — run inside WSL2.
+- In your project's .claude/settings.json (template: `dot-claude/settings.json`): `"sandbox": {"enabled": true, "failIfUnavailable": true}`, then narrow
+  `sandbox.network.allowedDomains` and `sandbox.filesystem.allowWrite` to what the project needs.
+  `failIfUnavailable` matters for the same reason the guard fails closed: a sandbox that silently does
+  not start looks exactly like one that did.
+- Leave `sandbox.autoAllowBashIfSandboxed` off until you have read what it auto-approves.
+- Check it interactively with `/sandbox`. The settings template carries the same note
+  (`dot-claude/settings.json`, `_comment_sandbox`).
 
 ## The per-slice duty (put this in your path-scoped backend rule)
 

@@ -94,6 +94,8 @@ Destructive action → explain blast radius + get approval. Secrets never in cha
 |---|---|
 | Prove hooks are live | look for the ⚡ SESSION BRIEF banner at session start — no banner, no hooks |
 | Verify the guard after editing it | `scripts/hook-pretooluse-guard-test.sh` (known-answer matrix) |
+| Edit the hooks / `.claude/settings.json` / `harness.conf` (owner only) | start the session as `HARNESS_ALLOW_CONTROL_EDITS=1 claude`; the guard refuses otherwise |
+| See what the hooks caught | `.harness-logs/` — `guard.log`, `verify-check.log`, `repeat-check.log`, `claim-check.log` … |
 | Sweep every surface for a topic | `scripts/librarian-sweep.sh <term> <alias> …` (0 = evidence, ABSENT = could not look) |
 | Delegate a corpus question | `/ask-librarian <topic>` — 5-part brief, require the sweep accounting table back |
 | See if advisories are firing | `.gate-logs/stop-advisory.log`, `.gate-logs/read-budget.log`, `.gate-logs/compaction.log` |

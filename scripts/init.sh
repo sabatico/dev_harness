@@ -148,6 +148,9 @@ HARNESS_GENERATED_PATHS=""      # glob=regen-command pairs — never hand-edited
 HARNESS_CORPUS_DIRS="docs"      # what the read-budget advisory and librarian-sweep consider corpus
 HARNESS_READ_BUDGET_BYTES="61440"
 HARNESS_SIBLING_REPOS=""        # repos beside this one that belong to the same product
+HARNESS_VERIFYCHECK_MODE="advise"  # end-of-turn: code changed, nothing checked it (advise|block|off)
+HARNESS_REPEAT_LIMIT="3"           # identical tool calls in a row before "stop and diagnose"
+HARNESS_CONTROL_PATHS=""           # extra paths the guard protects like its own wiring (defaults always on)
 
 # ── Second opinion (scripts/second-opinion.sh) — the harness never REQUIRES an outside API ─────────
 # Where the harness asks for an independent reviewer (cross-author tests, a second review of a diff,

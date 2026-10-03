@@ -59,6 +59,16 @@ if [ -n "$missing" ]; then
   echo "   the gap is a recorded decision instead of a silent one."
   echo
 fi
+# The control floor (guard-check.py): edits to the hook wiring, hook scripts and harness.conf are denied
+# unless the owner LAUNCHED this session with HARNESS_ALLOW_CONTROL_EDITS=1. A lifted floor must be
+# visible, or a maintenance session's permission quietly becomes every session's.
+if [ "${HARNESS_ALLOW_CONTROL_EDITS:-}" = "1" ]; then
+  echo "⚠ CONTROL FLOOR LIFTED for this session (HARNESS_ALLOW_CONTROL_EDITS=1): the agent may edit the"
+  echo "  hook wiring, the hook scripts and harness.conf. Meant for harness maintenance only — start the"
+  echo "  next ordinary session without it."
+  echo
+fi
+[ -f "$(dirname "$0")/guard-check.py" ] || { echo "⛔ scripts/guard-check.py is MISSING: the guard will deny every Bash/Write/Edit (fail-closed). Restore it from the kit."; echo; }
 echo "── git ──"
 bounded git log --oneline -5 2>/dev/null | sed 's/^/  /'
 dirty="$(bounded git status --porcelain 2>/dev/null)"

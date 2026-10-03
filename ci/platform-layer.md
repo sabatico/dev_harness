@@ -21,6 +21,9 @@ that the platform now offers a home for classes that used to be stuck there:
 | "Check docs after every write" | A, but Write/Edit only | **PostToolUse on Bash too** (`hook-postbash-docgates.sh`) | A, all three write paths |
 | "Delegate corpus reads" | D — cannot be a hard gate | **volume tripwire** (`hook-read-budget.sh`) + logged hits | **advisory-instrumented D** — measured, honestly labelled |
 | "Does the cited decision still GOVERN this change?" | impossible for scripts | **prompt-type hook** (LLM evaluates, advisory) | first judgment-call control |
+| "Verify before you report" | D — the most-cited rule, caught 0 escapes | **Stop hook over the turn's tool calls** (`hook-stop-verifycheck.sh`) | **advisory-instrumented**, block-able — code changed with no check after it is mechanical |
+| "Never switch off your own guard" | not even written down | **PreToolUse deny on the control paths** (`guard-check.py`, owner override at launch only) | **A** — for Write/Edit and the common shell writers |
+| "Diagnose, don't re-run the same failing thing" | D | **PostToolUse + PostToolUseFailure repeat counter** (`hook-repeat-check.sh`) | advisory, logged |
 
 Two rules stay honestly un-gated: "should this read have been delegated" and "is this comment's WHY
 still true" are judgment calls; the platform gives them advisories and measurements, not walls.
@@ -43,11 +46,24 @@ laws, each paid for live:
 
 1. **Hooks hot-reload; the guard can go live mid-session.** The source project's guard's first real
    deny was the commit SHIPPING it — the commit *message* named the forbidden commands.
-2. **Anchor every pattern to command position** (line start or after `;` `&` `|` backtick, paren).
-   A guard reading the whole command string sees its own vocabulary quoted in messages, echoes and
-   heredocs; anchored, only an actual invocation matches. Residual tension: heredoc CONTENT with
-   guard vocabulary at line starts still matches — the sanctioned path for such content is the
-   agent's Write/Edit tools (whose guard branch checks paths, not content).
+2. **Judge the commands a string RUNS, not the string** (`scripts/guard-check.py`, 2026-09-30). A
+   guard reading the whole command string sees its own vocabulary quoted in messages, echoes and
+   heredocs — so the first guard anchored each regex to command position. That fixed prose and left
+   spelling: a probe of 14 everyday disguises (split flags, `bash -c`/`eval` wrappers, `sudo`/`env`/
+   `command` prefixes, `$HOME` for `~`, and whole families never named — hard reset, forced clean,
+   force branch delete, plus-refspec push, stash clear, `find -delete`) let **14 of 14** through.
+   The judge now splits on the same separators (quote-blind on purpose: quote-aware splitting is a
+   bypass — one apostrophe in a heredoc swallows every later separator), tokenises each piece,
+   strips wrappers, unwraps `-c`/`eval` strings, reads flags as SETS and checks targets one by one.
+   A commit message is one argv token of `git commit`, so prose still never matches. Residual
+   tension unchanged: heredoc lines are judged as commands — use Write/Edit for such content.
+   **A second pass found more, and it was the cross-author test matrix that found it**, not the
+   builder: a quoted argument holding a `;` hid the target, `..` climbed out of an excluded folder,
+   `RM` runs `rm` on a case-insensitive filesystem, a `${HOME}` brace was cut by the splitter, plus
+   unknown wrappers, here-strings, `echo … | bash`. So the judge now also runs a QUOTE-AWARE pass
+   (a command found by either pass is judged), normalises every target (`$HOME`/`~user` expanded,
+   relative paths joined to the payload's `cwd`, `..` folded — a relative path that stays inside the
+   repo is still the repo's business), and compares command names case-insensitively.
 3. **The guard ships with a known-answer matrix** (`hook-pretooluse-guard-test.sh`) whose ALLOW
    rows are its actual false positives. Run it after any guard edit; the matrix lives in a FILE
    because inline test payloads are indistinguishable-by-grep from real chained commands and the
@@ -55,6 +71,22 @@ laws, each paid for live:
 
 Every deny reason names the sanctioned alternative — the model reads the reason and self-corrects.
 A guard that false-positives gets disabled, which is worse than absent: deny narrowly.
+
+4. **The guard guards its own off-switch.** Until 2026-09-30 the agent could edit
+   its project .claude/settings.json (or set `disableAllHooks`, which works from ANY settings file, including the
+   user-level one) or the hook scripts, and the guard allowed it — so one injected sentence in a web
+   page could ask the agent to remove its own safety net. Now Write/Edit/MultiEdit/NotebookEdit and the
+   common shell writers (redirect, `sed -i`, `mv`, `rm`, `cp`-as-destination, `tee`, `git rm`) onto
+   any `.claude/settings*.json`, `scripts/hook-*.sh`, the judge scripts or `harness.conf` are denied.
+   The override, `HARNESS_ALLOW_CONTROL_EDITS=1`, is read from the hook's LAUNCH environment before
+   `harness.conf` is sourced — hooks inherit Claude Code's environment, and nothing the agent does
+   mid-session reaches it — and the SessionStart banner announces it while it is on. Paths compare
+   case-insensitively and through symlinks, and a copy INTO a folder is judged by the file it
+   creates. Not covered, and said so: a write through an interpreter (`python -c`, an awk/sed
+   script, a script file).
+5. **Every deny is logged** (`guard.log` in `HARNESS_LOG_DIR`: time, session, tool, rule — never
+   the command text, which can carry a secret). Read it with the advisory logs at the two-week
+   review: a rule that never fires, or fires mostly on legitimate work, is a rule to retune.
 
 ## P3. The librarian (retrieval leaves the lead's window)
 
@@ -119,7 +151,7 @@ project's first eval found a stale services-inventory row, an alias blindness in
 4. Write one path-scoped rule per area you actually have (the rules dir); keep each ≤50 lines.
 5. Trigger one real deny and one real doc-gate block through the production path — a control you
    have not watched fire is not a control (control-timing C3).
-6. After the first week: read the stop-advisory, read-budget and claim-check logs (in `HARNESS_LOG_DIR`,
+6. After the first week: read the guard, stop-advisory, read-budget, claim-check, verify-check and repeat-check logs (in `HARNESS_LOG_DIR`,
    default .harness-logs — NOT a directory your gate run clears); tune or delete what never fires.
 
 ---
@@ -199,3 +231,50 @@ nested in `$( )`/`<( )` whose body holds a backtick; one apostrophe inside a `py
 makes the whole hook fail to PARSE — and a hook that fails to parse is silent; a script that treats an
 unknown flag as "do the default write" (`--help` performed a real rotation); `CLAUDECODE=1` is also set
 in IDE terminals, so "am I talking to an agent" also needs a non-tty stdout.
+
+---
+
+## P9. Additions from the harness-engineering source study (2026-09-30)
+
+Barbaste et al., *Harness Engineering: Anatomy, Architecture, and Evolution of Coding Agents* (arXiv
+2609.00006, July 2026) read the source of eleven production coding harnesses and closed with 18
+design recommendations. Most concern building an agent runtime, which this kit sits on top of rather
+than replaces. Eight ideas applied; each is below with what it changed. Its central longitudinal
+finding — *behavioural policy is migrating from the prompt, where the model reads it, to
+configuration, where the platform enforces it* — is this kit's founding measurement (README, "Why so
+much of this is mechanised"), reached independently.
+
+| Idea from the study | What the kit had | What it has now |
+|---|---|---|
+| Match on a deobfuscated command (§10.7 Hermes, §10.9 OpenCode) | anchored regexes; 14/14 probed disguises passed | `guard-check.py` judges argv (P2 law 2) |
+| A policy floor that survives "YOLO" (§10.7, Rec. 11) | the agent could edit its own hook wiring | control-path deny, launch-only override (P2 law 4) |
+| Verify-on-stop guard (§6.2 Hermes, Table 12) | "verify before you report" was prose | `hook-stop-verifycheck.sh` + `verify-check.py`, advise → block on evidence; a check counts only when it RUNS at command position and was not refused (mentioning `pytest` fooled the first version) |
+| Per-agent audit trail (Rec. 10) | denies left no trace | `guard.log` (P2 law 5) |
+| Cheap stuck detection (Rec. 18) | none | `hook-repeat-check.sh`: N identical calls in a row → "diagnose" (advisory) |
+| Untrusted-content delimiting (Table 12) | "data, not instructions" as prose | `<untrusted>` fences + defanging in every brief (`sops/agent-skills.md` rule 10) |
+| Read your neighbours' context files (Rec. 6) | `CLAUDE.md` only | `AGENTS.md` pointer, so Codex/Gemini/Cursor reviewers load the same rulebook |
+| OS sandbox for automated contexts (Rec. 10) | not mentioned | `sops/security-baseline.md` §Unattended runs + the `_comment_sandbox` in the settings template |
+
+**Already held, and validated by the study:** path-scoped rules = its "conditional activation"; SOPs as
+skills = its "deferred loading"; the compaction log + post-compaction re-brief; deterministic retrieval
+(the librarian greps; no vector index — 0 of 11 harnesses index code with embeddings); a second
+reviewer outside the turn loop = its "outer verification loop".
+
+**Deliberately not taken:** loop architecture, edit formats, provider coupling, ACP — Claude Code's
+job, not the kit's. Agent-maintained memory (Codex) — the kit's position stays "auto-memory is a
+pointer, never a source"; lessons graduate into skills through the owner (`sops/agent-skills.md`,
+Wiring it up), which is the study's human-gated variant (Gemini CLI's review inbox).
+
+**Wiring note:** the repeat counter must be on PostToolUseFailure as well as PostToolUse — a Bash
+command that exits non-zero arrives ONLY on the failure event, and failed repeats are the case that
+matters. Both events accept `hookSpecificOutput.additionalContext`, which the model sees.
+
+**What the cross-author matrix caught (escape analysis, 2026-09-30).** The builder's own probes passed
+14 of 14; the separate test author's invent-nastier pass then listed 31 more cases — most of them real failures — across the three
+new hooks — the same lesson as README's measurement, one level down: *the second author found what
+the first could not see*. Fixed in the same change: the guard bypasses above, the verify check counting
+a MENTION of a test as a run, `HARNESS_CODE_DIRS="."` switching it off, a zero repeat limit firing on
+every call, a relabelled retry resetting the repeat counter, and a session id able to forge guard-log
+lines. Also found by it, in OLDER code: both Stop-hook wrappers resolved their own directory after
+`cd`, so a run by relative path silently checked nothing. Left open by decision, and listed in
+`CLAUDE.md` footnote ¹: variables, git aliases, interpreter writes, alternating calls.

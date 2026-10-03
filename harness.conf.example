@@ -148,6 +148,25 @@ HARNESS_ONB_LOG_HEADING="## 8."
 HARNESS_ONB_NEXT_HEADING="## 6."
 HARNESS_ONB_ARCHIVE=""
 
+# ── Additions from the harness-engineering source study (2026-09-30; ci/platform-layer.md P9) ──────
+# End-of-turn verify check (scripts/verify-check.py): a turn that changed code under HARNESS_CODE_DIRS
+# and then ran no test/build/gate command. advise | block | off — start with advise, decide after two
+# weeks of $HARNESS_LOG_DIR/verify-check.log. HARNESS_TEST_CMD/LINT/COVERAGE are recognised; add any
+# other verification command your project uses as an extended regex.
+HARNESS_VERIFYCHECK_MODE="advise"
+HARNESS_VERIFY_RE=""
+
+# Repeat check (scripts/hook-repeat-check.sh): this many identical tool calls in a row → "stop and
+# diagnose" (advisory). Tools that legitimately poll are exempt (space-separated tool names).
+HARNESS_REPEAT_LIMIT="3"
+HARNESS_REPEAT_EXEMPT="BashOutput TaskOutput TaskGet TaskList ReadNotifications Monitor ScheduleWakeup"
+
+# The guard's control floor (scripts/guard-check.py) always protects .claude/settings*.json,
+# scripts/hook-*.sh, the judge scripts and THIS file. Add more paths (repo-relative globs) here; you
+# cannot remove the defaults. The override is NOT a setting in this file, on purpose: the owner starts
+# a harness-maintenance session with  HARNESS_ALLOW_CONTROL_EDITS=1 claude  and the banner says so.
+HARNESS_CONTROL_PATHS=""
+
 # ── Second opinion (scripts/second-opinion.sh) — the harness never REQUIRES an outside API ─────────
 # Where the harness asks for an independent reviewer (cross-author tests, a second review of a diff,
 # an adversarial design debate), THIS decides who that is:

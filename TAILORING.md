@@ -87,7 +87,14 @@ project wants the guard and the banner. To wire (full doctrine: `ci/platform-lay
 4. Run `scripts/hook-pretooluse-guard-test.sh` (20+ known-answer rows must pass, and it names the
    rows it could not exercise); adapt its ALLOW rows to your legitimate workflows before adding
    DENY patterns. Note the guard **fails CLOSED**: without `python3` it denies everything rather
-   than allowing blind, and the banner says why.
+   than allowing blind, and the banner says why. It also refuses edits to its own wiring (the
+   `.claude/settings*.json` files, `scripts/hook-*.sh`, the judge scripts, `harness.conf`): for a
+   tailoring or harness-upgrade session, the OWNER launches with `HARNESS_ALLOW_CONTROL_EDITS=1`
+   (the banner shows it is lifted), then starts the next ordinary session without it.
+   Two new end-of-turn/after-tool advisories start in advise mode — `HARNESS_VERIFYCHECK_MODE`
+   (code changed, nothing checked it) and `HARNESS_REPEAT_LIMIT` (same call N times) — read their
+   logs for two weeks before switching verify-check to `block`. Unattended runs: also turn on the
+   OS sandbox (`sops/security-baseline.md`, Unattended runs).
 5. Rename `dot-claude/rules/example-tests.md` for your stack; add one rule file per area you
    actually have.
 6. Trigger one deny and one doc-gate block through the REAL path before trusting either
