@@ -116,7 +116,7 @@ Destructive action → explain blast radius + get approval. Secrets never in cha
 | See what the hooks caught | `.harness-logs/` — `guard.log`, `verify-check.log`, `repeat-check.log`, `claim-check.log` … |
 | Sweep every surface for a topic | `scripts/librarian-sweep.sh <term> <alias> …` (0 = evidence, ABSENT = could not look) |
 | Write or change a skill / agent / rule | the `authoring-skills` skill; then `scripts/check-skills.sh` until 0 findings (also a gate) |
-| Check a skill actually changes behaviour | run its 3 scenarios in `evals/«skill».json` with a fresh agent (cheap · mid · strong model); log in `evals/RESULTS.md` |
+| Check a skill actually changes behaviour | run its 3 scenarios in `evals/«skill».json` with a fresh agent (Sonnet and Opus — never Haiku); log in `evals/RESULTS.md` |
 | Delegate a corpus question | `/consulting-the-librarian <topic>` — 5-part brief, require the sweep accounting table back |
 | See if advisories are firing | `.gate-logs/stop-advisory.log`, `.gate-logs/read-budget.log`, `.gate-logs/compaction.log` |
 | Add an area rule | `.claude/rules/<area>.md` with `paths:` frontmatter, ≤50 lines, pointer to the SOP |

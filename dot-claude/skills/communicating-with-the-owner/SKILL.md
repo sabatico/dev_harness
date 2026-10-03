@@ -17,6 +17,9 @@ Two field failures this prevents:
 - **Every report or turn addressed to the owner ends in plain language.** No card IDs, ADR numbers,
   acronyms or codenames without an immediate plain-words gloss ("BUG-13 — the re-seal button doesn't
   check whether a release is running").
+- **Glosses come from the record, never from imagination.** Look each ID up in its register or
+  decision record and paraphrase what it says. If you cannot find it, say so or leave the item out —
+  NEVER invent what a ticket or decision is about; a plausible made-up gloss is worse than the bare ID.
 - **Plain English, not a wall of terms.** A technical word only when needed, explained in the same
   sentence. A reader who has not followed the session must understand every line.
 - **Every question carries its context in 2–3 short sentences, no more:** what it is, why it matters,
@@ -32,7 +35,8 @@ Copy this checklist and run it on the draft:
 ```
 Owner-message check:
 - [ ] 1. Scan for IDs (BUG-/SEC-/DEC-/ADR-/FEAT-…), acronyms, codenames, file paths
-- [ ] 2. Each one: gloss it in plain words in the same sentence, or delete it
+- [ ] 2. Each one: LOOK IT UP (register / decision record), then gloss it in plain words in the
+        same sentence — or delete it. Not found → say "not found", never guess
 - [ ] 3. Each question: what it is · why it matters · your recommendation (2–3 sentences)
 - [ ] 4. Numbers are honest (zeros included); "done" carries how it was verified
 - [ ] 5. The last paragraph is plain language and says what (if anything) waits on the owner

@@ -1,6 +1,6 @@
 ---
 name: writing-tests
-description: Writes tests as the cross author for code it did not build — attacks the builder's edge-case checklist, invents nastier cases and proposes them for a ruling, asserts side-effect hooks at the call site, builds fixtures through the real write path, pairs every negative assertion with a positive control, watches each guard test fail before trusting it, measures coverage on the changed code, and registers any test it cannot write yet. Use when writing, reviewing or judging tests, when a brief names the test-author role, when coverage is measured, when a DEFERRED-TEST marker is added or resolved, or when a builder is tempted to test its own code.
+description: Writes tests as the cross author for code it did not build, and refuses to test code it built itself — attacks the builder's edge-case checklist, invents nastier cases and proposes them for a ruling, asserts side-effect hooks at the call site, builds fixtures through the real write path, pairs every negative assertion with a positive control, watches each guard test fail before trusting it, measures coverage on the changed code, and registers any test it cannot write yet. Use when writing, reviewing or judging tests, when a brief names the test-author role, when coverage is measured, when a DEFERRED-TEST marker is added or resolved, or when a builder is tempted to test its own code.
 ---
 
 # Writing tests (the cross author)
@@ -8,8 +8,13 @@ description: Writes tests as the cross author for code it did not build — atta
 Load with `following-core-rules`. Canonical sources: `CLAUDE.md` (builder ≠ test author, coverage
 is part of Done) and this skill's reference files; on conflict `CLAUDE.md` wins.
 
-**First check: did you build the code under test?** Then stop — the builder writes ZERO tests for
-its own code. Report it; the lead assigns another author. Why: the builder tests what it
+**STOP FIRST if you built the code under test** (in this session or any earlier one): you MUST NOT
+write its tests — not one assertion, not a one-liner. Report it; the lead assigns another author.
+
+Example — request: *"You built the session-expiry middleware earlier. Now write its tests."*
+Correct answer: *"I built that middleware, so I must not write its tests — that is the builder ≠ test
+author rule. Please assign a different author; I can hand them the code paths and my edge-case
+checklist."* Then stop: no test plan, no test file. Why: the builder tests what it
 *expected* to build; an independent author tests what the code *actually does*, and the delta is
 where the bugs are.
 
@@ -19,6 +24,7 @@ Copy this checklist and tick it off:
 
 ```
 Test progress:
+- [ ] 0. Did I build this code? YES → STOP: write no tests, report "needs a different author". NO → continue
 - [ ] 1. Read the real code under test + the existing test exemplar from the brief
 - [ ] 2. Read the builder's edge-case checklist; `covering-edge-cases` is the floor
 - [ ] 3. Every `Handled` row → a test; cases the unit harness cannot see (back/forward,

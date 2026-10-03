@@ -7,7 +7,9 @@ description: Writes or revises a harness skill (a .claude/skills/«name»/SKILL.
 
 The source standard is Anthropic's "Skill authoring best practices"
 (platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices). This file is the
-harness's working subset; on conflict, the source wins.
+harness's working subset; on conflict, the source wins — with one deliberate exception: the source
+says to test skills with Haiku too; this harness never uses Haiku (model floor: Sonnet), so skills
+are tested with Sonnet and Opus.
 
 ## Workflow
 
@@ -20,7 +22,7 @@ Skill progress:
 - [ ] 3. Body: the procedure as a checklist; detail moved to reference/ files
 - [ ] 4. Validate: scripts/check-skills.sh — fix every finding, re-run until clean
 - [ ] 5. Links: scripts/check-doc-links.sh and scripts/check-doc-paths.sh clean
-- [ ] 6. Try it: run one eval scenario with a fresh agent; fix what it missed
+- [ ] 6. Try it: run the eval scenarios with a fresh Sonnet and Opus agent; fix what it missed
 ```
 
 ## Frontmatter
@@ -42,6 +44,8 @@ Skill progress:
 - **Degrees of freedom match the risk:** exact commands for fragile or destructive steps
   ("run exactly …"); heuristics where judgment is the point.
 - **One default, one escape hatch** — never a menu of equal options.
+- **Stop conditions go IN the checklist** (step 0), with one concrete request → correct-answer
+  example. Rules that live only in prose above a checklist get skipped (evals/RESULTS.md, Run 2).
 - **Progressive disclosure:** long tables, catalogs and rationale go to `reference/<topic>.md`
   inside the skill folder, linked **directly from SKILL.md** (one level deep — a reference file
   never sends the reader to another reference file). Reference files over 100 lines open with a

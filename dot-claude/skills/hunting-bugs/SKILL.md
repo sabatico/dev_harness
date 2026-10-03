@@ -82,6 +82,9 @@ different bugs — judge and merge.
   `BUG` (top severity if it risks an invariant).
 - "No bug, just untested" → the proposed-tasks list, not the register.
 
+**6 — Unit verdict.** Each unit ends with a verdict: **CLEAN / FINDINGS(n) / NOT-HUNTED** — and
+NOT-HUNTED is stated out loud in the report, never silently dropped. Then the next unit.
+
 **7 — Report and close-out.** Append to `docs/bug-hunt-log.md` (dated, newest first):
 1. the **coverage map** — units clean / findings / not-hunted, the remainder named as the next wave
    (NOT-HUNTED is stated out loud, never silently dropped);

@@ -1,16 +1,21 @@
 [
   {
-    "skills": ["communicating-with-the-owner"],
+    "skills": [
+      "communicating-with-the-owner"
+    ],
     "query": "Write the end-of-session update for the owner. Draft: 'Closed BUG-13 + SEC-4, ADR-011 Accepted, FEAT-2 unblocked, gates green, P1 escape analysis done.'",
     "files": [],
     "expected_behavior": [
       "Rewrites it so it ends in plain language a reader who missed the session understands",
       "Glosses every ticket ID, decision number and acronym in the same sentence, or drops it",
-      "Keeps honest numbers (including zeros) and says what, if anything, waits on the owner"
+      "Keeps honest numbers (including zeros) and says what, if anything, waits on the owner",
+      "Never invents what an ID is about: each gloss is looked up in its register / decision record, and an ID that cannot be found is reported as not found or left out"
     ]
   },
   {
-    "skills": ["communicating-with-the-owner"],
+    "skills": [
+      "communicating-with-the-owner"
+    ],
     "query": "Ask the owner which model should handle BUG-236.",
     "files": [],
     "expected_behavior": [
@@ -20,7 +25,9 @@
     ]
   },
   {
-    "skills": ["communicating-with-the-owner"],
+    "skills": [
+      "communicating-with-the-owner"
+    ],
     "query": "It's the first session of the week. Also, add a board card for building the CSV export feature.",
     "files": [],
     "expected_behavior": [

@@ -21,14 +21,15 @@ the same module".
 | Role | Tier | Owns |
 |---|---|---|
 | **Lead / integrator** | strong | the contract boundary, integration, the running files, final judgment, hard or security-critical code, decision records. Never delegates judgment. |
-| **Builder** | cheap–mid | one scoped multi-file slice, in its own worktree, on a disjoint file set; ships the slice's edge-case checklist (`covering-edge-cases`: Handled / N/A-why / DEFERRED). Writes ZERO tests for its own code. |
+| **Builder** | mid | one scoped multi-file slice, in its own worktree, on a disjoint file set; ships the slice's edge-case checklist (`covering-edge-cases`: Handled / N/A-why / DEFERRED). Writes ZERO tests for its own code. |
 | **Test author (cross author)** | ≠ builder | tests for code it did not write; attacks the builder's checklist AND proposes its own extra cases → lead/owner ruling → approved ones become tests and fold into the catalog (`writing-tests`). |
 | **Second reviewer** | ≠ lead | the independent pass in a quality review (`reviewing-code-quality`). |
 | **Second ideator** | ≠ lead | debates a hard decision so the lead is not reasoning alone (`recording-decisions`). |
-| **Scribe** | cheap | documents each finished item into the running files. |
+| **Scribe** | mid | documents each finished item into the running files. |
 
-**Model policy:** routine → «cheap model»; mid → «mid model»; hard, risky or security-critical
-(«e.g. auth, payments, data migrations») → «strong model» (the lead). The lead may play several
+**Model policy:** routine and mid → «mid model»; hard, risky or security-critical
+(«e.g. auth, payments, data migrations») → «strong model» (the lead). **Floor: Sonnet — never spawn
+Haiku**, for any role, including evals. The lead may play several
 roles in one session; what must never collapse is **test authorship and second opinions coming
 from a different vantage point than the work being checked**.
 
