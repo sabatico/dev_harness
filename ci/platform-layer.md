@@ -209,6 +209,17 @@ up / right / wrong / what the claim check flags. It spends money — owner-trigg
 standalone CLI must be logged in (`claude`, `/login`); a run returning "Not logged in" is refused as
 a measurement.
 
+**Benchmarking versions from outside** (a separate, private benchmark project). `harness-eval.sh`
+measures one version inside one project; comparing VERSIONS needs a frozen practice project, sealed
+sessions and repeated runs, and its answer key must never sit where harness authors work: an author
+who has read the exam tunes the harness to it, and every later result is poisoned. Keep the benchmark
+in its own repository and make it unreadable from harness sessions in `.claude/settings.local.json`
+(per machine): `permissions.deny` Read/Edit/Write rules on its path stop the tools, but a shell
+wildcard (`cat */bench/…`) or `grep -r` walks straight past them — measured — so also enable the Bash
+sandbox with `filesystem.denyRead` on the same path and `allowUnsandboxedCommands: false`, allowing
+only the git host in `network.allowedDomains`. Prove it with a canary file read every way a shell can.
+Only verdicts and per-version means come back into `CHANGELOG.md`.
+
 **Post-compaction warning** (`scripts/hook-session-start.sh`, `source == compact`): facts read before
 a compaction survive only as paraphrase; the brief says so at the one moment it is certainly true.
 

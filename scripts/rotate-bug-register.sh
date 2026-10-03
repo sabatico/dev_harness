@@ -108,34 +108,44 @@ for i, l in enumerate(lines):
     keep.append((i, l))
 
 ids = lambda rows: [cells(l)[1] for _, l in rows]
+# Misfiled rows join the closed table (recent) or the archive (old) VERBATIM — so only when the closed table has
+# the SAME columns (same header names). A template whose closed table uses a different schema (e.g. "Found →
+# Closed | Fix | Verified by") needs a human rewrite; moving verbatim would corrupt it. Compare header NAMES, not
+# counts: the kit's own template has 7 columns in both tables, differently named. A closed section with NO table
+# header cannot prove the schemas match, so it blocks too. Decided BEFORE the dry-run/--check report, so the
+# preview says exactly what a real run will do.
+hdr = next((l for i, l in enumerate(lines) if i > ci and l.startswith('| ID')), None)
+ohdr = next((l for i, l in enumerate(lines) if oi is not None and oi < i < ci and l.startswith('| ID')), None)
+schema_differs = bool(ohdr and (hdr is None or [c.lower() for c in cells(hdr)] != [c.lower() for c in cells(ohdr)]))
+blocked = []
+if schema_differs:
+    blocked = to_closed + [(i, l) for i, l in to_archive if i < ci]
+    to_archive = [(i, l) for i, l in to_archive if i > ci]
+    to_closed = []
+    keep = sorted(keep + blocked)
+
 stay = sum(1 for i, l in keep if i > ci and ROW.match(l))
 print(f"cutoff {cutoff}: {len(to_archive)} closed row(s) to archive, {len(to_closed)} closed row(s) "
       f"misfiled in the OPEN table to move to the closed table, {stay} stay in the closed table")
+if blocked:
+    print(f"✗ {len(blocked)} closed row(s) still in the OPEN table ({', '.join(ids(blocked))}): the closed table "
+          f"{'has no header' if hdr is None else 'uses a different schema'} — rewrite each as a closed row by hand; "
+          "it then rotates normally")
 if mode in ('dry', 'check') or not (to_archive or to_closed):
     for tag, rows in (("archive", to_archive), ("closed table", to_closed)):
         if rows: print(f"  → {tag}: {', '.join(ids(rows)[:12])}{' …' if len(rows) > 12 else ''}")
     if mode == 'check' and (to_archive or to_closed):
         print("✗ rotation due — run scripts/rotate-bug-register.sh (verbatim move; ids are conserved)")
-        sys.exit(1)
-    sys.exit(0)
+    sys.exit(1 if (blocked or (mode == 'check' and (to_archive or to_closed))) else 0)
 
-# Misfiled-but-recent rows join the END of the closed table's row block (before the analysis prose) —
-# but only when the closed table has the SAME columns (same header names). A template whose closed table uses a different
-# schema (e.g. "Found → Closed | Fix | Verified by") needs a human rewrite; moving verbatim would corrupt it.
-# Compare header NAMES, not counts: the kit's own template has 7 columns in both tables, differently named.
-hdr = next((l for i, l in enumerate(lines) if i > ci and l.startswith('| ID')), None)
-ohdr = next((l for i, l in enumerate(lines) if oi is not None and oi < i < ci and l.startswith('| ID')), None)
-if to_closed and hdr and ohdr and [c.lower() for c in cells(hdr)] != [c.lower() for c in cells(ohdr)]:
-    keep = sorted(keep + to_closed); to_closed_blocked = to_closed; to_closed = []
-    print(f"✗ {len(to_closed_blocked)} recently-fixed row(s) in the OPEN table ({', '.join(ids(to_closed_blocked))}): the closed "
-          "table uses a different schema — rewrite each as a closed row by hand (they archive on their own once past the cutoff)")
-    if not to_archive: sys.exit(1)
 out = [l for _, l in keep]
 if to_closed:
     kept_idx = [i for i, _ in keep]
     last_row = max((k for k, (i, l) in enumerate(keep) if i > ci and ROW.match(l)), default=None)
     if last_row is None:  # empty closed table: insert after its |---| separator
-        last_row = next(k for k, (i, l) in enumerate(keep) if i > ci and l.startswith('|---'))
+        last_row = next((k for k, (i, l) in enumerate(keep) if i > ci and l.startswith('|---')), None)
+        if last_row is None:  # reachable when the open table's header isn't a literal "| ID" (schema then unprovable); never crash
+            print("✗ the closed section has no table to move rows into — refusing to touch anything"); sys.exit(1)
     out = out[:last_row + 1] + [l for _, l in to_closed] + out[last_row + 1:]
 
 try:
@@ -148,11 +158,14 @@ except FileNotFoundError:
         "> VERBATIM — same columns, same ids; a `BUG-NNN` lives in exactly one of the two files.\n"
         "> Anything that counts bugs must read both files. Append-only; never reopen a row\n"
         "> here — a regression is a NEW bug row in the live register citing the old id.\n\n"
-        "| ID | Sev | Found | Where/how found | Summary | Status | Detail |\n"
-        "|---|---|---|---|---|---|---|\n")
+        # the archive's columns are the CLOSED table's (that is what rotates here), copied from the register itself
+        + ((hdr.rstrip() + "\n" + "|" + "---|" * len([c for c in cells(hdr.strip())[1:] if c or not hdr.strip().endswith('|')]) + "\n") if hdr else
+           "| ID | Sev | Found → Closed | Summary | Fix (commit) | Verified by | Escape analysis |\n"
+           "|---|---|---|---|---|---|---|\n"))
 if to_archive:
     open(ARC, 'w').write(arc.rstrip('\n') + '\n' + '\n'.join(l for _, l in to_archive) + '\n')
 open(REG, 'w').write('\n'.join(out))
 moved = ids(to_archive) + ids(to_closed)
 print(f"moved: {', '.join(moved[:8])}{' …' if len(moved) > 8 else ''}")
+sys.exit(1 if blocked else 0)  # rows still waiting for a hand rewrite: same answer as --check and --dry-run
 PY
