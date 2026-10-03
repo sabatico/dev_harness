@@ -18,17 +18,17 @@ numbering stays stable across projects that already cite it.
 | 1 | **Constitution** | One file, loaded every session, is the supreme law. | `CLAUDE.md` |
 | 2 | **Running files** | The project's state lives in living docs, updated at the end of **every** act. | `running-files/*` |
 | 3 | **Decisions** | Hard/irreversible choices become ADRs; never re-litigate a locked one. | `running-files/adr/` |
-| 4 | **Roles & orchestration** | A strong "lead" integrates; parallel work goes to isolated agents; tests are authored by a *different* agent than the builder. | `sops/agents-and-roles.md` |
-| 5 | **Quality reviews** | "Quality review" = a repeatable 5-axis SOP (code, tests, observability, edge cases, **doc-claim truth**): lead + an independent second reviewer, lead judges, commit as the new baseline. | `sops/quality-review.md` |
-| 6 | **Test & coverage discipline** | Coverage is part of Done; blocked tests are deferred-and-registered, never dropped. | `sops/test-and-coverage.md` |
+| 4 | **Roles & orchestration** | A strong "lead" integrates; parallel work goes to isolated agents; tests are authored by a *different* agent than the builder. | the `orchestrating-agents` skill |
+| 5 | **Quality reviews** | "Quality review" = a repeatable 5-axis SOP (code, tests, observability, edge cases, **doc-claim truth**): lead + an independent second reviewer, lead judges, commit as the new baseline. | the `reviewing-code-quality` skill |
+| 6 | **Test & coverage discipline** | Coverage is part of Done; blocked tests are deferred-and-registered, never dropped. | the `writing-tests` skill |
 | 7 | **Guardrails & safety** | Name the 1–3 invariants that must never break; confirm destructive actions; never leak secrets. | (in `CLAUDE.md`) |
 | 8 | **Verify, don't assume** | "Done" means build + tests + gates are green and you watched them pass. **And the gates themselves are code that fails in ways that look like success** — a gate must refuse to report green over an empty scan, capture its own output, and be watched failing before it is trusted. | (in `CLAUDE.md` DoD), `ci/gates.md` (Gate INTEGRITY), `ci/run-integrity.md` (multi-stage runs) |
 | 8b | **Recall is not a source** | A remembered fact arrives feeling exactly as certain as one just read, so "check when unsure" can never fire. Four **shapes** always get a lookup: a path, a quantity, what a document says, a result. Code names the decision that governs it, both directions. | (in `CLAUDE.md` standing rules) |
 | 8c | **Controls have a WHEN, not just a WHAT** | A gate that is correct but late, wired to its weaker mode, or never loaded protects nothing — and all three print green. Fire cheap checks **at the write**; block on fact errors, advise on work-in-progress; verify a control **the way production triggers it**. | `ci/control-timing.md` |
 | 8d | **A run that scanned nothing is not a clean run** | Multi-stage jobs record what each stage **actually did** in a manifest that outranks the tool output, and end in an explicit **COMPLETE / INCOMPLETE** verdict. A detector whose output is a zero proves it can still fire, every run. | `ci/run-integrity.md`, `scripts/lib/manifest.sh` |
-| 9 | **Adversarial quality** | Abnormal-usage + hostile-input coverage is owned at build/test/review; a defect-only **bug hunt** sweeps on demand; every escape patches the process. Reviews & hunts file findings as `BUG`/`SEC` tickets unless fixable inline. | `sops/edge-case-catalog.md`, `sops/bug-hunt.md`, `running-files/tickets/bug-register.md`, `running-files/tickets/security.md` |
-| 9b | **The perpendicular axis** | Unit-local testing asks *"is this unit correct?"*. A separate pass asks *"does this PROPERTY hold **everywhere**, and what is NOT in my work list?"* — the class that was **30% of one project's defect register**. Answers are declared per operation and gated from the contract. | `sops/security-properties.md` |
-| 10 | **One truth + a human-readable surface** | One home per fact — boards/trackers COORDINATE, files DECIDE; counts are generated, claims are audited; the owner gets plain language + a weekly digest; agents get their rules as task-type **skills**, not memory. | `sops/owner-communication.md`, `sops/agent-skills.md`, `ci/gates.md` |
+| 9 | **Adversarial quality** | Abnormal-usage + hostile-input coverage is owned at build/test/review; a defect-only **bug hunt** sweeps on demand; every escape patches the process. Reviews & hunts file findings as `BUG`/`SEC` tickets unless fixable inline. | the `covering-edge-cases` skill, the `hunting-bugs` skill, `running-files/tickets/bug-register.md`, `running-files/tickets/security.md` |
+| 9b | **The perpendicular axis** | Unit-local testing asks *"is this unit correct?"*. A separate pass asks *"does this PROPERTY hold **everywhere**, and what is NOT in my work list?"* — the class that was **30% of one project's defect register**. Answers are declared per operation and gated from the contract. | the `hardening-security` skill |
+| 10 | **One truth + a human-readable surface** | One home per fact — boards/trackers COORDINATE, files DECIDE; counts are generated, claims are audited; the owner gets plain language + a weekly digest; agents get their rules as task-type **skills**, not memory. | the `communicating-with-the-owner` skill, the `orchestrating-agents` skill, `ci/gates.md` |
 | 10b | **The platform layer** | The agent platform's own primitives carry the rules prose can't: a PreToolUse **guard** denies the un-undoable BEFORE it runs — judged on the commands a string actually runs, and including any attempt to switch the guard itself off; a SessionStart **banner** proves hooks loaded (an unprotected session is otherwise invisible); path-scoped **rules** load on touch; SOPs are **skills**; retrieval is **delegated** to a read-only librarian agent that answers in verbatim quotes with per-surface hit accounting; end-of-turn and after-tool checks flag code left unverified and the same failing call repeated. | `ci/platform-layer.md`, `dot-claude/`, `scripts/hook-*.sh`, `scripts/librarian-sweep.sh` |
 
 ---
@@ -141,16 +141,20 @@ dev_harness/
 │   ├── selftest.sh                 ←   plants a violation per gate IN YOUR LANGUAGE (--all-stacks)
 │   ├── predicates-test.sh          ←   that the shared skip-scope has not gone over-broad
 │   └── lib/{common,manifest}.sh    ←   the shared exit vocabulary + the manifest/verdict library
-├── sops/
-│   ├── quality-review.md           ← 5-axis review (quality · tests+coverage · observability · edge-case coverage · doc-claim truth) → lead + independent 2nd → judge → quality-review: commit
-│   ├── test-and-coverage.md        ← cross-authored tests + coverage-as-Done + deferred-test discipline + the edge-case enrichment loop
-│   ├── edge-case-catalog.md        ← the growing catalog of unexpected user/data behavior (families A–I); instantiated per feature at build/test/review
-│   ├── bug-hunt.md                 ← the defect-only adversarial sweep (invent-nastier duty); DIFFERENT from a quality review
-│   ├── security-properties.md      ← the perpendicular axis: the five questions, P1–P8, the gated property matrix
-│   ├── agents-and-roles.md         ← roles, when to spawn, worktree isolation, integrate-before-removal
-│   ├── decisions-adr.md            ← ADR format + the second-ideator rule + locking
-│   ├── ui-development-guardrails.md ← tokens + components + zero inline styles + the three-width review; read before any UI work
-│   └── mockup-implementation.md    ← design mockup → pixel-perfect: structure preservation + extract values + rendered-HTML diff
+├── dot-claude/skills/             ← the operating procedures as Claude Code skills (installed to .claude/skills/; loaded when their task comes up)
+│   ├── reviewing-code-quality/     ← 5-axis review (quality · tests+coverage · observability · edge-case coverage · doc-claim truth) → lead + independent 2nd → judge → quality-review: commit
+│   ├── hunting-bugs/               ← the defect-only adversarial sweep (invent-nastier duty); DIFFERENT from a quality review
+│   ├── covering-edge-cases/        ← the growing catalog of unexpected user/data behavior (families A–I); instantiated per feature at build/test/review
+│   ├── hardening-security/         ← the 30-door pre-launch map + the perpendicular axis (five questions, P1–P8, gated property matrix)
+│   ├── orchestrating-agents/       ← roles, when to spawn, briefs built from skills, worktree isolation, integrate-before-removal
+│   ├── following-core-rules/ · writing-code/ · writing-tests/ · writing-docs/ · reviewing-adversarially/ · building-ui/
+│   │                               ← the task-type briefing skills every sub-agent brief names (core + exactly one task type)
+│   ├── recording-decisions/        ← ADR format + the second-ideator rule + locking
+│   ├── communicating-with-the-owner/ ← plain-language reports, ticket sentences, the weekly digest
+│   ├── implementing-mockups/       ← design mockup → pixel-perfect: structure preservation + extract values + rendered-HTML diff
+│   ├── consulting-the-librarian/   ← delegates corpus questions to the read-only librarian (forked, pre-swept)
+│   └── authoring-skills/           ← how every skill here is written (Anthropic Agent Skills best practices); linted by scripts/check-skills.sh
+├── evals/                          ← three evaluation scenarios per skill (evals/README.md)
 └── running-files/                  ← the project's living memory (updated at the end of every act)
     ├── ONBOARDING.md               ← current state + append-only session log
     ├── runner.md                   ← the ACTIVE wave's in-flight ENGINEERING work
@@ -221,7 +225,7 @@ than allowing blind. Then:
 
 1. Fill every `«SLOT»` in `CLAUDE.md`.
 2. Copy `running-files/*` into the repo (e.g. under `docs/`); fill the headers.
-3. Keep the `sops/*` either in the repo (`docs/sops/`) or linked from `CLAUDE.md`.
+3. Keep the skills in `.claude/skills/` (`scripts/init.sh` installs them); `scripts/check-skills.sh` keeps them to the Agent Skills standard.
 4. Pick the project's **invariants** (pillar 7) — the 1–3 properties that must never break — and write the guardrail tests for them first.
 5. Set up the **gates**. Copy `harness.conf.example` → `harness.conf`, fill in every path, copy
    `scripts/` into the repo, and run `scripts/run-all-gates.sh`. Add your stack's build, test,
@@ -268,7 +272,7 @@ or `off`; nothing else changes.
 - **Blameless post-mortems** — SRE practice; here the per-bug **escape analysis** that patches the process, not just the code.
 - **A per-repo agent constitution (`CLAUDE.md`) and worktree-isolated parallel agents** — the genuinely agent-era parts.
 
-See `sops/` for the operating procedures and `running-files/` for the templates.
+See `dot-claude/skills/` for the operating procedures (as Claude Code skills) and `running-files/` for the templates.
 
 ## License
 

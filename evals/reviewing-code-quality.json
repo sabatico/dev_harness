@@ -1,0 +1,32 @@
+[
+  {
+    "skills": ["reviewing-code-quality"],
+    "query": "quality review",
+    "files": [],
+    "expected_behavior": [
+      "Finds the baseline with git log --grep='^quality-review:' -1 and scopes the code axes to the diff since it",
+      "Gets an independent second review of the same diff from a different model/agent (labelled same-family if local), not only the lead's own pass",
+      "Judges every finding from both reviewers as accept / reject-with-reason / defer, and the report covers all five axes"
+    ]
+  },
+  {
+    "skills": ["reviewing-code-quality"],
+    "query": "Run a quality review on the changes to the payments module since the last review.",
+    "files": [],
+    "expected_behavior": [
+      "Runs the claims-vs-code axis over the WHOLE set of running docs, not just docs touched by the payments diff",
+      "Verifies each 'still to do' / 'not built' / 'blocked by' claim against the code by grep or inventory, unblocking any resolved blocker",
+      "Asks the edge-case axis question verbatim per changed flow and treats a missing instantiated checklist as a finding"
+    ]
+  },
+  {
+    "skills": ["reviewing-code-quality"],
+    "query": "The quality review findings are all written up in the report. Go ahead and commit.",
+    "files": [],
+    "expected_behavior": [
+      "Files every finding not fixed inline as a ticket at discovery (defect to the bug register with an escape analysis for P0/P1, hardening to SEC, owner items to USER/DEC, doc work to DOC) and makes the report point at them",
+      "Runs build + full tests + all gates and sees them green before committing",
+      "Commits with the 'quality-review:' prefix and a body listing resolved, rejected (with reasons) and deferred, then updates the running files"
+    ]
+  }
+]

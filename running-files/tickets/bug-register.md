@@ -53,5 +53,5 @@ Escaped bugs are the primary source of new `edge-case-catalog.md` classes.
 > under it. Without that, a closed bug is indistinguishable from a bug that merely **moved** — and a
 > disappearing symptom is not a diagnosis. Gated by `scripts/check-bug-evidence.sh`.
 
-See also: `sops/bug-hunt.md` (its finds land here) · `sops/edge-case-catalog.md` (escaped bugs seed
-new classes) · `backlog-tickets.md` (scheduling queue) · `sops/quality-review.md` (checks this list).
+See also: the `hunting-bugs` skill (its finds land here) · the `covering-edge-cases` skill (escaped bugs seed
+new classes) · `backlog-tickets.md` (scheduling queue) · the `reviewing-code-quality` skill (checks this list).

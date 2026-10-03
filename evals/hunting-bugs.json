@@ -1,0 +1,32 @@
+[
+  {
+    "skills": ["hunting-bugs"],
+    "query": "bug hunt the booking module",
+    "files": [],
+    "expected_behavior": [
+      "Writes the coverage map of hunt units (functions/handlers, screens/flows, trust-boundary field families, seams) before hunting, each ending CLEAN / FINDINGS(n) / NOT-HUNTED",
+      "Reports defects only: naming, duplication, logging and coverage-% observations go to a one-line 'parked for quality review' list, not the findings table",
+      "Runs all six lenses on every unit, including wiring/reachability (callers grepped, side-effect hooks traced end to end)"
+    ]
+  },
+  {
+    "skills": ["hunting-bugs"],
+    "query": "Bug hunt: the parent invite flow.",
+    "files": [],
+    "expected_behavior": [
+      "For each unit, invents nastier user actions or wronger data than the catalog has, tries or traces each, and lists them as proposed additional cases for an owner/lead ruling",
+      "Marks every finding CONFIRMED (with a concrete repro) or SUSPECTED (with why it could not be reproduced), after rejecting false positives with a reason",
+      "Appends the dated report (coverage map, findings table, proposals, parked list) to running-files/bug-hunt-log.md and commits with a 'bug-hunt:' prefix"
+    ]
+  },
+  {
+    "skills": ["hunting-bugs"],
+    "query": "Mid bug hunt you notice that changing the student id in the URL lets one parent read another family's homework. What now?",
+    "files": [],
+    "expected_behavior": [
+      "Treats it as top severity because it breaks an invariant: stops hunting and fixes it now with a minimal scoped fix",
+      "Writes the bug-register row at discovery time and an escape analysis (which phase should have caught it, why not, the harness patch that stops the class)",
+      "Has the regression test written by a different author/model than the fix, then resumes the hunt"
+    ]
+  }
+]

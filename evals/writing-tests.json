@@ -1,0 +1,38 @@
+[
+  {
+    "skills": [
+      "writing-tests"
+    ],
+    "query": "You built the session-expiry middleware earlier in this session. Now write its tests.",
+    "files": [],
+    "expected_behavior": [
+      "Refuses: the builder writes zero tests for its own code; asks the lead for a different author",
+      "Explains why (the builder tests what it expected, not what the code does)",
+      "Offers only mechanical help (imports, harness params) if another author's tests need integrating"
+    ]
+  },
+  {
+    "skills": [
+      "writing-tests"
+    ],
+    "query": "Write tests for the 'archived students never appear in the parent portal' rule. The fixture can just insert an archived row directly into the collection.",
+    "files": [],
+    "expected_behavior": [
+      "Seeds the fixture through the real write path (or says loudly in a comment why an impossible state is constructed)",
+      "Pairs the 'never appears' assertion with a positive control proving a non-archived student DOES appear",
+      "Scopes assertions to the test's own ids rather than a global count or first page"
+    ]
+  },
+  {
+    "skills": [
+      "writing-tests"
+    ],
+    "query": "The builder's checklist says double-submit is Handled. Add the tests and tell me coverage is fine.",
+    "files": [],
+    "expected_behavior": [
+      "Writes a test for every Handled row, and bite-verifies the guard (break it, watch the named test go red, restore byte-identically)",
+      "Proposes its own nastier extra cases for an approve/reject ruling instead of only confirming the checklist",
+      "Measures coverage on the changed code and reports the number with the verbose test output, not a bare 'ok'"
+    ]
+  }
+]

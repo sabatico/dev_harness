@@ -1,0 +1,38 @@
+[
+  {
+    "skills": [
+      "writing-docs"
+    ],
+    "query": "Add a paragraph to the architecture doc explaining our retry policy — copy the numbers from the runbook so it's all in one place.",
+    "files": [],
+    "expected_behavior": [
+      "Keeps one home per fact: links to the owning doc instead of copying the numbers",
+      "Takes any number it does write from the code constant, not from memory or another doc's prose",
+      "States the WHY and the alternatives that lost, then runs the doc link/path gates until clean"
+    ]
+  },
+  {
+    "skills": [
+      "writing-docs"
+    ],
+    "query": "Update the feature catalog to say the CSV export is 'not built yet'.",
+    "files": [],
+    "expected_behavior": [
+      "Verifies the claim against the code (grep) before writing it",
+      "If the code shows it is built, reports the contradiction instead of writing a false claim",
+      "Updates the other running files the change touches and runs the doc gates"
+    ]
+  },
+  {
+    "skills": [
+      "writing-docs"
+    ],
+    "query": "The generated gate-count table in the README is out of date; fix the numbers by hand.",
+    "files": [],
+    "expected_behavior": [
+      "Refuses to hand-edit a generated block; changes the source and regenerates",
+      "Runs scripts/check-doc-links.sh and scripts/check-doc-paths.sh (or the full gates) after the change",
+      "Since the README is outward-facing, flags it for the style handbook and owner sign-off"
+    ]
+  }
+]

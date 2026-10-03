@@ -1,43 +1,46 @@
 # scripts/ — the executable layer
 
-Everything else in this kit is conventions and SOPs: the agent reads them and follows them. **This
-directory is the part that does not depend on anyone reading anything.**
+Everything else in this kit is conventions the agent reads and follows. **This directory does not
+depend on anyone reading anything.** Over one audited session, of ten defects the count caught by *a
+rule that was read and complied with* was **zero**; gates caught three (README, evidence section). So
+prose sets direction; these scripts hold the line.
 
-It exists because of a measurement worth repeating (see the README's evidence section): over one
-audited session, of ten defects, the count caught by *a rule that was read and being complied with*
-was **zero**. Gates caught three. So the prose sets direction; these scripts hold the line.
+## Contents
 
-## Status — verified, and what that does and does not mean
+- Status — run the self-test first
+- Setup
+- What is here
+- The exit vocabulary
+- The push receipt (G4)
+- Measure before you enforce
+- Portability
+- Platform-layer hooks
 
-Run this first, and after any change to a gate:
+## Status — run the self-test first
+
+Run after any change to a gate:
 
 ```sh
 scripts/selftest.sh
 ```
 
-For every gate it builds a throwaway fixture project and asserts three things: the clean fixture
-**passes**, a planted violation makes it **fail**, and removing the plant makes it **pass again**.
-That third assertion matters as much as the second — a gate that fails on everything also "catches"
-the plant.
+For every gate it builds a throwaway fixture project and asserts: the clean fixture **passes**, a
+planted violation makes it **fail**, and removing the plant makes it **pass again** (a gate that
+fails on everything also "catches" the plant).
 
-**All 8 gates currently pass their self-test.** It is not decoration: the first run found
-`check-log-hygiene.sh` completely **blind** — its function match was case-sensitive, so it saw none of the
-capitalised forms every ecosystem actually uses, and reported a confident zero on a line that
-logged a password. Three other gates were fixed the same way (a register format it could not parse, a resolver
-that flagged correct prose, and one that flagged itself).
+**What it proves:** each gate can see the specific violation it claims to catch, and does not fire on
+a clean tree. Its first run found `check-log-hygiene.sh` completely **blind** — a case-sensitive
+function match saw none of the capitalised forms every ecosystem uses and reported a confident zero
+on a line that logged a password; three other gates were fixed the same way (an unparseable register
+format, a resolver that flagged correct prose, one that flagged itself).
 
-**What the self-test proves:** each gate can see the specific violation it claims to catch, and does
-not fire on a clean tree.
+**What it does NOT prove** (`gates.md` G5): that a gate catches every real-world variant of its class.
+`check-log-hygiene.sh` is a name-based heuristic and cannot see a secret in a neutrally-named
+variable; `check-citations.sh` proves a pointer exists, never that it points anywhere true.
 
-**What it does NOT prove** (`gates.md` G5, and worth stating because a green here is easy to
-over-read): that a gate catches every real-world variant of its class. `check-log-hygiene.sh` is a
-name-based heuristic and cannot see a secret flowing through a neutrally-named variable;
-`check-citations.sh` proves a pointer exists, never that it points anywhere true. The self-test raises
-the floor. It does not make any of these proofs.
-
-**And it does not prove WIRING.** `selftest.sh` calls the scripts directly, which is exactly the
-verification `ci/control-timing.md` C4 warns is insufficient. Before trusting the write-time hook,
-trigger it the way production does — edit a real file through your agent and watch the block arrive.
+**It does not prove WIRING either.** `selftest.sh` calls the scripts directly — the verification
+`ci/control-timing.md` C4 warns is insufficient. Before trusting the write-time hook, edit a real file
+through your agent and watch the block arrive.
 
 ## Setup
 
@@ -47,16 +50,16 @@ cp -r scripts <your-repo>/scripts
 scripts/run-all-gates.sh
 ```
 
-`harness.conf` is the only file you edit. Nothing here hardcodes a language, directory layout or
-project name: the language-shaped facts come from a **stack pack** (`stacks/<name>.conf`, selected
-by `HARNESS_STACK`) and everything else from the config. See `stacks/README.md`. A setting left empty **disables** the gate
+`harness.conf` is the only file you edit. Nothing here hardcodes a language, layout or project name:
+language-shaped facts come from a **stack pack** (`stacks/<name>.conf`, selected by `HARNESS_STACK`;
+see `stacks/README.md`), everything else from the config. A setting left empty **disables** the gate
 that needs it, and the gate says so out loud — an unconfigured check reports INCOMPLETE, never PASS.
 
 ## What is here
 
 | Script | Enforces | Notes |
 |---|---|---|
-| `selftest.sh` | **that every other gate here actually fails on its own violation** | run it first, and after touching any gate |
+| `selftest.sh` | **that every other gate here actually fails on its own violation** | run first, and after touching any gate |
 | `init.sh` | bootstraps a fresh clone into a project skeleton | deletes nothing; prints a prune list |
 | `run-all-gates.sh` | the whole fast tier, then optional suites; writes the G4 push receipt on green | tiered: bare, `--full`, `--lint`, `--all`; `--verify-receipt` re-checks the tree |
 | `hook-fast-gates.sh` | the sub-second gates **at the moment of the write** | see `ci/control-timing.md`; blocking on docs, advisory on code |
@@ -85,35 +88,28 @@ that needs it, and the gate says so out loud — an unconfigured check reports I
                force the run to INCOMPLETE.
 ```
 
-**3 vs 4 is the whole point of having four codes.** Collapsing them either hides a real hole
-(everything becomes N/A) or trains people to ignore the verdict (everything becomes INCOMPLETE).
-`lib/common.sh` gives you `gate_incomplete` and `gate_not_applicable` — use the right one.
-
-**`3` is the one that matters.** A check that scanned nothing must never exit `0`. Every expensive
-failure this harness is built around comes from "nothing was checked" rendering as "nothing was
-wrong". If you add a gate and skip this, you have added a control that lies in the reassuring
-direction.
+**3 vs 4 is the point of having four codes:** collapsing them either hides a real hole (everything
+becomes N/A) or trains people to ignore the verdict (everything becomes INCOMPLETE). `lib/common.sh`
+gives you `gate_incomplete` and `gate_not_applicable` — use the right one. **A check that scanned
+nothing must never exit `0`**: every expensive failure this harness is built around is "nothing was
+checked" rendering as "nothing was wrong".
 
 ## The push receipt (G4) — "gates passed" vs "gates passed on THIS code"
 
-`run-all-gates.sh` writes `.gate-receipt` when a run is COMPLETE with zero findings, and only then:
-a receipt over an INCOMPLETE run would certify a tree the gates never covered.
+`run-all-gates.sh` writes `.gate-receipt` only when a run is COMPLETE with zero findings (a receipt
+over an INCOMPLETE run would certify a tree the gates never covered).
 
 ```sh
 scripts/run-all-gates.sh                   # green → writes the receipt
 scripts/run-all-gates.sh --verify-receipt  # 0 = still this tree · 1 = stale · 3 = no receipt
 ```
 
-Wire `--verify-receipt` into a pre-push hook and the gap between verifying and pushing closes. Two
-details from G4 are load-bearing and are implemented in **one** shared function
-(`harness_tree_hash` in `lib/common.sh`): untracked-but-unignored files are **included** (the file
-you just wrote is the code most likely to be unverified), and writer and checker hash **identically**
-— two implementations drift, and the first symptom is a hook refusing the run that created it.
-
-It also honours G1's hashing corollary: **it refuses to emit a digest over an empty enumeration.**
-The hash of nothing is stable, so a receipt written while enumeration was broken would happily match
-a later check made while it was still broken — passing, having verified no files at all.
-
+Wire `--verify-receipt` into a pre-push hook to close the verify-to-push gap. Two G4 details are
+load-bearing and live in **one** shared function (`harness_tree_hash` in `lib/common.sh`):
+untracked-but-unignored files are **included**, and writer and checker hash **identically** (two
+implementations drift; the first symptom is a hook refusing the run that created it). It also
+**refuses to emit a digest over an empty enumeration** — the hash of nothing is stable, so a receipt
+written while enumeration was broken would match a later check made while it was still broken.
 
 ## Measure before you enforce
 
@@ -121,16 +117,15 @@ a later check made while it was still broken — passing, having verified no fil
 scripts/check-citations.sh --measure
 ```
 
-Prints the current adoption rate and fails nothing. **A rule with no baseline is a wish** — and the
+Prints the current adoption rate and fails nothing. **A rule with no baseline is a wish**, and the
 number is usually not what anyone guessed. Freeze what exists (`--write-baseline` where supported),
-then enforce forward. See `gates.md` G3 for what keeps a baseline honest, including the requirement to
-**triage before freezing**: burying real findings among false ones is the standard way a ratchet goes
-wrong.
+then enforce forward; `gates.md` G3 covers keeping a baseline honest, including **triage before
+freezing**.
 
 ## Portability
 
 Bash 3.2 compatible (stock macOS — no associative arrays, no `mapfile`) and BSD-safe (no GNU-only
-flags). The harness has to run on the machine the developer actually has, not the one CI has.
+flags): the harness must run on the machine the developer has, not the one CI has.
 
 ## Platform-layer hooks (wired via dot-claude/settings.json — see ci/platform-layer.md)
 
@@ -146,7 +141,7 @@ flags). The harness has to run on the machine the developer actually has, not th
 | `hook-repeat-check.sh` | PostToolUse + PostToolUseFailure, all tools | N identical tool calls in a row (default 3) → an advisory the MODEL sees: stop and diagnose. Per session and per agent; polling tools exempt; logged. Matrix: `hook-repeat-check-test.sh` |
 | `hook-stop-claimcheck.sh` + `claim-check.py` | Stop | Checks the reply's linked/`file:line` paths, decision/bug ids and ATTRIBUTED quotes; silent unless definitely false; advise or block (`HARNESS_CLAIMCHECK_MODE`). Matrix: `hook-stop-claimcheck-test.sh` |
 | `librarian-sweep.sh` | (used by the librarian agent) | Per-surface hit accounting over every knowledge surface incl. git history and sibling repos |
-| `librarian-presweep.sh` | (injected by the forked `/ask-librarian` skill) | Extracts terms from the brief (TERMS: line, ids, `code`, "phrases"), ERE-escapes them, runs the sweep before the librarian starts; always exits 0 |
+| `librarian-presweep.sh` | (injected by the forked `/consulting-the-librarian` skill) | Extracts terms from the brief (TERMS: line, ids, `code`, "phrases"), ERE-escapes them, runs the sweep before the librarian starts; always exits 0 |
 | `rotate-bug-register.sh` | (gate: `--check`) | Moves long-closed rows — incl. FIXED rows left in the open table — VERBATIM to the archive; ids conserved. Matrix: `rotate-bug-register-test.sh` |
 | `rotate-onboarding.sh` | (gate: `--limits`; `--check` once floors are set) | Log-entry diet + order; rotates old log entries / dated handover blocks VERBATIM past TWO floors (newest N AND younger than D days). Matrix: `rotate-onboarding-test.sh` |
 | `second-opinion.sh` | (called by agents/SOPs) | One entry point for an independent reviewer: tries the configured outside models, falls back to the local `red-team` agent, never fails the run; names who answered. Matrix: `second-opinion-test.sh` |

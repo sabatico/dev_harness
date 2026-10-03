@@ -1,0 +1,38 @@
+[
+  {
+    "skills": [
+      "building-ui"
+    ],
+    "query": "Here's the HTML export from the design tool for the new lessons page — paste it into the template and wire up the data.",
+    "files": [],
+    "expected_behavior": [
+      "Refuses to copy the export's markup/inline styles; reads it for intent and rebuilds on tokens + primitive components",
+      "Adds no inline styles or hardcoded colors/sizes; missing tokens/primitives are added to the foundation first",
+      "Checks the page at ~1440 / ~960 / ~640 widths for horizontal scroll, overlap and operability"
+    ]
+  },
+  {
+    "skills": [
+      "building-ui"
+    ],
+    "query": "Build the payments-history screen now; the backend endpoint won't exist until next sprint.",
+    "files": [],
+    "expected_behavior": [
+      "Stubs the data and marks the gap TBD-UI: with what is missing",
+      "Registers the TBD-UI marker in the tbd parking lot (or UI-deferred registry)",
+      "Reports which runner/tracker items the work touched"
+    ]
+  },
+  {
+    "skills": [
+      "building-ui"
+    ],
+    "query": "Show the student's free-text note on the card. The typecheck passes, so call it done.",
+    "files": [],
+    "expected_behavior": [
+      "Renders the note as escaped, inert text — no raw-HTML, href or src sink with unsanitized input",
+      "Runs the full build command and the gates, not just the typecheck, before reporting done",
+      "Ships the surface's edge-case checklist (incl. hostile input) and leaves the tests to a cross author"
+    ]
+  }
+]

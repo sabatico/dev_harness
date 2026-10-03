@@ -1,9 +1,9 @@
 # Conventions — «PROJECT»
 
-How we write code and docs here, so a swarm of agents (and humans) produce one coherent codebase. These are the *authoring* rules; the *process* rules are in `CLAUDE.md` + `sops/`.
+How we write code and docs here, so a swarm of agents (and the owner) produce one coherent codebase. These are the *authoring* rules; the *process* rules are in `CLAUDE.md` + the skills in `.claude/skills/`.
 
 ## Doc authoring
-1. **Explain WHY, not just what.** Every non-trivial decision in a doc states the reasoning and the **alternatives considered + why they lost.** A doc that only says "we do X" is half a doc. (Decisions of consequence graduate to an ADR.)
+1. **Explain WHY, not just what.** Every non-trivial decision in a doc states the reasoning and the **alternatives considered + why they lost.** A doc that only says "we do X" is half a doc. (Decisions of consequence graduate to a decision record (ADR).)
 2. **Give a fallback.** When you recommend an approach, note the backup if it doesn't pan out.
 3. **Living docs are dated + owned.** Headers carry "Last updated" and a one-line "what changed." Stale = a bug.
 4. **Write for a cold start.** Assume the reader has zero prior context (because the next session's agent does).

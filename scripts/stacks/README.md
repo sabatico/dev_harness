@@ -1,33 +1,31 @@
 # Stack packs — where the language-neutral gates unfold back into specifics
 
-Nothing in `scripts/` knows what language you write. Every language-shaped fact is a variable with
-a loose union default (`lib/common.sh`). A **pack** replaces that union with exact values for one
-language, and `HARNESS_STACK` in `harness.conf` selects it.
+Nothing in `scripts/` knows what language you write. Every language-shaped fact is a variable with a
+loose union default (`lib/common.sh`). A **pack** replaces that union with exact values for one
+language; `HARNESS_STACK` in `harness.conf` selects it.
 
 ```sh
 HARNESS_STACK="go"        # loads stacks/go.conf before harness.conf
 ```
 
-**Precedence: defaults < pack < `harness.conf`.** The pack is a correct starting point for the
-language; it cannot know your directory layout, your test runner flags, or your generated-code
-conventions, so anything you set in `harness.conf` still wins. Naming a pack that does not exist is
-a config error (`INCOMPLETE`), never a silent fall back to the union — a gate quietly checking
-something other than what the project declared is the failure this whole kit is built around.
+**Precedence: defaults < pack < `harness.conf`.** The pack is a correct starting point; it cannot
+know your directory layout, runner flags or generated-code conventions, so `harness.conf` still wins.
+Naming a pack that does not exist is a config error (`INCOMPLETE`), never a silent fall back to the
+union — a gate quietly checking something other than what the project declared is the failure this
+kit is built around.
 
-## Why a union default is the shipping state and not the operating state
+## The union default is the shipping state, not the operating state
 
-A regex that matches `func|def|fn|function` matches a great deal and therefore proves very little.
-It is there so a fresh clone does something useful before you have configured anything — not
-because it is good enough. **Adopt a pack in your first act.** The difference is measurable: on a Go
+A regex matching `func|def|fn|function` matches a great deal and proves very little; it exists so a
+fresh clone does something useful before configuration. **Adopt a pack in your first act.** On a Go
 codebase the generic declaration pattern misses every method with a receiver, and the gate reports a
 confident zero over them.
 
 ## The pack is proven, not asserted
 
-`scripts/selftest.sh` builds its fixture project **from the active pack** — the compliant source,
-the test file, and one planted violation per gate all come from the pack's `HARNESS_FIX_*` values.
-So running it proves the gates can see declarations, comments, skips and log calls **in your
-language**, which is the only version of that claim worth anything.
+`scripts/selftest.sh` builds its fixture project **from the active pack** — the compliant source, the
+test file and one planted violation per gate all come from the pack's `HARNESS_FIX_*` values — so a
+green run proves the gates can see declarations, comments, skips and log calls **in your language**.
 
 ```sh
 scripts/selftest.sh                  # the pack harness.conf selects
@@ -37,7 +35,12 @@ scripts/selftest.sh --all-stacks     # every pack shipped here
 
 ## Writing a pack for a language we do not ship
 
-Copy the closest one and change the values. It is about twenty lines and no code.
+About twenty lines and no code:
+
+1. Copy the closest shipped pack.
+2. Change the values (table below).
+3. Run `scripts/selftest.sh --stack «name»`; fix until clean. A non-compliant `HARNESS_FIX_GOOD` shows
+   as a false positive on the clean run — that is the point.
 
 | Variable | What it must match |
 |---|---|
@@ -51,13 +54,12 @@ Copy the closest one and change the values. It is about twenty lines and no code
 | `HARNESS_EXCLUDE_GLOBS` | vendored, generated, build output |
 | `HARNESS_LOG_FUNCS` | function-name fragments that count as logging |
 | `HARNESS_TEST_CMD` / `HARNESS_COVERAGE_CMD` / `HARNESS_LINT_CMD` | your runner |
-| `HARNESS_FIX_*` | the self-test fixture (see below) |
+| `HARNESS_FIX_*` | the self-test fixture (below) |
 
 ### The fixture values
 
-Seven small snippets, written as `printf` format strings (`\n` for newline, `\t` for tab, `%%` for
-a literal percent). Each one must be **exactly** what it claims, or the self-test proves the wrong
-thing:
+Seven snippets, written as `printf` format strings (`\n` newline, `\t` tab, `%%` literal percent).
+Each must be **exactly** what it claims, or the self-test proves the wrong thing:
 
 | Variable | Must be |
 |---|---|
@@ -69,6 +71,4 @@ thing:
 | `HARNESS_FIX_SKIP` | a test that **skips from an error branch** (the conditional-skips plant) |
 | `HARNESS_FIX_LOG` | a documented+cited function that **logs a secret-named argument** (the log-hygiene plant) |
 
-`selftest.sh` asserts the clean fixture passes, each plant fails, and removing it passes again. If
-your pack's `HARNESS_FIX_GOOD` is not actually compliant you will see it immediately as a
-false-positive on the clean run — which is the point.
+`selftest.sh` asserts the clean fixture passes, each plant fails, and removing it passes again.

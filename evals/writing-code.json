@@ -1,0 +1,38 @@
+[
+  {
+    "skills": [
+      "writing-code"
+    ],
+    "query": "Implement the discount-cap feature in the billing service and write a couple of quick unit tests for it so the coverage gate stays green.",
+    "files": [],
+    "expected_behavior": [
+      "Writes the implementation but ZERO tests for it; states the tests owed for a cross author (or leaves a TODO(cross-family-test): marker if none is available)",
+      "Instantiates the edge-case checklist for the slice (Handled / N/A-why / DEFERRED) with hostile input on every field",
+      "Runs scripts/run-all-gates.sh unpiped and reports done only on a watched green run"
+    ]
+  },
+  {
+    "skills": [
+      "writing-code"
+    ],
+    "query": "The generated API client is missing the new field — just add it by hand to the generated file, it's quicker.",
+    "files": [],
+    "expected_behavior": [
+      "Refuses to hand-edit generated code and changes the generation source instead",
+      "Re-runs the codegen command and verifies the regenerated output",
+      "Reads the governing decision record / doc comment of the touched functions before changing them"
+    ]
+  },
+  {
+    "skills": [
+      "writing-code"
+    ],
+    "query": "We can't test the S3 upload path yet because there's no sandbox bucket. Ship the feature anyway and move on.",
+    "files": [],
+    "expected_behavior": [
+      "Tags the site DEFERRED-TEST: with what, why and the blocking dependency",
+      "Adds the matching row to the deferred-test registry so scripts/check-markers.sh passes",
+      "Lists the deferred test in the report rather than silently dropping it"
+    ]
+  }
+]

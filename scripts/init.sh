@@ -4,8 +4,8 @@
 #   scripts/init.sh "My Project" P3 [go|typescript|python|generic]
 #
 # What it does:
-#   1. Lays down docs/  ← running-files/,  docs/sops/ ← sops/,  docs/ci/ ← ci/
-#   2. Installs the platform layer: .claude/ ← dot-claude/ (hooks, guard, rules, librarian)
+#   1. Lays down docs/  ← running-files/,  docs/ci/ ← ci/   (evals/ stays at the root, for check-skills)
+#   2. Installs the platform layer: .claude/ ← dot-claude/ (hooks, guard, rules, librarian, skills)
 #   3. Substitutes «PROJECT NAME» throughout the copies
 #   4. Writes harness.conf pointing at the new layout, so the gates run immediately
 #   5. Generates docs/documentation-index.md from what it actually copied
@@ -51,10 +51,11 @@ fi
 echo "── initialising '$NAME' at profile $PROFILE, stack $STACK"
 
 # ── 1. layout ────────────────────────────────────────────────────────────────
-mkdir -p docs/sops docs/ci
+mkdir -p docs/ci
 cp -R running-files/. docs/
-cp -R sops/.          docs/sops/
 cp -R ci/.            docs/ci/
+# the operating procedures are Claude Code skills (dot-claude/skills/ → .claude/skills/, step 2);
+# their eval scenarios stay in evals/ at the root, where scripts/check-skills.sh expects them
 
 # ── 2. the platform layer ────────────────────────────────────────────────────
 # NOT optional and NOT a later step. Hooks, the destructive-action guard, the path-scoped rules and
@@ -200,19 +201,23 @@ case "$PROFILE" in
     prune docs/runner.md            "P1: no wave runner"
     prune docs/feature-catalog.md   "P1"
     prune docs/use-case-runbook.md  "P1"
-    prune docs/sops                 "P1: core only"
+    for s in orchestrating-agents writing-code writing-tests writing-docs reviewing-adversarially building-ui \
+             implementing-mockups reviewing-code-quality hunting-bugs covering-edge-cases recording-decisions \
+             communicating-with-the-owner hardening-security; do
+      prune ".claude/skills/$s" "P1: core only (keep following-core-rules, consulting-the-librarian, authoring-skills)"
+    done
     ;;
   P2)
     prune docs/tickets                          "P2: until something needed from a human gets lost"
     prune docs/runner.md                        "P2: until >1 workstream is in flight"
     prune docs/use-case-runbook.md              "P2: no end-user flows in a library"
-    prune docs/sops/ui-development-guardrails.md "P2: no UI"
-    prune docs/sops/mockup-implementation.md    "P2: no designs"
-    prune docs/sops/security-properties.md      "P2: no network surface / multi-user"
-    prune docs/sops/owner-communication.md      "P2: no non-technical stakeholder"
+    prune .claude/skills/building-ui                  "P2: no UI"
+    prune .claude/skills/implementing-mockups         "P2: no designs"
+    prune .claude/skills/hardening-security/reference/security-properties.md "P2: no network surface / multi-user (also drop its link in that SKILL.md)"
+    prune .claude/skills/communicating-with-the-owner "P2: no non-technical stakeholder"
     ;;
   P3)
-    prune docs/sops/security-properties.md "P3: keep ONLY if multi-user, network surface, or untrusted input"
+    prune .claude/skills/hardening-security/reference/security-properties.md "P3: keep ONLY if multi-user, network surface, or untrusted input (also drop its link in that SKILL.md)"
     prune docs/ci/run-integrity.md         "P3: keep once any job has >1 stage"
     ;;
   P4) echo "   (P4 keeps nearly everything — prune only what plainly does not apply)" ;;
@@ -254,8 +259,8 @@ cat <<NEXT
   7. After the first week, read .gate-logs/ (stop-advisory, read-budget) and tune or delete what
      never fires. Keep the C5 table current as gates land.
 
-  This kit's own meta files (README.md, TAILORING.md, running-files/, sops/, ci/, harness.conf.example)
-  are now duplicated under docs/. Remove the originals when you are ready:  git rm -r running-files sops ci
+  This kit's own meta files (README.md, TAILORING.md, running-files/, ci/, harness.conf.example)
+  are now duplicated under docs/. Remove the originals when you are ready:  git rm -r running-files ci
   (CLAUDE.md's pointers are written for the post-init docs/ layout, so they survive that removal.)
 
   Starting a NEW project rather than a fork of the harness? Drop its history too:

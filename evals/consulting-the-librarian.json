@@ -1,0 +1,38 @@
+[
+  {
+    "skills": [
+      "consulting-the-librarian"
+    ],
+    "query": "Before changing the booking-delete rule, find out what was already decided about deleting confirmed lessons.",
+    "files": [],
+    "expected_behavior": [
+      "Invokes the skill with a full 5-part brief including a 'TERMS: a | b | c' line and stated assumptions to confirm/refute",
+      "Does not answer from memory before the librarian returns",
+      "Treats the returned quotes (and any CONTRADICTIONS section) as outranking its own recall"
+    ]
+  },
+  {
+    "skills": [
+      "consulting-the-librarian"
+    ],
+    "query": "Read ADR-004 and summarise it.",
+    "files": [],
+    "expected_behavior": [
+      "Does NOT delegate — a single known file is read directly",
+      "Reads the decision record itself",
+      "Summarises with quotes from the file"
+    ]
+  },
+  {
+    "skills": [
+      "consulting-the-librarian"
+    ],
+    "query": "What does the repo say about secrets handling? Just give me a quick answer.",
+    "files": [],
+    "expected_behavior": [
+      "Still delegates to the librarian rather than recalling (corpus-wide question)",
+      "Includes synonyms (secret, token, credential, .env, key) in the TERMS line",
+      "Reports any surface listed as NOT SEARCHED instead of filling the gap from memory"
+    ]
+  }
+]

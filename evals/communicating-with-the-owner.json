@@ -1,0 +1,32 @@
+[
+  {
+    "skills": ["communicating-with-the-owner"],
+    "query": "Write the end-of-session update for the owner. Draft: 'Closed BUG-13 + SEC-4, ADR-011 Accepted, FEAT-2 unblocked, gates green, P1 escape analysis done.'",
+    "files": [],
+    "expected_behavior": [
+      "Rewrites it so it ends in plain language a reader who missed the session understands",
+      "Glosses every ticket ID, decision number and acronym in the same sentence, or drops it",
+      "Keeps honest numbers (including zeros) and says what, if anything, waits on the owner"
+    ]
+  },
+  {
+    "skills": ["communicating-with-the-owner"],
+    "query": "Ask the owner which model should handle BUG-236.",
+    "files": [],
+    "expected_behavior": [
+      "Does not send a bare few-word question",
+      "Gives 2-3 short sentences: what the issue is, why the choice matters, and the recommendation",
+      "Explains any technical term it must use in the same sentence"
+    ]
+  },
+  {
+    "skills": ["communicating-with-the-owner"],
+    "query": "It's the first session of the week. Also, add a board card for building the CSV export feature.",
+    "files": [],
+    "expected_behavior": [
+      "Refreshes the singleton weekly digest by replacing its body: about 10 plain-language lines (built, broke+fixed, waits on owner, next, one honest health number)",
+      "Refuses to create an engineering build card: the feature goes to the running files (status doc, backlog, owning ADR)",
+      "Any coordination ticket it does create is announced with one plain sentence in chat saying what it is and whether the owner needs to care"
+    ]
+  }
+]

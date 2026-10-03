@@ -34,7 +34,7 @@ looks_like_path() {
     # A PLACEHOLDER, not a real path: `/tmp/<name>.log`, `path/to/<thing>`. Flagging these
     # trains authors to stop backticking examples, which costs more than it catches.
     *"<"*|*">"*|*"«"*|*"»"*|*'${'*) return 1 ;;
-    # A GLOB describes a set, not a file: `docs/sops/skill-*.md`.
+    # A GLOB describes a set, not a file: `.claude/skills/*/SKILL.md`.
     *"*"*|*"?"*|*"["*) return 1 ;;
     # An ABSOLUTE path is a claim about the machine, not about this repo. `/etc/hosts` and
     # `/tmp/gates.log` are legitimate prose and unresolvable here by design.

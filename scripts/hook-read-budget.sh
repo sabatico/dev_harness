@@ -15,7 +15,7 @@
 #   Bash   commands naming a corpus path (cat/sed/grep of it) count their stdout, capped at what the
 #          agent receives: BASH_MAX_OUTPUT_LENGTH (default 30000 chars); past it the output becomes a
 #          file + a 2 KB preview. In auto mode agents read through Bash, so a Read-only matcher is blind.
-#   Agent/Task (subagent_type librarian) and Skill (ask-librarian) are logged as DELEGATIONS, so the
+#   Agent/Task (subagent_type librarian) and Skill (consulting-the-librarian) are logged as DELEGATIONS, so the
 #          log answers "corpus read directly vs. delegated", per session.
 # Subagents are exempt (reading is their job). Logs go to $HARNESS_LOG_DIR (default .harness-logs/),
 # NEVER a directory a gate run clears — the live project lost five weeks of data that way.
@@ -73,7 +73,7 @@ elif tool == "Bash" and names_corpus(ti.get("command", "") or ""):
 elif tool in ("Agent", "Task") and (ti.get("subagent_type") or "") == "librarian":
     out.update(KIND="delegate", WHAT="agent:librarian")
 elif tool == "Skill" and "librarian" in (ti.get("skill") or ti.get("name") or ""):
-    out.update(KIND="delegate", WHAT="skill:ask-librarian")
+    out.update(KIND="delegate", WHAT="skill:consulting-the-librarian")
 for k, v in out.items(): print(k + "=" + shlex.quote(str(v)))
 PY
 vars="$(cat "$pf.vars" 2>/dev/null)"
@@ -98,7 +98,7 @@ kb = int(sys.argv[1]) // 1024
 print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": (
   f"read-budget (advisory): this session has now pulled ~{kb} KB of project corpus directly into its own "
   "context (Read + Bash). A targeted read of a record you cite is correct; if you are SEARCHING or "
-  "SURVEYING (\"what does the repo say about X\"), that is the librarian's job — /ask-librarian returns "
+  "SURVEYING (\"what does the repo say about X\"), that is the librarian's job — /consulting-the-librarian returns "
   "verbatim quotes with file:line from its own window. Delegate the next sweep.")}}))
 PY
 fi

@@ -1,0 +1,32 @@
+[
+  {
+    "skills": ["hardening-security"],
+    "query": "Add an endpoint GET /students/{id}/invoices for parents.",
+    "files": [],
+    "expected_behavior": [
+      "Adds the route to the unauthenticated, cross-tenant and role matrices (doors 6/7/11), not just a happy-path test",
+      "Names which identity it authorizes and which it uses (Q1) and proves isolation by re-reading the data as the victim, not by asserting a 403 (Q4/P3)",
+      "Returns a fixed error to the client with detail only in the log, validates input server-side, and audits any state change"
+    ]
+  },
+  {
+    "skills": ["hardening-security"],
+    "query": "We launch to real users next week. Are we secure?",
+    "files": [],
+    "expected_behavior": [
+      "Maps all 30 doors, classing each by what actually enforces it (GATED / CODE / DOC / NONE / N/A), not by what a doc claims",
+      "Verifies every NONE and every contradiction by reading the code itself (e.g. a comment claiming a rate limit)",
+      "Gives every NONE or DOC row a gate, a ticket or an explicit owner decision, and reports in plain language"
+    ]
+  },
+  {
+    "skills": ["hardening-security"],
+    "query": "Our cross-tenant read tests for documents all pass, so tenant isolation is done.",
+    "files": [],
+    "expected_behavior": [
+      "Runs the perpendicular pass: names the property (sink confirmation / one identity per request), not just the case",
+      "Asks where else the property must hold: every other resource type, verb (writes, not only reads) and entry point into the same store",
+      "Writes the uncovered surface into the report and derives the work list from the contract (route table/schema), proposing a gated property matrix"
+    ]
+  }
+]

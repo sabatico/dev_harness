@@ -1,0 +1,32 @@
+[
+  {
+    "skills": ["implementing-mockups"],
+    "query": "The designer sent a PNG screenshot of the new settings page. Build it so it matches.",
+    "files": [],
+    "expected_behavior": [
+      "Asks the owner for a structured handoff (component tree + tokens + layout + assets) and names the concrete export to use, instead of silently reverse-engineering the screenshot",
+      "Does not eyeball colours/spacing from the picture: values come from extracted computed styles mapped to tokens, with no inline styles",
+      "Runs (or confirms) the one-time token-lock pass, including the measured surface hierarchy, before building any screen"
+    ]
+  },
+  {
+    "skills": ["implementing-mockups"],
+    "query": "The handoff README says the account sub-nav is a horizontal strip, but the prototype renders it as a vertical rail at x=1 starting right under the header and running full height. Implement the account screen.",
+    "files": [],
+    "expected_behavior": [
+      "Stops at the reconcile gate and raises the doc-vs-mockup discrepancy with the owner before writing markup",
+      "Classifies the rail by its geometry (hugs the frame edge, docks to the header, full height) as shell chrome, not content",
+      "Plans it as a shell-level layout variant, not a styled div inside the existing centred content container"
+    ]
+  },
+  {
+    "skills": ["implementing-mockups"],
+    "query": "I've built the billing screen and it looks right to me. Commit it.",
+    "files": [],
+    "expected_behavior": [
+      "Refuses to commit before the owner has reviewed and approved a side-by-side",
+      "Verifies with an element-by-element computed-style diff plus a pixel-diff %-match (overall and per region, text masked) against the project threshold",
+      "Fixes structure/alignment mismatches before colour/type, re-scores, and commits with the side-by-side as the approval artifact"
+    ]
+  }
+]

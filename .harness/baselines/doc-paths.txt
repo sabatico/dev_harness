@@ -9,7 +9,7 @@
 # among false ones. Record the categories here:
 #   INSTALLED-LAYOUT PATHS (all 7 entries, triaged 2026-08-19).
 #   This repo is a BOILERPLATE. Its docs cite paths as they exist in the TARGET project once
-#   scripts/init.sh has copied running-files/ -> docs/ and sops/ -> docs/sops/. So `docs/...`
+#   scripts/init.sh has copied running-files/ -> docs/ and ci/ -> docs/ci/. So `docs/...`
 #   is CORRECT prose that cannot resolve here by construction; rewriting it kit-relative would
 #   make it wrong in every project cloned from this one.
 #
@@ -21,10 +21,3 @@
 #   artefacts. They were fixed at source rather than frozen. That is the G3 rule working:
 #   triage BEFORE you freeze, or real findings get buried among the acceptable ones.)
 #
-sops/decisions-adr.md	../adr/README.md
-sops/quality-review.md	../tickets/bug-register.md
-sops/quality-review.md	../tickets/doc-work.md
-sops/quality-review.md	../tickets/security.md
-sops/quality-review.md	../tickets/user-actions.md
-sops/test-and-coverage.md	docs/deferred-test-registry.md
-sops/test-and-coverage.md	docs/use-case-runbook.md

@@ -1,6 +1,6 @@
 # Bug Hunt Log — «PROJECT» — coverage map + per-session reports
 
-> The running record of every **bug hunt** (`sops/bug-hunt.md`): the persistent **coverage map** (so
+> The running record of every **bug hunt** (the `hunting-bugs` skill): the persistent **coverage map** (so
 > a whole-codebase hunt can span sessions and resume where it stopped) plus each session's dated
 > report. Newest report first. Findings themselves live as rows in `bug-register.md` (this log points
 > at them by ID); proposed new edge-cases live here until the owner/lead rules on them.
@@ -22,7 +22,7 @@ order by blast radius, invariants first.)*
 
 ## Proposed additional edge-cases awaiting owner/lead ruling
 *(populated by the invent-nastier pass during a hunt; approved ones become cross-author tests + fold
-into `sops/edge-case-catalog.md`; rejected ones stay here with the reason so they aren't re-proposed)*
+into the `covering-edge-cases` skill; rejected ones stay here with the reason so they aren't re-proposed)*
 
 | # | Unit | Proposed nasty case | Tried? outcome | Ruling |
 |---|------|---------------------|----------------|--------|

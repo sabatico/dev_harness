@@ -1,0 +1,38 @@
+[
+  {
+    "skills": [
+      "authoring-skills"
+    ],
+    "query": "Turn sops/onboarding-checklist.md (a 180-line procedure doc) into a harness skill.",
+    "files": [],
+    "expected_behavior": [
+      "Creates dot-claude/skills/<gerund-name>/SKILL.md with a third-person description that says what it does and 'Use when …'",
+      "Writes the 3 eval scenarios in evals/<name>.json before or alongside the body",
+      "Moves long tables/rationale into reference/ files linked directly from SKILL.md, runs scripts/check-skills.sh and fixes findings until clean"
+    ]
+  },
+  {
+    "skills": [
+      "authoring-skills"
+    ],
+    "query": "Add a skill called 'helper' whose description is 'I help you with deploys'.",
+    "files": [],
+    "expected_behavior": [
+      "Refuses or corrects the name to a gerund form (e.g. 'deploying-releases') — 'helper' is vague and not gerund",
+      "Rewrites the description in third person with concrete triggers ('Deploys … Use when the owner says deploy …')",
+      "Runs scripts/check-skills.sh and reports a clean result"
+    ]
+  },
+  {
+    "skills": [
+      "authoring-skills"
+    ],
+    "query": "Our hunting-bugs skill's reference/catalog.md links to reference/families.md for details. Is that fine?",
+    "files": [],
+    "expected_behavior": [
+      "Says no: references must be one level deep from SKILL.md",
+      "Proposes linking families.md directly from SKILL.md (or merging it) and removing the nested link",
+      "Mentions that check-skills.sh flags nested references and should be re-run after the fix"
+    ]
+  }
+]

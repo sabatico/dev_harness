@@ -106,6 +106,8 @@ manifest_expect doc-links doc-paths doc-index markers bug-evidence conditional-s
 run_gate doc-links         "$HERE/check-doc-links.sh"
 run_gate doc-paths         "$HERE/check-doc-paths.sh"
 run_gate doc-index         "$HERE/check-doc-index.sh"
+run_gate skills            "$HERE/check-skills.sh"        # Agent Skills best practices (authoring-skills)
+run_gate skills-matrix     "$HERE/check-skills-test.sh"   # the linter, watched failing on planted defects
 run_gate markers           "$HERE/check-markers.sh"
 run_gate bug-evidence      "$HERE/check-bug-evidence.sh"
 run_gate conditional-skips "$HERE/check-conditional-skips.sh"
@@ -127,7 +129,7 @@ run_gate bug-register-rotation     "$HERE/rotate-bug-register.sh" --check
 run_gate bug-rotation-matrix       "$HERE/rotate-bug-register-test.sh"
 run_gate onboarding-limits         "$HERE/rotate-onboarding.sh" --limits
 run_gate onboarding-rotation-matrix "$HERE/rotate-onboarding-test.sh"
-# Security baseline (sops/security-baseline.md): #26 an agent never prints .env values or dumps the env;
+# Security baseline (hardening-security skill, reference/thirty-doors.md): #26 an agent never prints .env values or dumps the env;
 # #5 no NEW third-party image pulled at a floating tag (ratchet over $HARNESS_BASELINE_DIR/image-pins.txt).
 run_gate secret-read-matrix        "$HERE/hook-pretooluse-secretread-test.sh"
 run_gate image-pins                "$HERE/check-image-pins.sh" --check

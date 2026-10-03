@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# librarian-presweep.sh — run librarian-sweep.sh on the terms in an /ask-librarian brief, BEFORE the
-# librarian starts. Injected by .claude/skills/ask-librarian/SKILL.md (context: fork, agent: librarian).
+# librarian-presweep.sh — run librarian-sweep.sh on the terms in a /consulting-the-librarian brief, BEFORE the
+# librarian starts. Injected by .claude/skills/consulting-the-librarian/SKILL.md (context: fork, agent: librarian).
 # Generalised 2026-09-29 from a live project.
 #
 # WHY. The live project's first harness eval found the librarian's one systematic

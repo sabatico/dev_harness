@@ -5,7 +5,7 @@
 # WHY: on the source project the constitution said creds live in `.env`, and nothing stopped an
 # agent from `cat .env` or a Read of it — which copies every secret into the model's context, the
 # session transcript on disk, and anything the transcript is later shared with. The existing guard
-# (hook-pretooluse-guard.sh) covers DESTRUCTION; this is the separate EXPOSURE rule (sops/security-baseline.md #26).
+# (hook-pretooluse-guard.sh) covers DESTRUCTION; this is the separate EXPOSURE rule (hardening-security skill, door #26).
 #
 # WHAT IS DENIED: showing secret material to the model —
 #   · Read of `.env` / `.env.<name>` (not .env.example/.sample/.template: those hold no values);

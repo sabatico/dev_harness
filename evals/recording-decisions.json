@@ -1,0 +1,32 @@
+[
+  {
+    "skills": ["recording-decisions"],
+    "query": "Let's move sessions from server-side cookies to JWTs.",
+    "files": [],
+    "expected_behavior": [
+      "Checks the ADR log first and finds whether an Accepted decision already governs sessions",
+      "Does not re-argue a locked decision in place: a change is a NEW ADR that supersedes the old one, with status updated on both",
+      "Gets an independent second opinion before locking because this is a hard security-boundary decision"
+    ]
+  },
+  {
+    "skills": ["recording-decisions"],
+    "query": "Pick the database for the new reporting service and write it up.",
+    "files": [],
+    "expected_behavior": [
+      "Frames the problem and candidate options for a different model/agent to argue, then the lead judges and records the call",
+      "Writes the ADR from the template with Context, Decision, Alternatives rejected (each with why it lost) and Consequences",
+      "Takes the next unused number, adds the row to the ADR index, and starts it as Proposed until accepted"
+    ]
+  },
+  {
+    "skills": ["recording-decisions"],
+    "query": "Should I write an ADR for renaming this helper function and picking its CSS class name?",
+    "files": [],
+    "expected_behavior": [
+      "Says no: routine, easily reversible choices do not get an ADR",
+      "States the test: an ADR is for what is expensive to reverse or what future work will depend on",
+      "Gives examples that would qualify (data model, trust boundary, key vendor, API contract, deployment locus)"
+    ]
+  }
+]

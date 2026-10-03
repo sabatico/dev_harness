@@ -41,7 +41,7 @@ if [ "$source_evt" = "compact" ]; then
   echo
   echo "── ⚠ CONTEXT WAS JUST COMPACTED ──"
   echo "  Everything before this point is a SUMMARY. File paths, numbers, and what a decision record says"
-  echo "  are UNVERIFIED until looked up again this session. Re-read, or /ask-librarian, before asserting one."
+  echo "  are UNVERIFIED until looked up again this session. Re-read, or /consulting-the-librarian, before asserting one."
 fi
 echo
 
@@ -111,5 +111,5 @@ if [ -n "$ONB" ]; then
   awk '/^## .*([Nn]ext|NEXT)/{f=1;next} /^## /{if(f)exit} f' "$ONB" | grep -vE '^\s*$' | head -8 | cut -c1-200 | sed 's/^/  /'
   echo
 fi
-echo "This brief is DERIVED state, not a substitute for reading what your task touches. Corpus questions → the librarian agent (/ask-librarian)."
+echo "This brief is DERIVED state, not a substitute for reading what your task touches. Corpus questions → the librarian agent (/consulting-the-librarian)."
 exit 0

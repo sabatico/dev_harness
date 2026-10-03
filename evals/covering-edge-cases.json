@@ -1,0 +1,32 @@
+[
+  {
+    "skills": ["covering-edge-cases"],
+    "query": "Build the multi-step password-reset flow (request code, enter code, set new password).",
+    "files": [],
+    "expected_behavior": [
+      "Ships an instantiated checklist table with every applicable catalog class marked Handled (how) / N/A (why) / DEFERRED",
+      "Covers Back-then-Forward past the code step (A1/G3) with the server re-checking the step (H2), plus double-submit (B1/H1) and one-time code reuse (G1)",
+      "Treats any case that could break a project invariant as must-fix, and registers DEFERRED cases instead of dropping them"
+    ]
+  },
+  {
+    "skills": ["covering-edge-cases"],
+    "query": "Add a 'display name' field to the profile form; we use it to detect duplicate accounts.",
+    "files": [],
+    "expected_behavior": [
+      "Applies family I on both client and server: wrong-but-plausible values, injection stored and rendered as inert text, oversized input capped",
+      "Normalizes (NFC + trim + case-fold) before the duplicate compare and before storing",
+      "Checks Unicode end to end (non-Latin, RTL/bidi, emoji without splitting graphemes at the length cap, zero-width and homoglyphs)"
+    ]
+  },
+  {
+    "skills": ["covering-edge-cases"],
+    "query": "You're the test author for the builder's upload feature. Here's their edge-case checklist — write the tests.",
+    "files": [],
+    "expected_behavior": [
+      "Writes a test for every Handled row; cases the unit harness cannot see go to a real-driver test or a registered DEFERRED-TEST marker",
+      "Proposes its own additional cases for an owner/lead ruling rather than only testing the builder's list",
+      "Folds approved, generalizable cases back into the catalog as new classes"
+    ]
+  }
+]

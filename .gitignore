@@ -5,7 +5,7 @@
 # Hook advisory logs (hook-stop-statecheck, hook-read-budget, hook-precompact-log).
 # Untracked-and-unignored would put these in every `git status` AND invalidate the push
 # receipt's working-tree hash (gates.md G4 deliberately hashes untracked files), which is
-# the shared-checkout collision class sops/agents-and-roles.md documents.
+# the shared-checkout collision class the orchestrating-agents skill documents.
 .gate-logs/
 # Hook instrumentation logs (read-budget, claim-check, stop-advisory, compaction): HARNESS_LOG_DIR.
 # Kept apart from any per-run gate-output dir on purpose — a project whose gate run clears its log dir

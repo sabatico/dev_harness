@@ -37,7 +37,7 @@ row 'Bash $VAR/docs path counts'                'event=bash bytes=10 ' no Bash '
 row 'Bash absolute path under the root counts'  'event=bash bytes=3 '  no Bash "{\"command\":\"sed -n 1p $CORPUS\"}" '{"stdout":"abc"}'
 row 'Bash past 30000 chars counts the 2 KB preview' 'event=bash bytes=2048 ' no Bash '{"command":"cat docs/a.md"}' "{\"stdout\":$(J "$big")}"
 row 'librarian Agent = delegation'              'event=delegate via=agent:librarian' no Agent '{"subagent_type":"librarian"}' '{}'
-row 'ask-librarian Skill = delegation'          'event=delegate via=skill:ask-librarian' no Skill '{"skill":"ask-librarian"}' '{}'
+row 'librarian Skill = delegation'              'event=delegate via=skill:consulting-the-librarian' no Skill '{"skill":"consulting-the-librarian"}' '{}'
 row 'code Read is not corpus'                   NONE no Read "{\"file_path\":\"$P/src/x.go\"}" '{"file":{"content":"code"}}'
 row 'a docs URL is not a corpus path'           NONE no Bash '{"command":"curl -s https://example.com/docs/en/x"}' '{"stdout":"lots"}'
 row 'subagent reads are exempt'                 NONE no Read "{\"file_path\":\"$CORPUS\"}" null librarian

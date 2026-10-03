@@ -1,6 +1,6 @@
 # ADR Log — «PROJECT»
 
-The running list of **locked architectural decisions.** Read this before making a decision of consequence — the answer may already be here. **Never re-litigate a locked (Accepted) ADR;** to change one, write a new ADR that supersedes it. Process: `../../sops/decisions-adr.md`.
+The running list of **locked architectural decisions.** Read this before making a decision of consequence — the answer may already be here. **Never re-litigate a locked (Accepted) ADR;** to change one, write a new ADR that supersedes it. Process: the `recording-decisions` skill.
 
 | # | Title | Status | Date |
 |---|-------|--------|------|
