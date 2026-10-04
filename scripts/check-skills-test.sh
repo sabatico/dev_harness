@@ -5,7 +5,7 @@
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 CHECK="$HERE/check-skills.sh"
-TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+TMP="$(mktemp -d "${TMPDIR:-/tmp}/skills-test.XXXXXX")" || { echo "cannot create a temp dir" >&2; exit 2; }; trap 'rm -rf "$TMP"' EXIT
 pass=0; fail=0
 
 mk_skill() {  # mk_skill ROOT FOLDER NAME DESCRIPTION [BODY]  — also writes a valid 3-scenario eval

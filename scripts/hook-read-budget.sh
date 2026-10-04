@@ -97,8 +97,9 @@ import json, sys
 kb = int(sys.argv[1]) // 1024
 print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": (
   f"read-budget (advisory): this session has now pulled ~{kb} KB of project corpus directly into its own "
-  "context (Read + Bash). A targeted read of a record you cite is correct; if you are SEARCHING or "
-  "SURVEYING (\"what does the repo say about X\"), that is the librarian's job — /consulting-the-librarian returns "
+  "context (Read + Bash). Targeted reads are expected; to FIND something, run scripts/find.sh (whole repo, "
+  "ranked) instead of reading files to look. A broad SURVEY (\"what does the repo say about X\") is the "
+  "librarian's job — /consulting-the-librarian returns "
   "verbatim quotes with file:line from its own window. Delegate the next sweep.")}}))
 PY
 fi

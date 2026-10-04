@@ -5,11 +5,12 @@ Led by an AI lead agent + spawned role sub-agents; the human owner («role») gi
 
 ## 🧭 COLD START — read these IN ORDER for full context (do not skip)
 1. **`docs/ONBOARDING.md`** — **ALWAYS FIRST.** The living state doc: current status, decided-vs-open, the active milestone, and the append-only session log (newest first). It always reflects *current* reality — trust it over older docs.
-2. **`docs/adr/README.md`** — the **ADR log** (the running list of locked decisions). Never re-litigate a locked decision.
+2. **`docs/adr/README.md`** — the **ADR log** (the running list of locked decisions). Never re-litigate a locked decision — but a LATER owner decision that never became an ADR is not re-litigation: it is a conflict (see the conflict rule below).
 3. **`docs/feature-catalog.md`** — the **single inventory of EVERYTHING** the product does (every user-facing capability + every core module), with status, surface, tests. The fastest "what does this do, end to end?" answer.
 4. **`docs/runner.md`** — the **live tracker for the active work wave** (what's in flight, statuses, open questions).
 5. Then dive deeper as the task needs — `docs/architecture.md`, the relevant ADRs, the skills in `.claude/skills/` (each loads when its task comes up). **Touching «X subsystem»?** read «its doc» first. **Doing UI work?** read **the `building-ui` skill** FIRST (tokens + components, zero inline styles). **Implementing a design mockup pixel-perfect?** read **the `implementing-mockups` skill** (structure preservation + extract values + rendered-HTML diff; ask for the structured handoff). **Touching an integration?** read **`docs/third-party-services.md`** first.
 6. **Coordination tickets** (the human's queue — NOT engineering state) live as one typed running file each under **`docs/tickets/`** (index: `docs/tickets/README.md`): **USER** (human-only actions) · **DEC** (pending human decisions → recorded as ADRs) · **FEAT** (blocked-feature *visibility* only) · **DOC** (doc work not doable inline) · **BIZ** (business/organisational) · **BUG** (`docs/tickets/bug-register.md` — defects) · **SEC** (`docs/tickets/security.md` — security hardening, not a live defect) — plus **TBD** (`docs/tbd-parking-lot.md`). **Engineering work is never a ticket** — a feature/tech-debt/residual lives in `ONBOARDING.md` status + the owning ADR + `runner.md`. Unscheduled *engineering* features/bugs sit in **`docs/backlog-tickets.md`**.
+7. **Owner decisions are not only in ADRs.** They also turn up in closed and archived tickets, the session-log and register archives, meeting/call notes, logs and data files. A search for a decision covers ALL of them — which is what `scripts/find.sh` and the librarian's "everything else" surface do.
 
 ⚡ **Hook liveness:** a `SESSION BRIEF` banner appears at session start iff the harness hooks
 loaded. **No banner ⇒ no fast gates, no guard** — run the doc gates by hand after doc edits and
@@ -18,11 +19,14 @@ treat the destructive-action guard as unenforced. (`docs/ci/platform-layer.md` P
 **Path-scoped rules in `.claude/rules/` auto-load area detail when you touch matching files** —
 this file stays the map; the rules and linked docs are the law.
 
-**Corpus questions** ("what does the repo already say about X?") → **`/consulting-the-librarian`** (the skill
-carries the 5-part delegation brief: question · task · every id/alias · your ASSUMPTIONS to
-confirm-or-refute · extra surfaces). Do not read the corpus into your own window — a read-budget
-hook advises when you do. Exception: the decision record a function cites, and the record you are
-drafting, are personal reads.
+**Looking anything up** → **`scripts/find.sh <concept> <synonym> <synonym>`** — the whole repo
+(untracked files, archives and dot-folders included), case-insensitive, files ranked by hits, and
+loud about "no hits" (with how many files it searched), about errors, and about truncation. Don't
+hand-write `grep` across folders you guessed. A few targeted reads after it are expected.
+**Broad questions** ("what does the repo already say about X?", before a design pass, before a
+ticket) → **`/consulting-the-librarian`** (the skill carries the 5-part delegation brief: question ·
+task · every id/alias · your ASSUMPTIONS to confirm-or-refute · extra surfaces). Don't read the
+WHOLE corpus into your own window — a read-budget hook advises past a budget; targeted reads are fine.
 
 ## ⛔ Standing rules (non-negotiable — never miss these)
 
@@ -38,8 +42,19 @@ drafting, are personal reads.
   (local | external | off) via `scripts/second-opinion.sh` — no rule here requires an outside API.
   Record who actually reviewed; label a local reviewer's output "same-family review".
 - **Verify before you report.** Never report a result you have not seen. A guard test proves nothing until you have watched it **fail** (break it, see red, restore byte-identically). A scan reporting zero must be tested against a known positive. A red must be reproduced before it is attributed. **A disappearing symptom is not a diagnosis.**
-- **Recall is not a source — four SHAPES always get a lookup, no matter how sure you feel.** A remembered specific arrives feeling exactly as certain as one just read, so a rule conditioned on *doubt* can never fire. The trigger is the **shape of what you are about to write**: **a file path or name** → from `ls`/`grep` output in this session, never typed from memory; **a quantity** (count, threshold, cap, version) → from the schema constraint or code constant first, prose second; **what a document SAYS** → **quote it**, because quoting forces the read and paraphrasing lets memory answer; **a result** → the raw output (and verbosely — a bare `ok` can be a *skipped* suite, and `$?` after a pipe is the pipe's). **If you cannot say which file a fact came from, you are recalling it.** Auto-memory and sub-agent output are pointers, never sources.
+- **Recall is not a source — five SHAPES always get a lookup, no matter how sure you feel.** A remembered specific arrives feeling exactly as certain as one just read, so a rule conditioned on *doubt* can never fire. The trigger is the **shape of what you are about to write**: **a file path or name** → from `ls`/`grep` output in this session, never typed from memory; **a quantity** (count, threshold, cap, version) → LOOK in the schema constraint or code constant first, prose second (if they disagree, that is a conflict — the rule below); **what a document SAYS** → **quote it**, because quoting forces the read and paraphrasing lets memory answer; **a result** → the raw output (and verbosely — a bare `ok` can be a *skipped* suite, and `$?` after a pipe is the pipe's); **an absence** ("nothing says X", "not built", "no such rule") → a WHOLE-repo search first (`scripts/find.sh`, not folders you guessed), and the answer says where it looked. **If you cannot say which file a fact came from, you are recalling it.** Auto-memory and sub-agent output are pointers, never sources.
 - **Before you START on a topic, read what already says something about it — including everything that POINTS AT it.** Not the primary document alone: **a decision drifts in the places that QUOTE it, and a document can contradict itself** — neither is visible when you read one file. Sweep the decision record *plus* every doc, comment and test referencing it, and put the primary's stated PROBLEM next to its stated DECISION. **If they disagree, that disagreement outranks the task you were given.**
+- **Business questions are answered from owner decisions first, code second.** How the business handles
+  something — pricing, statuses, exceptions, which changes are allowed, a process — is decided by the
+  owner; code shows only what was implemented, possibly before a later decision. Look for the decision
+  (`scripts/find.sh`, the librarian) BEFORE applying the code's behaviour; if they differ, the conflict
+  rule applies.
+- **When records conflict: show both, with dates, and ask the owner.** Never pick one silently, and never
+  hedge vaguely ("I can't tell which is right"). Quote each version with where it lives and its date (or
+  "undated"), say which looks newer and why, and ask which is current. Present neither as fact until the
+  owner answers; then fix the stale record. Exception: when a recorded decision already settles it (a
+  superseding ADR, a dated ruling that names the older one), follow it and cite it — there is nothing to
+  ask. In a run with nobody to ask, report the conflict this way and act on neither.
 - **Code and the decision that governs it are BOUND, both ways.** A function you touch names the **decision record and section** in its doc comment; you **read** those before changing it; and when the body changes you **re-read the comment** and either fix it or date a confirmation that it still holds. **Comments say WHY, not what** — the code already says what, and **the next reader is another agent with no memory of this session**, for whom WHY is the only thing unrecoverable from source. Gate it on *touched* functions and ratchet (see `docs/ci/gates.md` G3).
 - **Coverage is part of Done:** every slice **measures** coverage on its new/changed code and hits «target band, e.g. 80–100%». A test you can't write yet (missing harness/dep) is **DEFERRED, never dropped** — tag the site `DEFERRED-TEST:`, register it, and write it the moment the dependency lands.
 - **Git:** «branch/PR policy». End commits with the agreed co-author trailer.

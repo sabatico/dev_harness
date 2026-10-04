@@ -167,6 +167,12 @@ HARNESS_REPEAT_EXEMPT="BashOutput TaskOutput TaskGet TaskList ReadNotifications 
 # a harness-maintenance session with  HARNESS_ALLOW_CONTROL_EDITS=1 claude  and the banner says so.
 HARNESS_CONTROL_PATHS=""
 
+# ── Search (scripts/find.sh, v1.3) ───────────────────────────────────────────────────────────────
+# The harness's OWN files, listed after the project's in every search so process docs stop crowding
+# the answers (repo-relative; a trailing / means a folder). Leave the line OUT for the default below;
+# set it empty to list everything together.
+# HARNESS_FIND_LAST="docs/ci/ .claude/ evals/ harness.conf harness.conf.example AGENTS.md TAILORING.md CHEAT-SHEET.md CONVENTIONS.md CONTRIBUTING.md"
+
 # ── Second opinion (scripts/second-opinion.sh) — the harness never REQUIRES an outside API ─────────
 # Where the harness asks for an independent reviewer (cross-author tests, a second review of a diff,
 # an adversarial design debate), THIS decides who that is:

@@ -25,7 +25,10 @@ cd "$ROOT" || exit 0
 # shellcheck disable=SC1091
 [ -f harness.conf ] && . harness.conf
 
-bounded() { ( "$@" ) & local p=$!; ( sleep 8; kill -9 "$p" 2>/dev/null ) & local k=$!; wait "$p" 2>/dev/null; local rc=$?; kill -9 "$k" 2>/dev/null; return $rc; }
+# The watchdog's output goes to /dev/null: killing its subshell leaves the `sleep` alive, and a sleep that
+# still holds this hook's stdout made Claude Code wait out BOTH 8-second timers — 16 s on every session
+# start against a 20 s hook timeout (found by the v1.3 cross-author matrix, 2026-10-03).
+bounded() { ( "$@" ) & local p=$!; ( sleep 8; kill -9 "$p" 2>/dev/null ) >/dev/null 2>&1 & local k=$!; wait "$p" 2>/dev/null; local rc=$?; kill -9 "$k" 2>/dev/null; return $rc; }
 
 # Which SessionStart fired (startup|resume|clear|compact) — from the payload, never guessed.
 payload=""; [ -t 0 ] || payload="$(cat)"
@@ -105,11 +108,48 @@ if [ -n "${HARNESS_BUG_REGISTER:-}" ] && [ -f "${HARNESS_BUG_REGISTER}" ]; then
   echo
 fi
 ONB=""
-for c in docs/ONBOARDING.md ONBOARDING.md; do [ -f "$c" ] && ONB="$c" && break; done
+for c in ${HARNESS_ONBOARDING:-} docs/ONBOARDING.md ONBOARDING.md; do [ -f "$c" ] && ONB="$c" && break; done
 if [ -n "$ONB" ]; then
+  # v1.3: "read ONBOARDING first" was an instruction, and an outside benchmark found only a small
+  # minority of sessions opened it first and well under half opened it at all. So its current state is
+  # INJECTED: the status and decided-vs-open sections, bounded, then what happens next. Headings are
+  # matched by meaning (status / decided / next), not by number, so a renumbered template still works;
+  # HARNESS_ONBOARDING (harness.conf) wins over the default locations. HTML comments — template
+  # guidance, often multi-line, sometimes opened mid-line — are never injected, and lines are cut by
+  # CHARACTER, not byte (a byte cut split accented letters into invalid UTF-8 in the model's context).
+  # A section that cannot be found is SAID, never printed as nothing.
+  # (The python reads its arguments only; no backticks in this body - macOS bash 3.2 trap, P8.)
+  onb_section() { python3 - "$ONB" "$1" "$2" <<'PY' 2>/dev/null
+import re, sys
+path, pattern, limit = sys.argv[1], sys.argv[2], int(sys.argv[3])
+text = open(path, encoding="utf-8", errors="replace").read()
+text = re.sub(r"<!--.*?(-->|\Z)", "", text, flags=re.S)      # every comment, wherever it opens
+out, inside = [], False
+for line in text.splitlines():
+    if line.startswith("## "):
+        if inside:
+            break
+        inside = re.search(pattern, line, re.I) is not None
+        continue
+    if inside and line.strip():
+        out.append("  " + line[:200])
+print("\n".join(out[:limit]))
+PY
+  }
+  st="$(onb_section 'status' 10)"
+  dv="$(onb_section 'decided' 10)"
+  nx="$(onb_section 'next' 8)"
+  if [ -n "$st$dv" ]; then
+    echo "── current state ($ONB — injected, so you start from it; open the file for detail) ──"
+    if [ -n "$st" ]; then printf '%s\n' "$st"; else echo "  ⚠ no section headed 'status' (or only comments in it) — status could NOT be injected; read the file."; fi
+    if [ -n "$dv" ]; then echo "  · decided vs open:"; printf '%s\n' "$dv"; else echo "  ⚠ no section headed 'decided' (or only comments in it) — decided-vs-open could NOT be injected; read the file."; fi
+  else
+    echo "⚠ $ONB has no section headed 'status' or 'decided' — the current state could NOT be injected; read the file."
+  fi
+  echo
   echo "── what happens next ($ONB, first lines of the next-steps section) ──"
-  awk '/^## .*([Nn]ext|NEXT)/{f=1;next} /^## /{if(f)exit} f' "$ONB" | grep -vE '^\s*$' | head -8 | cut -c1-200 | sed 's/^/  /'
+  if [ -n "$nx" ]; then printf '%s\n' "$nx"; else echo "  ⚠ no section headed 'next' — read the file."; fi
   echo
 fi
-echo "This brief is DERIVED state, not a substitute for reading what your task touches. Corpus questions → the librarian agent (/consulting-the-librarian)."
+echo "This brief is DERIVED state, not a substitute for reading what your task touches. Look things up with scripts/find.sh (whole repo); broad questions → the librarian (/consulting-the-librarian)."
 exit 0

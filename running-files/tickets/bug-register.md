@@ -43,6 +43,9 @@ Escaped bugs are the primary source of new `edge-case-catalog.md` classes.
 | BUG-001 | «P?» | «date» | «who/how» | «one-line defect» | ☐ open | «link to repro / hunt report / ticket» |
 
 ## Closed bugs (append-only; escape analysis inline for P0/P1)
+
+> Long-closed rows rotate VERBATIM to the register's archive (bug-register-archive.md beside this
+> file, created by scripts/rotate-bug-register.sh). A search for a past defect or ruling covers it.
 | ID | Sev | Found → Closed | Summary | Fix (commit) | **Verified by** (the test that went RED) | Escape analysis (P0/P1) |
 |----|-----|----------------|---------|--------------|------------------------------------------|--------------------------|
 | — | | | | | | |

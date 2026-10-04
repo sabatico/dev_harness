@@ -76,7 +76,8 @@ PASS=0; FAIL=0; FAILED_GATES=""
 
 # ── the fixture: a minimal, fully COMPLIANT project ──────────────────────────
 build_fixture() {
-  FX="$(mktemp -d)"
+  # macOS `mktemp -d` ignores TMPDIR; the template keeps every kit test on the same temp root.
+  FX="$(mktemp -d "${TMPDIR:-/tmp}/selftest.XXXXXX")" || { echo "cannot create a temp dir" >&2; exit 3; }
   mkdir -p "$FX/docs/tickets" "$FX/src" "$FX/tests"
   ( cd "$FX" && git init -q . && git config user.email t@example.com && git config user.name t )
 

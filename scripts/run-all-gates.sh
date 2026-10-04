@@ -101,7 +101,7 @@ printf '%sfast tier%s\n' "$C_B" "$C_0"
 manifest_expect doc-links doc-paths doc-index markers bug-evidence conditional-skips citations log-hygiene \
   guard-matrix read-budget-matrix claim-check-matrix bug-register-rotation bug-rotation-matrix \
   onboarding-limits onboarding-rotation-matrix secret-read-matrix image-pins image-pins-matrix second-opinion-matrix \
-  verify-check-matrix repeat-check-matrix
+  verify-check-matrix repeat-check-matrix find-matrix librarian-sweep-matrix session-start-matrix
 
 run_gate doc-links         "$HERE/check-doc-links.sh"
 run_gate doc-paths         "$HERE/check-doc-paths.sh"
@@ -123,6 +123,10 @@ run_gate claim-check-matrix        "$HERE/hook-stop-claimcheck-test.sh"
 # 2026-09-30 (ci/platform-layer.md P9): the end-of-turn verify check and the repeat counter.
 run_gate verify-check-matrix       "$HERE/hook-stop-verifycheck-test.sh"
 run_gate repeat-check-matrix       "$HERE/hook-repeat-check-test.sh"
+# v1.3: the standard search. Its "no hits" is a claim agents act on, so its suite is a gate.
+run_gate find-matrix               "$HERE/find-test.sh"
+run_gate librarian-sweep-matrix    "$HERE/librarian-sweep-test.sh"
+run_gate session-start-matrix      "$HERE/hook-session-start-test.sh"
 # Rotation as gates: "move the row / archive the entry" was a prose step on the source project, and the
 # register reached 523 KB (86 closed rows left in the open table) while the handover file hit its budget.
 run_gate bug-register-rotation     "$HERE/rotate-bug-register.sh" --check

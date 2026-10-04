@@ -9,7 +9,9 @@
 > NOT a ticket.** A feature to build, tech debt, a residual, a productionization gap → it lives in
 > the running docs (`ONBOARDING.md` status + the owning ADR + `runner.md`/`backlog-tickets.md`) at
 > discovery time. Two sources of truth guarantee drift: tickets that duplicate engineering state go
-> stale within hours. If a ticket and a doc disagree, **the doc wins and the ticket gets fixed.**
+> stale within hours. If a ticket and a doc disagree about engineering STATE (what is built, what is running), **the doc
+> wins and the ticket gets fixed.** If they disagree about an owner DECISION, neither wins by type:
+> show both with their dates and ask the owner (`CLAUDE.md`, the conflict rule).
 
 ## The types (one file each)
 

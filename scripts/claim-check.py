@@ -10,7 +10,7 @@ HARNESS_LOG_DIR, HARNESS_CLAIMCHECK_MODE=advise|block, HARNESS_ROOT_OVERRIDE (te
 WHY (harness-review-2026-08-24 §11, owner 2026-09-29: "even opus level main agent misses things a lot
 and hallucinates 'from memory' instead of every time researching"). Every existing control fires on a
 FILE: check-doc-links caught 5 of 5 invented filenames in docs (harness-review §4), while the prose rule
-caught 0 of 5. But answers-from-memory land in CHAT, where nothing looked. the recall-is-not-a-source rule names four shapes that
+caught 0 of 5. But answers-from-memory land in CHAT, where nothing looked. the recall-is-not-a-source rule names the shapes that
 always get a lookup — path, quantity, ruling, result. Three have a mechanically checkable form:
 
   PATH    a markdown link [x](path) or a backticked `file.ext:line` asserts the file (and the line)

@@ -21,6 +21,15 @@ How we write code and docs here, so a swarm of agents (and the owner) produce on
 - Commit messages: imperative subject, a body that says *why* for anything non-obvious. Special prefixes the harness uses: **`quality-review:`** (a review baseline — the next review diffs from it) and **`bug-hunt:`** (a hunt baseline — a later delta hunt scopes from it). Both are scoping anchors, so the prefix is load-bearing, not decoration.
 - «Co-author / attribution trailer, if any.»
 
+## Searching
+Use `scripts/find.sh` (whole repo, ranked, loud). If you must hand-write a search:
+1. **Quote every glob** (`--include='*.md'`, `-- '*.md'`): zsh aborts on an unquoted one with a
+   single "no matches found" line, and a pipe after it still exits 0 — it looks like "no hits".
+2. **A command that printed an error found nothing** — fix it and rerun; never read it as absence.
+3. **List files first** (`-l`), then read; **never cap a broad search with `head`** — the cap fills
+   with code before it reaches the document you need.
+4. **Search the whole repo, not folders you guessed**, before saying something does not exist.
+
 ## Naming
 - «Project naming conventions: files, modules, tests, IDs (feature-catalog IDs, ADR numbers, ticket IDs).»
 

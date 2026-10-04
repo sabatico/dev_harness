@@ -114,7 +114,8 @@ Destructive action → explain blast radius + get approval. Secrets never in cha
 | Verify the guard after editing it | `scripts/hook-pretooluse-guard-test.sh` (known-answer matrix) |
 | Edit the hooks / `.claude/settings.json` / `harness.conf` (owner only) | start the session as `HARNESS_ALLOW_CONTROL_EDITS=1 claude`; the guard refuses otherwise |
 | See what the hooks caught | `.harness-logs/` — `guard.log`, `verify-check.log`, `repeat-check.log`, `claim-check.log` … |
-| Sweep every surface for a topic | `scripts/librarian-sweep.sh <term> <alias> …` (0 = evidence, ABSENT = could not look) |
+| Look anything up | `scripts/find.sh <concept> <synonym> …` — whole repo, ranked; `--list` for files only; exit 1 = no hits (with coverage), 2 = the search failed |
+| Sweep every surface for a topic | `scripts/librarian-sweep.sh <term> <alias> …` (0 = evidence, ABSENT = could not look; "everything else" covers the rest of the repo) |
 | Write or change a skill / agent / rule | the `authoring-skills` skill; then `scripts/check-skills.sh` until 0 findings (also a gate) |
 | Check a skill actually changes behaviour | run its 3 scenarios in `evals/«skill».json` with a fresh agent (Sonnet and Opus — never Haiku); log in `evals/RESULTS.md` |
 | Delegate a corpus question | `/consulting-the-librarian <topic>` — 5-part brief, require the sweep accounting table back |

@@ -26,6 +26,10 @@ Two field failures this prevents:
   what you recommend. Never a bare few-word question ("BUG-236 — which model?").
 - **No ticket or card is created without one plain sentence in chat**: what it is, and whether the
   owner needs to care. Spawned sub-agents never create tickets — only the lead, after review.
+- **Status is checked, not repeated.** Before listing anything as open, pending, blocked or not built,
+  check it against the current-state doc (ONBOARDING) and the code. A ticket's status is a claim to
+  verify, not a fact; telling the owner to do something already done is a defect. If the records
+  disagree, show both with their dates and ask (`CLAUDE.md`, the conflict rule).
 - **The test:** if the owner would have to ask "what does that mean?", rewrite it first.
 
 ## Before sending — the feedback loop

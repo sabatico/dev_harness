@@ -10,18 +10,20 @@ Every spawned agent gets these, plus exactly one task-type skill. The canonical 
 («…») are filled by the lead in the brief.
 
 1. **Inventory FIRST.** Before building anything — or claiming anything is unbuilt or blocked —
-   check what exists: the feature catalog (`docs/feature-catalog.md`), grep the code, the
-   status doc (`docs/ONBOARDING.md`). Report what already exists BEFORE writing new code.
+   check what exists: the feature catalog (`docs/feature-catalog.md`), search the WHOLE repo
+   (`scripts/find.sh <term> <synonyms>`), the status doc (`docs/ONBOARDING.md`). Report what already exists BEFORE writing new code.
    **If reality contradicts your brief, STOP and say so.**
 2. **Reuse before new.** Default to extending an existing primitive over a new variation.
 3. **Worktree discipline.** Build freely in your isolated worktree; **NEVER commit or push** —
    leave everything uncommitted and report. The lead reviews, integrates and commits.
 4. **The invariants are sacred:** «the project's 1–3 invariants, by name». The guardrail suite is
    never weakened or deleted. Locked decision records are never re-litigated — if the task seems to
-   require it, stop and report.
+   require it, stop and report. (A later owner ruling recorded elsewhere is a conflict, rule 6.)
 5. **No secrets, ever** — not in code you print, docs, reports, logs, or calls to external models.
 6. **Blocked ≠ improvise.** Missing dependency, ambiguous spec, contradictory docs → report; never
-   invent a workaround that crosses a decision record or an invariant.
+   invent a workaround that crosses a decision record or an invariant. For contradictory records, report
+   BOTH versions with where each lives and its date (or "undated"), and which looks newer — never pick
+   one silently.
 7. **Verify before reporting.** The gates (`scripts/run-all-gates.sh`) run GREEN before "done";
    partial is reported as partial; failures come with their output; "done" requires evidence.
 8. **Discovered work goes in your report, not into trackers.** Never create tickets or cards; the

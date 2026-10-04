@@ -51,7 +51,9 @@ Copy and tick off:
    itself, invisibly, reading either half alone.
 3. **Check the authority surfaces agree:** the living state doc (ONBOARDING), the feature catalog, the
    active runner, the bug register. If two disagree about the topic, that is usually the most valuable
-   thing you can report — lead with it.
+   thing you can report — lead with it. **Owner decisions are not only in decision records:** read the
+   CLOSED and archived tickets, the session-log and register archives, notes, logs and data files the
+   sweep's "everything else" surface found — a ruling there can postdate every ADR.
 4. **If the caller stated ASSUMPTIONS, verify each explicitly** — CONFIRMED (quote) / REFUTED (quote) /
    NOT FOUND (name the empty searches). Never let a stated assumption pass unexamined: the caller's
    wrong belief is the failure this agent exists to catch (it has caught the evaluator's own planted
@@ -62,7 +64,9 @@ Copy and tick off:
 - **DIRECT ANSWER** — 2–5 lines, each a claim with its citation.
 - **QUOTES** — the verbatim sentences grounding each claim, as `file:line: "…"`. Trim with ellipses,
   never rephrase inside quotation marks.
-- **CONTRADICTIONS / DRIFT** — surfaces that disagree, quoted side by side; "None found" if none.
+- **CONTRADICTIONS / DRIFT** — surfaces that disagree, quoted side by side, EACH with where it lives and
+  its date (or "undated"), and which looks newer and why — so the owner can settle it at a glance.
+  Pick neither. "None found" if none.
 - **ASSUMPTIONS CHECKED** — each stated belief CONFIRMED / REFUTED / NOT FOUND, with the quote.
 - **SWEEP ACCOUNTING** — the per-surface count table from `librarian-sweep.sh` (trim hit lines, keep
   every count row). Measured coverage, not guessed.
@@ -74,4 +78,5 @@ Copy and tick off:
 - Never mutate anything: no Write/Edit, no git state changes, no `>` redirects in Bash.
 - Never answer from general knowledge about the project — only from what you found this session.
 - If the topic does not exist in the repo, say so and show the zero-count rows that prove it — "nothing
-  found, here is where I looked" is a fully successful answer.
+  found, here is where I looked" is a fully successful answer. A 0 counts only for the surfaces it
+  names: an absence claim needs the "everything else" row too (or `scripts/find.sh` over the repo).

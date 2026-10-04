@@ -320,3 +320,30 @@ Dated provenance for the rules above; nothing here adds a rule.
   limit firing on every call, a relabelled retry resetting the repeat counter, a session id able to
   forge guard-log lines. Also found in OLDER code: both Stop-hook wrappers resolved their own
   directory after `cd`, so a run by relative path silently checked nothing.
+
+---
+
+## P10. Retrieval: searches fail far more often than reads (v1.3, 2026-10-03)
+
+An outside benchmark of v1 → v1.2 (270 sealed sessions, two models, three runs each) found retrieval
+almost never failed because a file could not be read. It failed four ways: the agent searched a GUESSED
+subset of the repo and concluded "nothing exists"; it answered a business question from the code without
+looking for an owner decision; its hand-written search died silently in the shell; or it met two
+conflicting records and picked one, or hedged, without showing the dates. What each now has:
+
+| Failure | Control | Class |
+|---|---|---|
+| zsh aborts `grep … --include=*.md` with one line; piped, it exits 0 and reads as "no hits" | `scripts/find.sh` — its own bash script on `git grep`, no shell glob anywhere | **structural** — the trap cannot occur inside the tool |
+| ~80% of searches named a few guessed folders | `find.sh` always searches the whole repo, from any cwd, and "no hits" prints its coverage; the librarian sweep's "everything else" surface | structural + a stated number |
+| piping a broad search into head filled the quota with code before the document | files ranked by hits before any match line; every cap says TRUNCATED | structural |
+| "nothing exists" asserted from a partial search | the recall rule's fifth shape: an absence needs a whole-repo search and says where it looked | D — a rule, now with a tool that makes it one command |
+| policy answered from code | "owner decisions first, code second", a named librarian trigger | D |
+| conflicting records settled silently | one conflict rule (both versions, where, dated, ask); the three silent precedence rules qualified | D |
+| ONBOARDING not read | its status and decided-vs-open sections are INJECTED at session start | structural |
+
+Honest reading: three of the four failure modes moved to structure; the decision-first and conflict
+rules are still prose (class D), and the benchmark is what will say whether prose was enough. The tool
+and its suite came with the report; the kit's version fixed two silent misses in it before adoption
+(an accented file name was printed escaped and then lost its match lines; the suite ran `mkdir /repo`
+when macOS `mktemp -d`, which ignores TMPDIR, failed — two older kit tests had the same bare
+`mktemp -d` and were fixed with it).
