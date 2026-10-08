@@ -12,10 +12,11 @@ only its verdict and per-version means — never task names or contents.
 2. Commit, then tag: `git tag -a vX.Y -m "harness vX.Y"` on that commit.
 3. Push the commit and the tag (`git push origin master vX.Y`).
 
-## Unreleased — fixes from the first install on Linux (AnyTutor, 2026-10-07)
+## v1.4 — 2026-10-07
 
-Installing v1.3 into a new project in a Debian container found three defects the maintainer's macOS
-checkout could not show. Not benchmarked: no change to how an agent is steered.
+Fixes from the first install on Linux. Installing v1.3 into a new project (AnyTutor) in a Debian
+container found three defects the maintainer's macOS checkout could not show. Not benchmarked: no
+change to how an agent is steered.
 
 - **init left the copied docs pointing at the kit layout.** The kit's docs cite kit paths
   (`ci/gates.md`, `running-files/tickets/`, `dot-claude/...`), which resolve only while the originals
