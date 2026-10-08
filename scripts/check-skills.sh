@@ -85,11 +85,15 @@ def resolves(tok, here):  # harness:allow-uncited kit linter governed by the aut
     """ A backticked path claim resolves at the root, next to the file, or — in the kit, whose docs
     cite INSTALLED-layout paths (.harness/baselines/doc-paths.txt) — after mapping docs/ci/ -> ci/,
     docs/ -> running-files/, .claude/ -> dot-claude/."""
-    cands = [os.path.join(root, tok), os.path.join(here, tok)]
+    # The prefix test runs on the token AS WRITTEN: stripping its trailing slash first turned a bare
+    # `.claude/` into `.claude`, which matched no prefix, so it resolved only on a machine that happened
+    # to have a local .claude/ (found in a fresh Linux clone, 2026-10-07).
+    bare = tok.rstrip("/")
+    cands = [os.path.join(root, bare), os.path.join(here, bare)]
     if KIT:
         for pre, kit in (("docs/ci/", "ci/"), ("docs/", "running-files/"), (".claude/", "dot-claude/")):
             if tok.startswith(pre):
-                cands.append(os.path.join(root, kit + tok[len(pre):])); break
+                cands.append(os.path.join(root, (kit + tok[len(pre):]).rstrip("/"))); break
     return any(os.path.exists(c) for c in cands)
 
 def check_paths(path, text):  # harness:allow-uncited kit linter governed by the authoring-skills skill; the kit has no ADR log
@@ -102,7 +106,7 @@ def check_paths(path, text):  # harness:allow-uncited kit linter governed by the
             continue
         if "/" not in tok or not (tok.endswith("/") or re.search(r"/[^/]*\.[A-Za-z0-9]+$", tok)):
             continue
-        if not resolves(tok.rstrip("/"), os.path.dirname(path)):
+        if not resolves(tok, os.path.dirname(path)):
             findings.append(f"{rel(path)}: backticked path `{tok}` does not exist")
 
 def check_md_common(path, text):  # harness:allow-uncited kit linter governed by the authoring-skills skill; the kit has no ADR log

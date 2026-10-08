@@ -4,7 +4,8 @@
 #   scripts/init.sh "My Project" P3 [go|typescript|python|generic]
 #
 # What it does:
-#   1. Lays down docs/  ← running-files/,  docs/ci/ ← ci/   (evals/ stays at the root, for check-skills)
+#   1. Lays down docs/  ← running-files/,  docs/ci/ ← ci/   (evals/ stays at the root, for check-skills),
+#      re-pointing the copies' backticked kit paths at that layout (scripts/init-test.sh proves it)
 #   2. Installs the platform layer: .claude/ ← dot-claude/ (hooks, guard, rules, librarian, skills)
 #   3. Substitutes «PROJECT NAME» throughout the copies
 #   4. Writes harness.conf pointing at the new layout, so the gates run immediately
@@ -54,6 +55,18 @@ echo "── initialising '$NAME' at profile $PROFILE, stack $STACK"
 mkdir -p docs/ci
 cp -R running-files/. docs/
 cp -R ci/.            docs/ci/
+# Re-point kit-layout paths at the installed layout. The kit's docs cite paths as they exist IN THE KIT
+# (that is what its own doc-paths gate can check), so a copied doc saying `ci/gates.md` resolves only
+# while the originals sit beside the copies, and the advised removal below turned 11 of them red on
+# the first real install (AnyTutor, 2026-10-07). Only BACKTICKED tokens are rewritten: those are the
+# path claims check-doc-paths.sh verifies, and prose naming the kit folders is left alone. The same
+# mapping, in reverse, is check-skills.sh's kit mode. scripts/init-test.sh proves the result.
+relayout() {
+  local f="$1"
+  local tmp="$f.init.$$"
+  sed -e 's|`running-files/|`docs/|g' -e 's|`ci/|`docs/ci/|g' -e 's|`dot-claude/|`.claude/|g' "$f" > "$tmp" && mv "$tmp" "$f"
+}
+find docs -name '*.md' -type f | while IFS= read -r f; do relayout "$f"; done
 # the operating procedures are Claude Code skills (dot-claude/skills/ → .claude/skills/, step 2);
 # their eval scenarios stay in evals/ at the root, where scripts/check-skills.sh expects them
 
@@ -259,9 +272,11 @@ cat <<NEXT
   7. After the first week, read .gate-logs/ (stop-advisory, read-budget) and tune or delete what
      never fires. Keep the C5 table current as gates land.
 
-  This kit's own meta files (README.md, TAILORING.md, running-files/, ci/, harness.conf.example)
-  are now duplicated under docs/. Remove the originals when you are ready:  git rm -r running-files ci
-  (CLAUDE.md's pointers are written for the post-init docs/ layout, so they survive that removal.)
+  The kit's running-files/, ci/ and dot-claude/ are now copied into docs/, docs/ci/ and .claude/.
+  Remove the originals when you are ready (after comparing any KEPT file above against its
+  dot-claude/ original):  git rm -r running-files ci dot-claude
+  (CLAUDE.md's pointers are written for the post-init layout, and init re-pointed the copied docs'
+  paths at it, so both survive that removal; scripts/init-test.sh is the proof.)
 
   Starting a NEW project rather than a fork of the harness? Drop its history too:
       rm -rf .git && git init && git add -A && git commit -m "«project»: initial harness install"

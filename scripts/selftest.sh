@@ -219,6 +219,21 @@ if [ -f "$HERE/predicates-test.sh" ]; then
   fi
 fi
 
+# init's install layout, end to end: init into a copy of the kit with THIS stack, remove the kit
+# originals as init advises, and the doc gates must still pass. The per-gate checks below build their
+# own fixture, so none of them could see a copied doc that cites a kit-layout path (the first real
+# install found 11). Only the kit has originals to remove; an installed project reports a SKIP.
+if [ -f "$HERE/init-test.sh" ] && { [ -z "$ONLY" ] || case "init-test.sh" in *"$ONLY"*) true ;; *) false ;; esac; }; then
+  bash "$HERE/init-test.sh" "$STACK" >/dev/null 2>&1; rc_init=$?
+  case "$rc_init" in
+    0) printf '  %s✓%s init-layout         init + remove the kit originals → doc gates still pass\n' "$G" "$Z"
+       PASS=$((PASS + 1)) ;;
+    4) printf '  %s-%s init-layout         SKIP — not the kit (no originals to remove): unexercised, NOT a pass\n' "$Y" "$Z" ;;
+    *) printf '  %s✗%s init-layout         FAILED (exit %s) — run scripts/init-test.sh %s\n' "$R" "$Z" "$rc_init" "$STACK"
+       FAIL=$((FAIL + 1)); FAILED_GATES="$FAILED_GATES init-layout" ;;
+  esac
+fi
+
 check check-doc-links.sh        "doc-links"         plant_doc_links
 check check-doc-paths.sh        "doc-paths"         plant_doc_paths
 check check-doc-index.sh        "doc-index"         plant_doc_index

@@ -1,7 +1,7 @@
 # The platform layer — hooks, agents, rules, skills (and what each one enforces)
 
-The doctrine for the agent-platform layer: `dot-claude/` is the template, `scripts/hook-*.sh` are the
-implementations. Origin and dated evidence: see **History** at the end.
+The doctrine for the agent-platform layer: `dot-claude/` holds the wiring, agents, rules and skills;
+`scripts/hook-*.sh` are the implementations. Origin and dated evidence: see **History** at the end.
 
 ## Contents
 
@@ -26,7 +26,7 @@ stuck there a home:
 |---|---|---|---|
 | "Never run X" (destructive commands) | D — hoped | **PreToolUse deny** (`hook-pretooluse-guard.sh`) | **A** — cannot run |
 | "Read the state docs at session start" | D — a reading list | **SessionStart injection** (`hook-session-start.sh`) | structural — state arrives derived |
-| "Load the right rules for this job" | D — a routing table | **path-scoped rules** (`dot-claude/rules/`, copied to your repo's dot-claude directory, + `paths:` frontmatter) | structural — loads on touch |
+| "Load the right rules for this job" | D — a routing table | **path-scoped rules** (`dot-claude/rules/` + `paths:` frontmatter) | structural — loads on touch |
 | "Follow the SOP when the owner says X" | D — remembered | **skills** (`/reviewing-code-quality`, `/hunting-bugs` …) | structural — invoked by name |
 | "Check docs after every write" | A, but Write/Edit only | **PostToolUse on Bash too** (`hook-postbash-docgates.sh`) | A, all three write paths |
 | "Delegate corpus reads" | D — cannot be a hard gate | **volume tripwire** (`hook-read-budget.sh`) + logged hits | **advisory-instrumented D** — measured, honestly labelled |
@@ -114,7 +114,7 @@ with file:line** (`dot-claude/agents/librarian.md`).
 ## P4. What hot-reloads and what does not (verify, don't assume)
 
 **Hooks** hot-reload on settings edits; **skills** hot-load into a running session; **agent
-definitions do NOT** — a new or edited agent definition (your repo's dot-claude agents dir) waits for
+definitions do NOT** — a new or edited agent definition (`dot-claude/agents/`) waits for
 the next session start. Never assume a just-written agent runs the just-written protocol; the first
 spawn in a fresh session is the wiring proof. Re-verify these semantics on your platform version —
 this class of claim rots.
@@ -149,8 +149,9 @@ tool, a live product invariant violation in the source project).
 
 ## P7. Wiring order for a new project
 
-1. Run `scripts/init.sh` — it installs `dot-claude/` → `.claude/` per file and seeds the platform
-   vars in `harness.conf`. (Retrofitting an existing repo: do that copy by hand.)
+1. Run `scripts/init.sh` — it copies the kit's platform layer into the project's .claude folder file
+   by file and seeds the platform vars in `harness.conf`. (Retrofitting an existing repo: do that
+   copy by hand.)
 2. Start a session; **see the banner** (P1). No banner = fix wiring before trusting anything.
 3. Run `hook-pretooluse-guard-test.sh`; adapt the ALLOW rows to your workflows.
 4. Write one path-scoped rule per area you actually have (the rules dir); keep each ≤50 lines.
@@ -213,11 +214,11 @@ a measurement.
 measures one version inside one project; comparing VERSIONS needs a frozen practice project, sealed
 sessions and repeated runs, and its answer key must never sit where harness authors work: an author
 who has read the exam tunes the harness to it, and every later result is poisoned. Keep the benchmark
-in its own repository and make it unreadable from harness sessions in `.claude/settings.local.json`
-(per machine): `permissions.deny` Read/Edit/Write rules on its path stop the tools, but a shell
-wildcard (`cat */bench/…`) or `grep -r` walks straight past them — measured — so also enable the Bash
-sandbox with `filesystem.denyRead` on the same path and `allowUnsandboxedCommands: false`, allowing
-only the git host in `network.allowedDomains`. Prove it with a canary file read every way a shell can.
+in its own repository and make it unreadable from harness sessions in the per-machine
+`settings.local.json` (in the .claude folder): `permissions.deny` Read/Edit/Write rules on its path
+stop the tools, but a shell wildcard (`cat */bench/…`) or `grep -r` walks straight past them —
+measured — so also enable the Bash sandbox with `filesystem.denyRead` on the same path and
+`allowUnsandboxedCommands: false`, allowing only the git host in `network.allowedDomains`. Prove it with a canary file read every way a shell can.
 Only verdicts and per-version means come back into `CHANGELOG.md`.
 
 **Post-compaction warning** (`scripts/hook-session-start.sh`, `source == compact`): facts read before

@@ -76,6 +76,7 @@ that needs it, and the gate says so out loud — an unconfigured check reports I
 | `lib/manifest.sh` | `ci/run-integrity.md` R1–R4 in ~90 lines | for multi-stage jobs |
 | `stacks/*.conf` | **the language-shaped facts every gate reads** | `HARNESS_STACK` picks one; `stacks/README.md` |
 | `predicates-test.sh` | that "is this a test file / vendored?" has not gone over-broad | known-answer matrix; an over-broad exclusion makes gates quieter, not louder |
+| `init-test.sh` | that an initialised project still passes its doc gates once the kit originals are removed | kit only (exit 4 elsewhere); runs init on a copy; `selftest.sh` runs it |
 
 ## The exit vocabulary — honour it in every gate you add
 

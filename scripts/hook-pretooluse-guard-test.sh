@@ -68,14 +68,19 @@ judge() {
 }
 
 mkpayload() { # tool cmd fp [notebook_path]   (env: ROW_CWD = the payload's cwd, as Claude Code sends it)
-  python3 -c '
+  # The command travels on STDIN, as the hook's own payload does, never as an argument: Linux caps one
+  # argument at 128 KiB, so the 200 KB row's python3 died with E2BIG, the guard got an EMPTY payload and
+  # rightly failed closed (rule=cannot-run), and the row reported the fixture's failure as the guard's
+  # (first Linux install, 2026-10-07). macOS has no per-argument cap, which is why it passed there.
+  printf '%s' "$2" | python3 -c '
 import json,sys
-tool,cmd,fp,nb,sid,cwd=sys.argv[1:7]
+tool,fp,nb,sid,cwd=sys.argv[1:6]
+cmd=sys.stdin.read()
 ti={"command":cmd,"file_path":fp}
 if nb: ti={"notebook_path":nb,"new_source":"x"}
 d={"session_id":sid,"tool_name":tool,"tool_input":ti}
 if cwd: d["cwd"]=cwd
-print(json.dumps(d))' "$1" "$2" "$3" "${4:-}" "$RUNSID" "${ROW_CWD:-}"
+print(json.dumps(d))' "$1" "$3" "${4:-}" "$RUNSID" "${ROW_CWD:-}"
 }
 
 t() { # want tool cmd fp label [rule]

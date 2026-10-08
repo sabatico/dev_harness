@@ -12,6 +12,9 @@ T=$(mktemp -d "${TMPDIR:-/tmp}/find-test.XXXXXX") || { echo "cannot create a tem
 R="$T/repo"; mkdir -p "$R"; cd "$R" || exit 2
 P=0; F=0
 ok()  { if [ "$2" = 0 ]; then P=$((P+1)); echo "  ok    $1"; else F=$((F+1)); echo "  FAIL  $1"; [ -n "${3:-}" ] && printf '        %s\n' "$3"; fi; }
+# A row that cannot be exercised on this machine prints SKIP and is counted apart — never a pass.
+S=0
+skip() { S=$((S+1)); echo "  SKIP  $1 — $2 (unexercised: NOT a pass)"; }
 run() { OUT=$("$FIND" "$@" 2>"$T/err"); RC=$?; ERR=$(cat "$T/err"); }
 has() { printf '%s\n' "$OUT" | grep -qF -- "$1"; }
 lists() { printf '%s\n' "$OUT" | grep -qE "^[0-9]+	$(printf '%s' "$1" | sed 's/[][\.*^$/]/\\&/g')\$"; }
@@ -73,8 +76,12 @@ ok "announces the exact remainder (20 more) as TRUNCATED" $(has "20 more in this
 run --max-per-file 25 "warranty line"; ok "no TRUNCATED notice when everything fits" $(! has TRUNCATED; echo $?)
 
 echo "-- shell-independence (the zsh 'no matches found' trap) and cwd"
-OUT=$(zsh -c "cd '$R' && '$FIND' '*.md' 'file?' warranty" 2>&1); RC=$?
-ok "under zsh, glob-looking terms are searched literally (no 'no matches found')" $([ $RC = 0 ] && ! has "no matches found" && lists data/many.txt; echo $?) "rc=$RC"
+# zsh is not installed on most Linux images (Debian/Ubuntu containers): the row is then unexercised, a
+# SKIP, never a FAIL (it failed on the first Linux install, 2026-10-07) and never a pass.
+if command -v zsh >/dev/null 2>&1; then
+  OUT=$(zsh -c "cd '$R' && '$FIND' '*.md' 'file?' warranty" 2>&1); RC=$?
+  ok "under zsh, glob-looking terms are searched literally (no 'no matches found')" $([ $RC = 0 ] && ! has "no matches found" && lists data/many.txt; echo $?) "rc=$RC"
+else skip "under zsh, glob-looking terms are searched literally" "zsh is not installed"; fi
 OUT=$(cd "$R/src" && "$FIND" ruling 2>&1); RC=$?
 ok "run from a subdirectory, still searches the WHOLE repo" $([ $RC = 0 ] && lists docs/archive/2025/tickets.md; echo $?) "$OUT"
 E="$T/empty"; mkdir -p "$E" && (cd "$E" && git init -q . && printf 'fresh decision\n' > d.md)
@@ -89,10 +96,8 @@ ok "a repo with no commits yet (untracked files only) is still searched" $([ $RC
 # and exit codes 0/1/2 on every new path. Each fixture here is its OWN repo under $T, so the counts
 # the rows above depend on never move. Cases find.sh currently gets WRONG are not rows (a red row
 # nobody can fix blocks the gate); they went to the lead in the test author's report.
-# A row that cannot be exercised on this machine prints SKIP and is counted apart — never a pass.
+# A row that cannot be exercised on this machine prints SKIP (skip(), defined with ok() above).
 # ═════════════════════════════════════════════════════════════════════════════════════════════════
-S=0
-skip() { S=$((S+1)); echo "  SKIP  $1 — $2 (unexercised: NOT a pass)"; }
 # rank_ln PATH → the output line number of PATH's ranking row ("N<TAB>PATH"), exact string compare via
 # ENVIRON (awk -v would eat backslashes; the existing `lists` helper is ERE, so '?' '+' '(' in a name
 # would be regex there).

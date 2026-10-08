@@ -12,6 +12,42 @@ only its verdict and per-version means — never task names or contents.
 2. Commit, then tag: `git tag -a vX.Y -m "harness vX.Y"` on that commit.
 3. Push the commit and the tag (`git push origin master vX.Y`).
 
+## Unreleased — fixes from the first install on Linux (AnyTutor, 2026-10-07)
+
+Installing v1.3 into a new project in a Debian container found three defects the maintainer's macOS
+checkout could not show. Not benchmarked: no change to how an agent is steered.
+
+- **init left the copied docs pointing at the kit layout.** The kit's docs cite kit paths
+  (`ci/gates.md`, `running-files/tickets/`, `dot-claude/...`), which resolve only while the originals
+  sit beside the copies, so init's own advice (remove the originals) turned the doc-paths gate red:
+  11 violations, in `docs/ci/gates.md`, `docs/ci/platform-layer.md` and `docs/tickets/security.md`.
+  init now re-points every backticked kit path at the installed layout as it copies (`docs/`,
+  `docs/ci/`, `.claude/`). Five sentences in `ci/platform-layer.md` that described the kit-to-install
+  mapping itself, or named the per-machine `settings.local.json` by path, were reworded so they read
+  right in both layouts. A fresh install's doc-paths baseline is now 0 entries, as the baseline header
+  always claimed (it froze 1). The closing advice now says to remove all three originals
+  (`git rm -r running-files ci dot-claude`, after comparing any file init kept).
+- **New known-answer test `scripts/init-test.sh`, run by `selftest.sh` (row `init-layout`).** It runs
+  init on a copy of the kit's working tree, checks the fresh baseline is empty, removes `running-files/`,
+  `ci/` and `dot-claude/`, then asserts doc-paths, doc-links and skills pass and no copied doc still
+  cites a kit path. Seen failing before the fix (4 of 8 rows, the 11 violations reproduced) and passing
+  after, on macOS and on Debian. Exits 4 (selftest prints SKIP) in an installed project, which has no
+  originals to remove.
+- **`find-test.sh`: the zsh row reports SKIP when zsh is not installed** (most Linux images), counted
+  apart as unexercised, never a pass. It reported FAIL.
+- **`hook-pretooluse-guard-test.sh`: the 200 KB row failed on Linux, and the guard was not at fault.**
+  The test built each payload by passing the command to python3 as an argument. Linux caps a single
+  argument at 128 KiB, so that call died, the guard received an empty payload and correctly failed
+  closed (`rule=cannot-run`). The command now goes on stdin, as the real hook payload does. The guard
+  is unchanged, and the row now proves it judges a 200 KB command in full on Linux too.
+- **Found while verifying on a clean clone:** the kit's own doc-paths and skills gates passed only
+  where a local `.claude/` existed (the maintainer's machine), and failed on any fresh clone.
+  `check-skills.sh` stripped a claim's trailing slash before matching it to the kit's dot-claude
+  folder, so a bare `.claude/` never matched (fixed, plus a new matrix row seen failing against the old
+  linter). Two `ci/platform-layer.md` claims (`.claude/`, `.claude/settings.local.json`) were reworded
+  as above. The stale triage note in `.harness/baselines/doc-paths.txt` (it said 7 entries; there were 0)
+  now describes the kit-path-plus-rewrite scheme.
+
 ## v1.3 — 2026-10-03
 
 Retrieval. The outside benchmark of v1 → v1.2 found no version a clear step forward on retrieval, and

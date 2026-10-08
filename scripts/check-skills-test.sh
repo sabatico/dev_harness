@@ -90,6 +90,11 @@ R=$(case_dir kitpath); mk_skill "$R" running-w running-w "$GOOD_DESC" 'See `docs
 mkdir -p "$R/ci"; echo "# gates" > "$R/ci/gates.md"
 expect "installed-layout path resolves in the kit" 0 "0 finding" "$R"
 
+# A bare folder claim with its trailing slash: the slash was stripped before the prefix test, so this
+# resolved only where a local .claude/ happened to exist (a fresh clone has none; neither has $R).
+R=$(case_dir kitbare); mk_skill "$R" running-z running-z "$GOOD_DESC" 'Lives under `.claude/` once installed.'
+expect "a bare installed-layout folder (\`.claude/\`) resolves in the kit" 0 "0 finding" "$R"
+
 R=$(case_dir relroot); mk_skill "$R" running-x running-x "$GOOD_DESC" "See [ref](reference/r.md)."
 mkdir -p "$R/dot-claude/skills/running-x/reference"; echo "# r" > "$R/dot-claude/skills/running-x/reference/r.md"
 out="$(cd "$R" && "$CHECK" . 2>&1)"; if printf '%s' "$out" | grep -q "0 finding"; then pass=$((pass+1)); echo "  ok    relative ROOT ('.') still matches linked references"; else fail=$((fail+1)); echo "  BAD   relative ROOT"; printf '%s\n' "$out"; fi

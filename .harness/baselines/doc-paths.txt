@@ -7,17 +7,10 @@
 #
 # TRIAGE BEFORE YOU FREEZE (gates.md G3): freezing without triage buries real findings
 # among false ones. Record the categories here:
-#   INSTALLED-LAYOUT PATHS (all 7 entries, triaged 2026-08-19).
-#   This repo is a BOILERPLATE. Its docs cite paths as they exist in the TARGET project once
-#   scripts/init.sh has copied running-files/ -> docs/ and ci/ -> docs/ci/. So `docs/...`
-#   is CORRECT prose that cannot resolve here by construction; rewriting it kit-relative would
-#   make it wrong in every project cloned from this one.
-#
-#   MEASURED, not assumed: 7 frozen here; a freshly initialised project regenerates this
-#   baseline and gets **0**. If yours is not ~0 after init, your install layout does not match
-#   what the docs claim -- and that mismatch is the finding, not a reason to freeze it.
-#
-#   (An earlier round froze 10, of which 3 were genuinely wrong relative paths, not layout
-#   artefacts. They were fixed at source rather than frozen. That is the G3 rule working:
-#   triage BEFORE you freeze, or real findings get buried among the acceptable ones.)
+#   EMPTY (2026-10-07). The kit's docs cite paths as they exist IN THE KIT (running-files/, ci/,
+#   dot-claude/), so this gate checks them here; scripts/init.sh re-points every backticked one at
+#   the installed layout (docs/, docs/ci/, .claude/) as it copies, and scripts/init-test.sh proves an
+#   initialised project passes this gate with the kit originals removed and a baseline of 0.
+#   (Earlier: 7 installed-layout entries froze here, 2026-08-19; 3 more were real wrong paths, fixed
+#   at source. That is the G3 rule: triage BEFORE you freeze, or real findings get buried.)
 #

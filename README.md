@@ -140,6 +140,7 @@ dev_harness/
 │   ├── claim-check.py · rotate-*.sh · harness-eval.sh ← platform-layer self-measurement (ci/platform-layer.md P8)
 │   ├── selftest.sh                 ←   plants a violation per gate IN YOUR LANGUAGE (--all-stacks)
 │   ├── predicates-test.sh          ←   that the shared skip-scope has not gone over-broad
+│   ├── init-test.sh                ←   that init's install passes the doc gates with the kit originals removed
 │   └── lib/{common,manifest}.sh    ←   the shared exit vocabulary + the manifest/verdict library
 ├── dot-claude/skills/             ← the operating procedures as Claude Code skills (installed to .claude/skills/; loaded when their task comes up)
 │   ├── reviewing-code-quality/     ← 5-axis review (quality · tests+coverage · observability · edge-case coverage · doc-claim truth) → lead + independent 2nd → judge → quality-review: commit
@@ -213,8 +214,9 @@ git clone <this repo> my-project && cd my-project
 scripts/init.sh "My Project" P2      # P1 script · P2 library/CLI · P3 app · P4 service · P5 program
 ```
 
-`init.sh` lays down `docs/`, **installs the platform layer into `.claude/`** (hooks, the
-destructive-action guard, path-scoped rules, the librarian), substitutes the project name, writes
+`init.sh` lays down `docs/` (re-pointing the copied docs' kit paths at the installed layout),
+**installs the platform layer into `.claude/`** (hooks, the destructive-action guard, path-scoped
+rules, the librarian), substitutes the project name, writes
 `harness.conf` including the platform vars, generates the doc index, and regenerates the path
 baseline against the real layout. It **prints** what your profile does not need and **deletes
 nothing** — pruning has a blast radius, so it is a human's call.
