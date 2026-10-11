@@ -61,7 +61,7 @@ that needs it, and the gate says so out loud — an unconfigured check reports I
 |---|---|---|
 | `selftest.sh` | **that every other gate here actually fails on its own violation** | run first, and after touching any gate |
 | `init.sh` | bootstraps a fresh clone into a project skeleton | deletes nothing; prints a prune list |
-| `run-all-gates.sh` | the whole fast tier, then optional suites; writes the G4 push receipt on green | tiered: bare, `--full`, `--lint`, `--all`; `--verify-receipt` re-checks the tree |
+| `run-all-gates.sh` | the whole fast tier, then optional suites; writes the G4 push receipt on green | tiered: bare, `--full`, `--lint`, `--all`; `--docs` = record gates only (about 10 s, no receipt); the bare fast tier skips the harness self-test matrices when no harness file changed, names them SKIPPED and writes no receipt (`--matrices`, `--full`, `--all` force them); `--verify-receipt` re-checks the tree |
 | `hook-fast-gates.sh` | the sub-second gates **at the moment of the write** | see `ci/control-timing.md`; blocking on docs, advisory on code |
 | `check-doc-links.sh` | every markdown link resolves | **blocking** at write time — a dead link is a fact error |
 | `check-doc-paths.sh` | every **bare backticked** path exists | ratcheted; links are only half the surface |
@@ -98,10 +98,12 @@ checked" rendering as "nothing was wrong".
 ## The push receipt (G4) — "gates passed" vs "gates passed on THIS code"
 
 `run-all-gates.sh` writes `.gate-receipt` only when a run is COMPLETE with zero findings (a receipt
-over an INCOMPLETE run would certify a tree the gates never covered).
+over an INCOMPLETE run would certify a tree the gates never covered). A `--docs` run, or a bare run
+that skipped the self-test matrices because no harness file changed, checked less than the fast tier
+and writes no receipt.
 
 ```sh
-scripts/run-all-gates.sh                   # green → writes the receipt
+scripts/run-all-gates.sh --matrices        # green → writes the receipt (so do --full and --all)
 scripts/run-all-gates.sh --verify-receipt  # 0 = still this tree · 1 = stale · 3 = no receipt
 ```
 

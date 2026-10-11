@@ -4,7 +4,7 @@ The SOPs are honor-system until CI enforces them. These are the gates every proj
 the rules cannot quietly erode. Make them **required status checks** on the default branch.
 
 > **No hosted CI? Run them locally.** Wire every gate into **one script** (`scripts/run-all-gates.sh`
-> — a fast tier cheap enough to run constantly, plus `--full` for the suites, `--lint`, `--all`, and
+> — a fast tier cheap enough to run constantly (`--docs` for documentation-only work: the record gates in about 10 s, no receipt; the fast tier skips the harness self-test matrices when `git status` shows no harness file changed, and then writes no receipt), plus `--full` for the suites, `--lint`, `--all`, and
 > `--verify-receipt` for G4) and run it **before every push**. The security sweep is a separate,
 > slower cadence, not a tier of the fast runner. State plainly in `CLAUDE.md` that CI is local, keep
 > the workflow file below as a dormant reference, and make the runner **say what it skipped**
@@ -78,7 +78,7 @@ jobs:
       - run: «build»
       - run: «test --coverage»          # + assert the coverage floor
       - run: «lint»                      # incl. no-inline-styles for UI
-      - run: ./scripts/run-all-gates.sh   # the fast tier: docs, markers, citations, log-hygiene
+      - run: ./scripts/run-all-gates.sh --matrices   # the fast tier; --matrices because a fresh checkout looks unchanged
       - run: «secret-scan»                # gitleaks / trufflehog — you supply this one
 ```
 

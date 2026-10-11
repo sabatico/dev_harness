@@ -12,6 +12,40 @@ only its verdict and per-version means — never task names or contents.
 2. Commit, then tag: `git tag -a vX.Y -m "harness vX.Y"` on that commit.
 3. Push the commit and the tag (`git push origin master vX.Y`).
 
+## v1.5 — 2026-10-11
+
+Gate-running logic, "ask before you judge", and a model policy by code area. All three were made and
+proven first in an installed project (KidsEarnScreenTime, on v1.4) and are ported here in generic form.
+Not yet benchmarked: items 2 and 3 change how an agent is steered, so run harness-bench against v1.4
+before tagging.
+
+- **`run-all-gates.sh --docs`: the record gates only** (links, paths, index, skills, markers,
+  bug evidence, citations, the two rotation limits), in seconds, for documentation-only work. It never
+  writes a receipt, and it refuses `--full`/`--lint`/`--all` (exit 3) rather than guess which was meant.
+- **Scoped self-test matrices.** A bare run records every `*-matrix` stage as SKIPPED (named, never a
+  pass) when `git status --porcelain --untracked-files=all` shows no change under `scripts/`,
+  `harness.conf` or the settings file — an unchanged script cannot change its answer. A failed git call
+  counts as changed. `--matrices`, `--full` and `--all` always run them. Any scoped skip means **no
+  receipt**: for a push receipt, run `--matrices` (or `--full`/`--all`). In the kit a bare run used to
+  write the receipt, so this is the one behaviour change to know; the hosted-CI example in
+  `ci/gates.md` now passes `--matrices`, because a fresh checkout always looks unchanged.
+  Docs: `scripts/README.md` (row and receipt section), `ci/gates.md`, `ci/platform-layer.md` P8, and
+  the `writing-docs` verify step (which now names `--docs`).
+- **Ask before you judge** (agents in development, tests and risk analysis made false claims for lack
+  of context). `following-core-rules` rule 11: look the context up; still missing → return QUESTIONS,
+  not conclusions (`NEEDS-CONTEXT` when it touches the main result), and mark any claim resting on a
+  guess `ASSUMPTION`. Wired into: the `orchestrating-agents` brief checklist (item 11, two-step
+  questions-then-judge for reviews, risk analyses and test designs of consequence) and integration
+  checklist (answer from sources, resume the same agent); step 0 of `reviewing-adversarially`,
+  `writing-tests` and `hunting-bugs`; the two-step send in the `recording-decisions` second-ideator
+  rule; an "Ask before you judge" section in the `red-team` agent; one sentence in `CLAUDE.md`; and
+  the same rule for outside reviewer models in `AGENTS.md`.
+- **Model policy by code area.** `CLAUDE.md` and `orchestrating-agents` now hold a per-area placeholder
+  instead of "routine → mid, hard → strong", with the example: UI and auxiliary code → Sonnet (latest);
+  core server and core endpoint code (communications, database queries, API architecture) → Opus
+  (latest). Hard, risky or security-critical work still goes to the strong model. Floor unchanged:
+  never Haiku.
+
 ## v1.4 — 2026-10-07
 
 Fixes from the first install on Linux. Installing v1.3 into a new project (AnyTutor) in a Debian

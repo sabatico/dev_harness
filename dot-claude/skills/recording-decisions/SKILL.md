@@ -33,10 +33,15 @@ Decision progress:
 **2 — The second-ideator rule.** Before locking a consequential decision, frame the problem and the
 candidate options for an independent second opinion from a *different* model/agent
 (`scripts/second-opinion.sh`; if it hands back to the local reviewer, label it same-family) and have
-it argue for the best option and against the others. The lead stays the **judge**: deliberate harder,
+it argue for the best option and against the others. **Send it in TWO steps:** step 1 = the brief +
+"ask your context questions only, do not judge yet"; answer every question from sources (quoted) and
+fix what the questions exposed; step 2 = brief + questions + answers + "now judge". Keep both steps in
+the record (`following-core-rules` rule 11). The lead stays the **judge**: deliberate harder,
 incorporate what is right, and record the call with the rejected alternatives so the reasoning
 survives. *WHY: a single reasoner rationalizes toward its first instinct; a genuine debate surfaces
-the option it would have skipped and the failure mode it underweighted.*
+the option it would have skipped and the failure mode it underweighted. A reviewer that judges
+without the context it lacks produces confident false claims; the questions step costs one round
+trip and removes them.*
 
 ## The format (Nygard-style)
 

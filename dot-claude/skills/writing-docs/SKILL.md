@@ -47,8 +47,10 @@ Doc progress:
 ## Verify (feedback loop)
 
 Run `scripts/check-doc-links.sh`, `scripts/check-doc-paths.sh` and `scripts/check-doc-index.sh`
-(or the whole `scripts/run-all-gates.sh`). Red → fix the doc (not the baseline) → re-run. Editing a
-skill file instead? Use `authoring-skills` and `scripts/check-skills.sh`.
+(or all the record gates at once: `scripts/run-all-gates.sh --docs`, seconds, once at the end of a
+documentation-only batch; it writes no receipt, so the full runner still goes before a commit or
+push). Red → fix the doc (not the baseline) → re-run. Editing a skill file instead? Use
+`authoring-skills` and `scripts/check-skills.sh`.
 
 ## History
 

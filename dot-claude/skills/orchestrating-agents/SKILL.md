@@ -21,14 +21,17 @@ the same module".
 | Role | Tier | Owns |
 |---|---|---|
 | **Lead / integrator** | strong | the contract boundary, integration, the running files, final judgment, hard or security-critical code, decision records. Never delegates judgment. |
-| **Builder** | mid | one scoped multi-file slice, in its own worktree, on a disjoint file set; ships the slice's edge-case checklist (`covering-edge-cases`: Handled / N/A-why / DEFERRED). Writes ZERO tests for its own code. |
+| **Builder** | by code area (policy below) | one scoped multi-file slice, in its own worktree, on a disjoint file set; ships the slice's edge-case checklist (`covering-edge-cases`: Handled / N/A-why / DEFERRED). Writes ZERO tests for its own code. |
 | **Test author (cross author)** | ≠ builder | tests for code it did not write; attacks the builder's checklist AND proposes its own extra cases → lead/owner ruling → approved ones become tests and fold into the catalog (`writing-tests`). |
 | **Second reviewer** | ≠ lead | the independent pass in a quality review (`reviewing-code-quality`). |
 | **Second ideator** | ≠ lead | debates a hard decision so the lead is not reasoning alone (`recording-decisions`). |
 | **Scribe** | mid | documents each finished item into the running files. |
 
-**Model policy:** routine and mid → «mid model»; hard, risky or security-critical
-(«e.g. auth, payments, data migrations») → «strong model» (the lead). **Floor: Sonnet — never spawn
+**Model policy — by code area** (the project fills this in; `CLAUDE.md` holds the same list):
+«area → model, one line each — e.g. UI and auxiliary code (screens, styling, scripts, tooling, docs)
+→ Sonnet (latest); core server and core endpoint code — communications, database queries, API
+architecture — → Opus (latest)». Anything hard, risky or security-critical («e.g. auth, payments,
+data migrations») → «strong model» (the lead), whatever its area. **Floor: Sonnet — never spawn
 Haiku**, for any role, including evals. The lead may play several
 roles in one session; what must never collapse is **test authorship and second opinions coming
 from a different vantage point than the work being checked**.
@@ -48,7 +51,7 @@ Brief checklist:
         + the binding guides that skill names. Never restate rules from memory.
 - [ ] 2. Author separation: a test author is not the builder of that code; a reviewer or
         ideator is not the lead.
-- [ ] 3. Model tier per the policy above.
+- [ ] 3. Model per the policy above: the code AREA the slice touches picks it; the risk can raise it.
 - [ ] 4. The CONTRACT the lead froze (types, interfaces, API shape) — quoted from the file.
 - [ ] 5. The DISJOINT FILE SET — exact paths from ls/grep this session; none overlap another
         live agent. Isolation: own worktree, "never commit or push".
@@ -58,6 +61,11 @@ Brief checklist:
 - [ ] 9. Test author only: the real code under test + one existing test as the style exemplar.
 - [ ] 10. Project values the core skill leaves as placeholders: invariants by name, environment
         quirks by pointer.
+- [ ] 11. The question invitation, in the brief's own words: "If you lack context for a sound
+        judgement, return QUESTIONS before conclusions; mark anything you assume ASSUMPTION"
+        (`following-core-rules` rule 11). For a review, risk analysis or test design of consequence,
+        run it in TWO steps: step 1 asks only for questions, step 2 sends the answers and asks for
+        the judgement.
 ```
 
 **Feedback loop:** before sending, re-read the finished brief against the checklist. Any unticked
@@ -99,6 +107,9 @@ output (wrong facts in hand-written briefs have each cost a full round trip).
 ```
 Integration checklist:
 - [ ] The final message is a REPORT, not ground truth: re-run the build/tests/gates myself.
+- [ ] `NEEDS-CONTEXT` or QUESTIONS → answer each from sources (quoted, not recalled), then RESUME
+      the same agent (SendMessage keeps its context) — never a fresh spawn, never "use your best
+      guess". Every `ASSUMPTION` in a result is checked against the source before it is accepted.
 - [ ] Cross-authored tests JUDGED, not applied blind (`writing-tests`); rejected claims recorded.
 - [ ] Integrate BEFORE removing the worktree: commit / stash / copy the uncommitted work out
       before `git worktree remove` — the most common way agent work is lost forever.

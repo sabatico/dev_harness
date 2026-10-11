@@ -16,6 +16,9 @@ Copy this checklist and tick it off:
 
 ```
 Review progress:
+- [ ] 0. Questions first: what must I know to judge this well? Look it up; what is still missing,
+        ask the lead BEFORE judging (`following-core-rules` rule 11). In a one-shot run, list the
+        questions at the top and mark every finding that depends on one PLAUSIBLE + ASSUMPTION
 - [ ] 1. Read the target AND the code/docs it touches — never judge a claim unchecked against source
 - [ ] 2. Walk the lens stack, in order (below)
 - [ ] 3. Per finding: scenario + severity + minimal fix + evidence (file:line or quote)

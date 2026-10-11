@@ -11,6 +11,19 @@
 #   --full       + your test and coverage commands  — minutes
 #   --lint       + your linter
 #   --all        everything
+#   --docs       ONLY the record gates (links, paths, index, skills, markers, evidence, citations,
+#                rotation limits) — seconds; for documentation-only work; never writes a receipt
+#                (not a push proof)
+#   --matrices   force the harness self-test matrices in the fast tier (see SCOPED MATRICES)
+#
+# ── SCOPED MATRICES ───────────────────────────────────────────────────────────
+# Most fast-tier stages are known-answer matrices (`*-matrix`): self-tests of the harness's OWN
+# scripts. They can only change their answer when a harness file changes. When `git status` shows no
+# change under the harness paths (scripts/, harness.conf, .claude/settings*.json), a bare run records
+# them as SKIPPED (named, never a pass) and writes NO receipt. --matrices, --full and --all always run
+# them — so for a push receipt (or in hosted CI, where a fresh checkout is always "unchanged") pass
+# one of those. WHY: re-proving unchanged scripts on every documentation edit cost minutes and taught
+# agents to skip the runner; a skip that is named and withholds the receipt cannot pass for a check.
 #
 # ── TWO RULES THAT MAKE THE OUTPUT TRUSTWORTHY ────────────────────────────────
 #
@@ -29,17 +42,36 @@ GATE_NAME="run-all-gates"
 . "$HERE/lib/common.sh"
 . "$HERE/lib/manifest.sh"
 
-WANT_FULL=0; WANT_LINT=0
+WANT_FULL=0; WANT_LINT=0; WANT_DOCS=0; WANT_MATRICES=0
 for a in "$@"; do
   case "$a" in
+    --docs) WANT_DOCS=1 ;;
+    --matrices) WANT_MATRICES=1 ;;
     --full) WANT_FULL=1 ;;
     --lint) WANT_LINT=1 ;;
     --all)  WANT_FULL=1; WANT_LINT=1 ;;
     # G4: is the last green run still about THIS code? Wire this into a pre-push hook.
     --verify-receipt) harness_receipt_verify; exit $? ;;
-    -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,38p' "$0"; exit 0 ;;
   esac
 done
+
+# --docs with a code tier is a contradiction: refuse rather than guess which one was meant.
+if [ "$WANT_DOCS" -eq 1 ] && [ $((WANT_FULL + WANT_LINT)) -gt 0 ]; then
+  printf 'INCOMPLETE: --docs cannot be combined with --full/--lint/--all\n' >&2
+  exit 3
+fi
+[ "$WANT_FULL" -eq 1 ] && WANT_MATRICES=1
+# The record gates: what a documentation-only change can break. Add a project record gate here when
+# you add one to the fast tier.
+DOC_GATES=" doc-links doc-paths doc-index skills markers bug-evidence citations bug-register-rotation onboarding-limits "
+# Harness files changed (tracked or untracked)? A failed git call counts as CHANGED, so the matrices run.
+# (dot-claude/ is the kit's own layout of .claude/; in an installed project that path simply matches nothing.)
+HARNESS_TOUCHED=1
+if hs="$(git -C "$REPO_ROOT" status --porcelain --untracked-files=all -- scripts harness.conf '.claude/settings*.json' 'dot-claude/settings*.json' 2>/dev/null)"; then
+  [ -z "$hs" ] && HARNESS_TOUCHED=0
+fi
+SCOPED_SKIPS=0
 
 OUT_DIR="${TMPDIR:-/tmp}/harness-gates-$$"
 mkdir -p "$OUT_DIR"
@@ -47,11 +79,41 @@ manifest_init "$OUT_DIR"
 
 printf '%s══ local gates ══%s  output: %s\n\n' "$C_B" "$C_0" "$OUT_DIR"
 
+# in_scope <name> — 0 when this run should execute the stage. --docs runs only DOC_GATES (others are
+# not expected either, see expect_gates); a matrix is skipped by scope only in a fast run with no
+# harness change, and recorded as skipped so the report names it.
+in_scope() {
+  local name="$1"
+  if [ "$WANT_DOCS" -eq 1 ]; then case "$DOC_GATES" in *" $name "*) return 0 ;; *) return 1 ;; esac; fi
+  case "$name" in
+    *-matrix)
+      if [ "$WANT_MATRICES" -eq 0 ] && [ "$HARNESS_TOUCHED" -eq 0 ]; then
+        printf '  %-22s %sSKIPPED%s  no harness file changed (run with --matrices or --all)\n' "$name" "$C_DIM" "$C_0"
+        record "$name" skipped "scoped: no harness file changed since HEAD — self-test of unchanged scripts" "-"
+        SCOPED_SKIPS=$((SCOPED_SKIPS + 1))
+        return 1
+      fi ;;
+  esac
+  return 0
+}
+expect_gates() {
+  # manifest_expect, filtered to DOC_GATES in a --docs run
+  local n keep=""
+  if [ "$WANT_DOCS" -eq 1 ]; then
+    for n in "$@"; do case "$DOC_GATES" in *" $n "*) keep="$keep $n" ;; esac; done
+    # shellcheck disable=SC2086
+    [ -n "$keep" ] && manifest_expect $keep
+  else
+    manifest_expect "$@"
+  fi
+}
+
 run_gate() {
   # run_gate <name> <script> [args...]
   local name="$1"; shift
   local script="$1"; shift
   local log="$OUT_DIR/$name.log"
+  in_scope "$name" || return 0
 
   if [ ! -x "$script" ] && [ ! -f "$script" ]; then
     record "$name" skipped "gate script not found: $script" "$name.log"
@@ -79,6 +141,7 @@ run_cmd() {
   # run_cmd <name> <command-string>
   local name="$1" cmd="$2"
   local log="$OUT_DIR/$name.log"
+  in_scope "$name" || return 0
   if [ -z "$cmd" ]; then
     printf '  %-22s %sNOT RUN%s  (not configured in harness.conf)\n' "$name" "$C_YEL" "$C_0"
     record "$name" skipped "no command configured — this is a GAP, not a pass" "-"
@@ -97,8 +160,12 @@ run_cmd() {
 }
 
 # ── fast tier ─────────────────────────────────────────────────────────────────
-printf '%sfast tier%s\n' "$C_B" "$C_0"
-manifest_expect doc-links doc-paths doc-index markers bug-evidence conditional-skips citations log-hygiene \
+if [ "$WANT_DOCS" -eq 1 ]; then
+  printf '%sdocs tier%s  (record gates only — no receipt)\n' "$C_B" "$C_0"
+else
+  printf '%sfast tier%s\n' "$C_B" "$C_0"
+fi
+expect_gates doc-links doc-paths doc-index markers bug-evidence conditional-skips citations log-hygiene \
   guard-matrix read-budget-matrix claim-check-matrix bug-register-rotation bug-rotation-matrix \
   onboarding-limits onboarding-rotation-matrix secret-read-matrix image-pins image-pins-matrix second-opinion-matrix \
   verify-check-matrix repeat-check-matrix find-matrix librarian-sweep-matrix session-start-matrix
@@ -143,9 +210,9 @@ run_gate second-opinion-matrix     "$HERE/second-opinion-test.sh"
 # OPTIONAL, LOCAL-ONLY gate: a maintainer may keep a personal-data check (scripts/check-no-pii.sh +
 # its test) that is gitignored, not shipped. It runs when present; a clone without it is not "incomplete".
 if [ -f "$HERE/check-no-pii.sh" ]; then
-  manifest_expect no-pii
+  expect_gates no-pii
   run_gate no-pii                  "$HERE/check-no-pii.sh"
-  [ -f "$HERE/check-no-pii-test.sh" ] && { manifest_expect no-pii-matrix; run_gate no-pii-matrix "$HERE/check-no-pii-test.sh"; }
+  [ -f "$HERE/check-no-pii-test.sh" ] && { expect_gates no-pii-matrix; run_gate no-pii-matrix "$HERE/check-no-pii-test.sh"; }
 fi
 
 # ── suites ────────────────────────────────────────────────────────────────────
@@ -154,7 +221,7 @@ if [ "$WANT_FULL" -eq 1 ]; then
   manifest_expect tests coverage
   run_cmd tests    "$HARNESS_TEST_CMD"
   run_cmd coverage "$HARNESS_COVERAGE_CMD"
-else
+elif [ "$WANT_DOCS" -eq 0 ]; then
   printf '\n  %-22s %sNOT RUN%s  (pass --full)\n' "tests" "$C_DIM" "$C_0"
 fi
 
@@ -179,6 +246,14 @@ fi
 if [ "$fails" -gt 0 ]; then
   printf '%sDo not push.%s %s gate(s) found violations.\n' "$C_RED" "$C_0" "$fails"
   exit 1
+fi
+
+# A docs run or a scoped fast run checked LESS than the fast tier: green, but no receipt may claim "fast".
+if [ "$WANT_DOCS" -eq 1 ] || [ "$SCOPED_SKIPS" -gt 0 ]; then
+  if [ "$WANT_DOCS" -eq 1 ]; then why="docs tier only"; else why="$SCOPED_SKIPS harness self-test(s) skipped by scope"; fi
+  printf '%sAll gates in scope green%s (%s) — no receipt written; this run is not a push proof.\n' "$C_GRN" "$C_0" "$why"
+  printf '%s  For a receipt: scripts/run-all-gates.sh --matrices (or --full / --all).%s\n' "$C_DIM" "$C_0"
+  exit 0
 fi
 
 # Green — bind the verdict to the tree it was computed over (gates.md G4). Only on a COMPLETE run

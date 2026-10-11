@@ -21,6 +21,9 @@ Copy this checklist and tick it off:
 
 ```
 Bug hunt progress:
+- [ ] 0. Context gaps (intended behaviour, the governing decision, the threat model) are asked
+        as QUESTIONS, never guessed; a defect claim resting on a guess is ASSUMPTION, not CONFIRMED
+        (`following-core-rules` rule 11)
 - [ ] 1. Coverage map FIRST: list every hunt unit (waves by blast radius for a whole-codebase hunt)
 - [ ] 2. Per unit: all six lenses (reference/lens-stack.md)
 - [ ] 3. Per unit: invent nastier cases → try or trace each → add to the proposals list

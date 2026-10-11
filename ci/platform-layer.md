@@ -171,7 +171,9 @@ thing, watch the matrix go RED) before it is trusted.
 
 **Self-proofs are gates.** "Run the guard matrix after ANY edit" is prose until a gate runs it.
 `run-all-gates.sh` runs every hook matrix (`guard-matrix`, `read-budget-matrix`,
-`claim-check-matrix`) and the rotation matrices.
+`claim-check-matrix`) and the rotation matrices. A bare run skips them, by name and without a
+receipt, when `git status` shows no change under `scripts/`, `harness.conf` or the settings file:
+an unchanged script cannot change its answer. `--matrices`, `--full` and `--all` always run them.
 
 **The read-budget measures what the agent receives** (`scripts/hook-read-budget.sh`): bytes actually
 returned (`tool_response.file.content`), not whole-file size (a 3-line read of a 523 KB register must

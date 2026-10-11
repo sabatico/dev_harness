@@ -25,6 +25,9 @@ Copy this checklist and tick it off:
 ```
 Test progress:
 - [ ] 0. Did I build this code? YES → STOP: write no tests, report "needs a different author". NO → continue
+- [ ] 0. Intended behaviour unclear (the code, the decision record and the brief do not settle it)?
+        Ask the lead (`following-core-rules` rule 11) — a test that asserts a guessed behaviour is
+        a false claim that later looks like proof
 - [ ] 1. Read the real code under test + the existing test exemplar from the brief
 - [ ] 2. Read the builder's edge-case checklist; `covering-edge-cases` is the floor
 - [ ] 3. Every `Handled` row → a test; cases the unit harness cannot see (back/forward,
