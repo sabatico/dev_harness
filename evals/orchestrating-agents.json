@@ -34,5 +34,17 @@
       "Integrates (commit/stash/copy out) the uncommitted work BEFORE any git worktree remove",
       "Uses scoped git add by path, never git add -A, and updates the running files on integration"
     ]
+  },
+  {
+    "skills": [
+      "orchestrating-agents"
+    ],
+    "query": "We have three ready slices: the server API, the iOS endpoint and the harness scripts. They touch different files. The first sub-session is still running. Plan how to run them in parallel and wrap up.",
+    "files": [],
+    "expected_behavior": [
+      "Starts a sub-session per area now, without waiting for the running one to finish, because the file sets are disjoint; each gets its own worktree and branch",
+      "Briefs each sub-session for a fresh context (slice, decisions and files to read first, model by code area, exact editable files, area checks, DoD, report format) and tells it to run only its own area's checks, commit only to its own branch, never push and never edit the shared running files (it lists the needed changes in its report)",
+      "At the end: verifies each report by re-running the area's tests, merges with --no-ff, runs the full gate set once, pushes through the push gate, then deletes each merged sub-session, stops finished helper agents and stops containers, simulators, servers and browser tabs it started"
+    ]
   }
 ]

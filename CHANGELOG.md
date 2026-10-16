@@ -12,6 +12,34 @@ only its verdict and per-version means — never task names or contents.
 2. Commit, then tag: `git tag -a vX.Y -m "harness vX.Y"` on that commit.
 3. Push the commit and the tag (`git push origin master vX.Y`).
 
+## v1.6 — 2026-10-16
+
+Parallel sub-sessions. The way of working was decided and proven in an installed project
+(KidsEarnScreenTime) on 2026-10-16, in two waves, and is ported here in generic form. Not yet
+benchmarked: it changes how a lead steers work, so run harness-bench against v1.5 before tagging.
+
+- **New reference `orchestrating-agents/reference/parallel-sub-sessions.md`** (no new skill: it is
+  the lead's side of spawning, which this skill already owns). Rules, each with its WHY: one
+  sub-session per area on disjoint file sets, each in its own worktree and branch; start the next
+  as soon as an untouched area has ready work; a brief written for a fresh context; inside a
+  sub-session the builder writes zero tests, one cross-author test agent of a different model,
+  every test watched red against a mutation restored byte-identically, task-named scratch folders,
+  helpers stopped when reported; a sub-session runs only its own area's checks, commits only to its
+  own branch, never pushes and never edits the shared running files (it lists the changes in its
+  report); a missing product decision goes to the lead as a main and a backup proposal, and the lead
+  checks in with every running sub-session; the lead verifies each report, merges with `--no-ff`,
+  runs the full gates once and pushes; each sub-session is deleted when merged, and finished helpers
+  and everything a task started are stopped; a 10-minute total cap on a long reviewer call; the
+  tracker records each wave.
+- **`orchestrating-agents` SKILL.md:** description and section 1 name the two sizes of spawn
+  (sub-agent, sub-session); brief checklist item 5 now separates "sub-agent: never commit or push"
+  from "sub-session: commits only to its own branch, never pushes"; new section 8 points to the
+  reference. `shared-checkout.md` is unchanged (it is still the case for when worktrees are not used).
+- **Also:** a fourth eval scenario in `evals/orchestrating-agents.json`; a cheat-sheet block; one
+  sentence in the `CLAUDE.md` Git line; the README tree line.
+- The source project's read-only "list what this task left running" script is described in the
+  reference, not shipped: the kit has no scripts area for stack-specific process checks.
+
 ## v1.5 — 2026-10-11
 
 Gate-running logic, "ask before you judge", and a model policy by code area. All three were made and

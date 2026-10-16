@@ -41,6 +41,16 @@
 3. **Integrate BEFORE removing its worktree** (agents leave work uncommitted → lost otherwise).
 4. Verify its claims yourself.
 
+## Parallel sub-sessions (a wave across several areas)
+
+1. One sub-session per area, only on **disjoint file sets**; each in its **own worktree + branch**.
+2. Start the next as soon as there is ready work in an area no running one touches — don't wait.
+3. Brief it for a fresh context: slice · files/decisions to read · model by area · editable files · area checks · DoD · report format.
+4. It runs only its **own area's checks**, commits only to **its own branch**, never pushes, never edits the shared running files (it lists the changes in its report).
+5. No product decision? It asks the lead (main + backup proposal) — never guesses. The lead checks in with every running one.
+6. Lead: verify each report, merge `--no-ff`, update running files, file findings, **full gates ONCE**, push.
+7. **Delete each sub-session when merged**; stop finished helpers and everything the task started. Detail: the `orchestrating-agents` skill, `reference/parallel-sub-sessions.md`.
+
 ## "Quality review" (on request / at milestones)
 
 `git log --grep='^quality-review:' -1` = baseline → diff since → **5 axes** (code quality · tests+coverage · observability · **edge-case/abnormal-usage coverage** — "did we cover the unexpected?" · **claims-vs-code truth audit** — every "still to do"/"blocked by" claim in the running docs checked against the code; WHOLE-docs scope, not diff-scoped) → **lead + independent second reviewer** → **lead judges** (accept / reject-with-reason / defer) → resolve → green → commit `quality-review:` (= new baseline).

@@ -147,7 +147,7 @@ dev_harness/
 │   ├── hunting-bugs/               ← the defect-only adversarial sweep (invent-nastier duty); DIFFERENT from a quality review
 │   ├── covering-edge-cases/        ← the growing catalog of unexpected user/data behavior (families A–I); instantiated per feature at build/test/review
 │   ├── hardening-security/         ← the 30-door pre-launch map + the perpendicular axis (five questions, P1–P8, gated property matrix)
-│   ├── orchestrating-agents/       ← roles, when to spawn, briefs built from skills, worktree isolation, integrate-before-removal
+│   ├── orchestrating-agents/       ← roles, when to spawn, briefs built from skills, worktree isolation, parallel sub-sessions (one worktree + branch per area), integrate-before-removal
 │   ├── following-core-rules/ · writing-code/ · writing-tests/ · writing-docs/ · reviewing-adversarially/ · building-ui/
 │   │                               ← the task-type briefing skills every sub-agent brief names (core + exactly one task type)
 │   ├── recording-decisions/        ← ADR format + the second-ideator rule + locking
