@@ -43,8 +43,20 @@
     "files": [],
     "expected_behavior": [
       "Starts a sub-session per area now, without waiting for the running one to finish, because the file sets are disjoint; each gets its own worktree and branch",
-      "Briefs each sub-session for a fresh context (slice, decisions and files to read first, model by code area, exact editable files, area checks, DoD, report format) and tells it to run only its own area's checks, commit only to its own branch, never push and never edit the shared running files (it lists the needed changes in its report)",
+      "Briefs each sub-session for a fresh context (slice, decisions and files to read first, GOAL · PROOF · LIMIT block, model per the policy, exact editable files, area checks, DoD, report format) and tells it to run only its own area's checks, commit only to its own branch, never push and never edit the shared running files (it lists the needed changes in its report)",
       "At the end: verifies each report by re-running the area's tests, merges with --no-ff, runs the full gate set once, pushes through the push gate, then deletes each merged sub-session, stops finished helper agents and stops containers, simulators, servers and browser tabs it started"
+    ]
+  },
+  {
+    "skills": [
+      "orchestrating-agents"
+    ],
+    "query": "Four sub-sessions are running and a fifth slice is ready. Two of them have started full test runs. Keep things moving while you wait for them.",
+    "files": [],
+    "expected_behavior": [
+      "Does not start the fifth sub-session while the session cap (HARNESS_MAX_SESSIONS, default 4) is reached; queues it and starts it when one finishes",
+      "Waits by reacting to notifications (and at most one scheduled backup wake-up), never by a sleep/check loop, repeated tail of a log or repeated ps",
+      "Has heavy runs go through scripts/heavy-run.sh as one background command per session, and handles a FINAL note in the same turn with check-the-work verify before any merge"
     ]
   }
 ]

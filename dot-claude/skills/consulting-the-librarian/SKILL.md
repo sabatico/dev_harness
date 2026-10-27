@@ -39,6 +39,10 @@ HARNESS_BRIEF_EOF
 Follow your standing procedure, with one change: **step 1's sweep has been run for you** on the
 caller's terms (above). That is a floor, not the whole job:
 
+0. **A known id or path? Run `scripts/refs.sh <ID|path>` first:** it lists what points at it and what
+   it points at, with `file:line`, including variants (`ADR-49`, `ADR 49`, `§3 of ADR-001`) that a
+   text search misses; `refs.sh --dangling` lists ids cited but never defined. Use `find.sh` for words
+   and the sweep for the rest.
 1. **Step 0 still applies.** Derive the aliases the caller did not know (glossary term, feature id,
    governing decision records, ticket ids, code names) and run `scripts/librarian-sweep.sh` once more
    with **only the NEW aliases** (skip it only if step 0 found none — say so).

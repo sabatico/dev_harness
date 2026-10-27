@@ -13,10 +13,12 @@ files. Separate checkouts removed that class.
 ## Contents
 
 - Lead: when to split, when to start, the brief
+- The GOAL block and the duties
 - Inside a sub-session
 - What a sub-session never does
 - Questions and open decisions
 - Lead: integrate
+- A dead sub-session
 - Clean-up
 - Time cap and the tracker
 
@@ -26,8 +28,36 @@ files. Separate checkouts removed that class.
 |---|---|
 | **Split by AREA, one area per sub-session** (the server, each client endpoint, the harness), only where the file sets are **disjoint**. | Two sessions on one file collide, and the merge costs more than the parallel work saved. |
 | **Each sub-session gets its OWN worktree and its own branch.** | A separate checkout has no shared working tree and no shared scratch files. This is the cure for the class in `shared-checkout.md`. |
-| **Do not wait.** Start a new sub-session as soon as there is ready work for an area that no running sub-session touches. | The owner's ruling: you do not need to wait for one to finish to start a new one, as long as the work is ready and does not affect the running ones. |
-| **Write the brief for a fresh context.** It holds: the slice · the decisions and files to read first · the model per the project's model policy (by code area) · the exact files it may edit · the checks to run · the Definition of Done · the report format. | The sub-session has no memory of the lead's session. A missing item becomes a guess. Build the brief with the checklist in `SKILL.md` section 3. |
+| **Do not wait — up to the cap.** Start a new sub-session as soon as there is ready work for an area that no running sub-session touches, while fewer than `HARNESS_MAX_SESSIONS` (default 4) sessions or builder agents are working. | The owner's ruling: you do not need to wait for one to finish to start a new one, as long as the work is ready and does not affect the running ones. The cap came later (`docs/ci/token-budget.md` R5): past about four, the extra sessions only queued for the heavy-run lock and polled while they waited. |
+| **Write the brief for a fresh context.** It holds: the slice · the decisions and files to read first · the model per the project's model policy («mid model» builds, «strong model» plans and judges) · the exact files it may edit · the checks to run · the Definition of Done · the report format. | The sub-session has no memory of the lead's session. A missing item becomes a guess. Build the brief with the checklist in `SKILL.md` section 3. |
+
+## The GOAL block and the duties
+
+Every sub-session brief opens with a GOAL block, in exactly this shape:
+
+```
+GOAL:  what done looks like, in one sentence
+PROOF: each command whose raw result line the FINAL report must quote (a test or gate summary,
+       `git log --oneline -1`)
+LIMIT: turns, hours or money
+```
+
+WHY (the owner of the first adopting project): "at every sub session run - the main agent should set
+a goal. And a check the work step at end of every sub session, but before comits. An adversary model
+should check it and report back, then subsession analyze and if need be improve". Use your own GOAL
+block, not a built-in goal command whose judge is a model below your floor tier.
+
+The brief also names these duties:
+
+| Duty | How | WHY |
+|---|---|---|
+| **Check the work before the commit** | Save the GOAL block to a file. Run `scripts/check-the-work.sh run --goal <file> --summary <file>`, judge every finding (`judge`: FIXED / REJECTED with why / DEFERRED to a named home), fix what is real, commit the judged review row with the work. At most 3 rounds; at the cap ask the lead. | A self-reported "done" reached the lead unchecked; a bug hunt then found six top-severity defects in "done" work. Details: `docs/ci/review-step.md`. |
+| **Keep the state record** | `scripts/session-state.sh init --goal <file>`, then `step` / `gate` / `question` at each step. | A session that dies (usage limit, app restart) loses its context; the record lets a fresh session resume (`docs/ci/session-resilience.md` S1). |
+| **Heavy runs through the queue** | `scripts/heavy-run.sh -- <command>`, never a bare lock. | A plain lock is not first-come-first-served; one session waited two hours while later jobs went first (S4). |
+| **The FINAL report contract** | The first line of every message and turn-end summary is exactly `FINAL — DONE`, `INTERIM` or `QUESTION`. A FINAL report has the fields `COMMITS:` · `GATES:` (raw lines) · `BUGS:` · `DEFERRED:` · `QUESTIONS:`; check it with `scripts/check-the-work.d/20-report-contract.sh --file <it>`. | A finished session went unnoticed; a report without its proof cannot be judged (S2). |
+| **Judging files declared** | Before `check-the-work.sh run`, append `scripts/check-the-work.d/10-success-criterion.sh scan --section` to the summary; before `judge`, answer a flag with `10-success-criterion.sh answer --text "<who wrote the tests and why nothing was weakened>"`. | A session that changes both the code and what judges it can redefine success (S3). |
+| **Log every agent it runs** | `scripts/log-agent-run.py`, the usage block pasted whole; itself at the end (role `lead`). | Without the numbers nobody can see which model or brief cost what (`SKILL.md` section 6). |
+| **Context budget** | `following-core-rules` rule 12 and brief item 13. | `docs/ci/token-budget.md`. |
 
 ## Inside a sub-session
 
@@ -66,7 +96,16 @@ Do these in order, per sub-session, as its final report arrives:
 
 ```
 Integration checklist (sub-sessions):
-- [ ] Read the final report. It is a report, not ground truth.
+- [ ] A `FINAL` note is handled in the SAME turn: read the full report. It is a report, not ground
+      truth.
+- [ ] `scripts/check-the-work.sh verify --branch <its branch>`: exit 1 = the review was skipped or
+      is over the round cap without the lead's yes → send it back, do not merge. A REJECTED finding is
+      the sub-session's judgement, not proof: read the logged rejections.
+- [ ] `scripts/check-the-work.d/20-report-contract.sh --file <its FINAL report>`: exit 1 = a field is
+      missing or a commit does not exist → send it back.
+- [ ] `CTW_BRANCH=<its branch> scripts/check-the-work.d/10-success-criterion.sh verify`, and READ the
+      flag: the branch changed code and what judges it; rule on the answer (who wrote the tests,
+      anything weakened?) before the merge.
 - [ ] Verify each claim: re-run the area's tests on the main branch; watch the result.
 - [ ] Merge the branch with `git merge --no-ff`. On a conflict, keep BOTH sides.
 - [ ] Apply the running-file changes the report listed (status, tracker, registers, catalogs).
@@ -78,6 +117,19 @@ Integration checklist (sub-sessions):
 WHY `--no-ff`: the merge commit keeps each sub-session's work as one visible unit that can be
 reverted whole. WHY the gate set once: it is slow and reads the whole tree, and only the merged
 tree is what ships.
+
+## A dead sub-session
+
+A sub-session can stop without a FINAL report: a usage limit, an app restart, a crash.
+
+- Run `scripts/resume-brief.sh <its worktree> --reason "<why it stopped>"` and start a fresh session
+  with that brief in the SAME worktree. The brief holds the goal, the steps (done and doing), the last
+  raw gate lines, the open questions and the git facts; the new session first re-checks the newest
+  done step's proof.
+- **At most 2 resumes** (`HARNESS_RESUME_CAP`). Past the cap the script prints the best partial result
+  and a stop reason: merge what is proven and re-plan the rest. WHY: in a published study of
+  multi-agent self-supervision, retries past two bought luck, not progress
+  (`docs/ci/session-resilience.md`).
 
 ## Clean-up
 

@@ -15,6 +15,7 @@ prose sets direction; these scripts hold the line.
 - Measure before you enforce
 - Portability
 - Platform-layer hooks
+- Agent work (v1.7)
 
 ## Status — run the self-test first
 
@@ -148,5 +149,25 @@ flags): the harness must run on the machine the developer has, not the one CI ha
 | `librarian-presweep.sh` | (injected by the forked `/consulting-the-librarian` skill) | Extracts terms from the brief (TERMS: line, ids, `code`, "phrases"), ERE-escapes them, runs the sweep before the librarian starts; always exits 0 |
 | `rotate-bug-register.sh` | (gate: `--check`) | Moves long-closed rows — incl. FIXED rows left in the open table — VERBATIM to the archive; ids conserved. Matrix: `rotate-bug-register-test.sh` |
 | `rotate-onboarding.sh` | (gate: `--limits`; `--check` once floors are set) | Log-entry diet + order; rotates old log entries / dated handover blocks VERBATIM past TWO floors (newest N AND younger than D days). Matrix: `rotate-onboarding-test.sh` |
-| `second-opinion.sh` | (called by agents/SOPs) | One entry point for an independent reviewer: tries the configured outside models, falls back to the local `red-team` agent, never fails the run; names who answered. Matrix: `second-opinion-test.sh` |
+| `second-opinion.sh` | (called by agents/SOPs) | One entry point for an independent reviewer: tries the configured outside models, falls back to the local `red-team` agent, never fails the run; names who answered. Extra reviewers beside the chain (`HARNESS_ALSO_ASK`, time-limited, never instead); a failing reviewer's reason printed; a worktree call with no key file handed to the main checkout's own copy. Matrix: `second-opinion-test.sh` (about 220 rows, ~90 s; kept in the fast tier because it holds the key hand-over) |
+| `lib/main-checkout.sh` | (sourced by second-opinion.sh) | `main_checkout_for <root> <script>`: the main checkout's path when a call made in a linked worktree with no key file (`HARNESS_KEY_FILE`, default `.env`) should go to the main checkout's own script, so worktree code never handles a key. Only tests that files exist; never reads a key. |
 | `harness-eval.sh` | (owner-run, spends money) | Task-embedded retrieval probes (`harness-eval-probes.json`): does the main agent look a fact up or answer from memory? |
+
+## Agent work (v1.7): the review step, resilience, the run log, the reference index
+
+WHY and the rules: `ci/review-step.md`, `ci/session-resilience.md`, `ci/token-budget.md`. Every
+matrix below except `review-tally-test.sh` is slow (40 s to over 10 min), so `run-all-gates.sh` runs
+them with `--full` / `--all` and names them NOT RUN in a fast run. A fast receipt (`covers: fast`) does
+not cover them: after changing one of their scripts, push only on a `--full` receipt.
+
+| Script | Who runs it | What it holds |
+|---|---|---|
+| `check-the-work.sh` | the sub-session before its commit; the lead before a merge | `run` / `record` / `tally` / `judge` / `verify`: the configured second opinion reads the work against the brief's GOAL block; every finding judged FIXED / REJECTED / DEFERRED; tags (`nit`, `pre-existing`; a P0/P1 is never a nit), round cap (`CHECK_THE_WORK_MAX_ROUNDS`, default 3, `--lead-ok`), delta rounds, optional vote (`HARNESS_REVIEW_VOTE`, fails closed with no scan), hook point `check-the-work.d/` (a missing enforcing hook exits 3); judged rows to `reviews.jsonl` in `HARNESS_AGENT_DIR`. Matrix: `check-the-work-test.sh` |
+| `lib/review_tally.py` · `lib/review-prompt-header.txt` | (used by check-the-work.sh) | the one parser of reviewer answers, and the instructions every reviewer gets. Matrix: `review-tally-test.sh` (fast tier) |
+| `check-the-work.d/10-success-criterion.sh` | hook (`judge`, `verify`); `scan --section`, `answer --text` by hand | flags a branch that changed code AND what judges it (tests, fixtures, gates, baselines, registries, `HARNESS_JUDGE_GLOBS`, a replaced goal) with weakening signals; refuses `judge` without an answer; logs it to `criterion.jsonl`. Matrix: `ctw-success-criterion-test.sh` |
+| `check-the-work.d/20-report-contract.sh` · `lib/report-contract.sh` | hook (`verify`); `--file <report>` by hand | refuses a FINAL report missing `COMMITS:` / `GATES:` / `BUGS:` / `DEFERRED:` / `QUESTIONS:` or naming a commit that does not exist; no report found = NOT CHECKED (exit 4). Matrix: `ctw-report-contract-test.sh` |
+| `session-state.sh` | the sub-session, at each step | the resumable state record in the worktree's own git dir (goal, steps, last raw gate lines, questions, notes); never committed. Matrix: `resume-brief-test.sh` |
+| `resume-brief.sh` | the lead, for a dead sub-session | turns the record + git facts into a fenced (`<untrusted>`) brief for a fresh session; past `HARNESS_RESUME_CAP` (default 2) a STOP summary of the best partial result (exit 1). Matrix: `resume-brief-test.sh` |
+| `heavy-run.sh` | any session: `heavy-run.sh -- <command>` | the fair numbered-ticket queue for heavy runs: `HARNESS_HEAVY_SLOTS`, position reports, a wait-time log, `--status`; one queue per repository, shared by all its worktrees; a symlink lock that works on macOS and Linux. Matrix: `heavy-run-test.sh` (2 rows skip where `ps`/`pgrep` are blocked; they say so) |
+| `refs.sh` · `refs-index.py` | any agent, for a known id or path | "what points at X": inbound and outbound references with `file:line`, id variants a text search misses (`ADR 49`, `ADR-49`), `--dangling`, `--section N`; cached in `.refs-cache/` (gitignored). Id families: `HARNESS_DECISION_PREFIX`, `HARNESS_BUG_PREFIX`, `HARNESS_REFS_IDS`. Matrix: `refs-test.sh` |
+| `log-agent-run.py` | the lead, at integration time | the only door into `runs.jsonl` in `HARNESS_AGENT_DIR`: `--usage` block, outcomes incl. stopped / killed / restarted, `--kind infra/judgement/correction` (proof audit: `UNPROVEN:`, `WRONG CLAIM:`, `WRONG DIAGNOSIS:`); the row schema is in its header. Matrix: `log-agent-run-test.sh` |

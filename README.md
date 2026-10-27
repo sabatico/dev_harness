@@ -125,7 +125,10 @@ dev_harness/
 ├── ci/
 │   ├── gates.md                    ← the enforcement layer + the security sweep + deploy/rollback + Gate INTEGRITY (G1–G8)
 │   ├── control-timing.md           ← WHEN a control fires: write-time vs push, blocking vs advisory, wiring ≠ logic
-│   └── run-integrity.md            ← multi-stage runs: the manifest, the status vocabulary, COMPLETE/INCOMPLETE
+│   ├── run-integrity.md            ← multi-stage runs: the manifest, the status vocabulary, COMPLETE/INCOMPLETE
+│   ├── token-budget.md             ← token discipline R1–R7: wait without polling, small context, summaries, the session cap
+│   ├── review-step.md              ← check-the-work: GOAL block, judged findings, tags, round cap, delta rounds, optional vote
+│   └── session-resilience.md       ← a dead session (state record + resume brief), the FINAL report contract, the success-criterion guard, the fair heavy-run queue
 ├── scripts/                        ← the EXECUTABLE layer — config-driven gates, drop-in, bash 3.2 / BSD-safe
 │   ├── README.md                   ←   what each gate holds + the two-step adoption ritual (G7 logic, G8 wiring)
 │   ├── init.sh                     ←   bootstrap a fresh clone: layout, .claude/ platform layer,
@@ -138,6 +141,10 @@ dev_harness/
 │   ├── hook-fast-gates.sh          ←   the same gates, fired at the moment of the write
 │   ├── check-*.sh                  ←   doc-links · doc-paths · doc-index · markers · bug-evidence · conditional-skips · citations · log-hygiene
 │   ├── claim-check.py · rotate-*.sh · harness-eval.sh ← platform-layer self-measurement (ci/platform-layer.md P8)
+│   ├── check-the-work.sh           ←   the sub-session's review before its commit (+ check-the-work.d/ hooks: success criterion, report contract)
+│   ├── session-state.sh · resume-brief.sh · heavy-run.sh ← survive a dead session; the fair queue for heavy runs
+│   ├── refs.sh                     ←   the reference index: what points at an id or a file (a token saver for lookups)
+│   ├── log-agent-run.py            ←   the only door into the agent-run log (usage, outcomes, proof-audit corrections)
 │   ├── selftest.sh                 ←   plants a violation per gate IN YOUR LANGUAGE (--all-stacks)
 │   ├── predicates-test.sh          ←   that the shared skip-scope has not gone over-broad
 │   ├── init-test.sh                ←   that init's install passes the doc gates with the kit originals removed
@@ -147,7 +154,7 @@ dev_harness/
 │   ├── hunting-bugs/               ← the defect-only adversarial sweep (invent-nastier duty); DIFFERENT from a quality review
 │   ├── covering-edge-cases/        ← the growing catalog of unexpected user/data behavior (families A–I); instantiated per feature at build/test/review
 │   ├── hardening-security/         ← the 30-door pre-launch map + the perpendicular axis (five questions, P1–P8, gated property matrix)
-│   ├── orchestrating-agents/       ← roles, when to spawn, briefs built from skills, worktree isolation, parallel sub-sessions (one worktree + branch per area), integrate-before-removal
+│   ├── orchestrating-agents/       ← roles and model tiers (plan and judge strong, build mid), briefs built from skills, parallel sub-sessions (GOAL block, check-the-work, resume), the run log and proof audit, the session cap
 │   ├── following-core-rules/ · writing-code/ · writing-tests/ · writing-docs/ · reviewing-adversarially/ · building-ui/
 │   │                               ← the task-type briefing skills every sub-agent brief names (core + exactly one task type)
 │   ├── recording-decisions/        ← ADR format + the second-ideator rule + locking
@@ -175,6 +182,7 @@ dev_harness/
     ├── use-case-runbook.md         ← user stories = manual-test script = playbook
     ├── third-party-services.md     ← every external dependency: what, why, config-by-name (no secrets)
     ├── deferred-test-registry.md   ← owed-but-blocked test coverage
+    ├── agents/                     ← runs.jsonl · reviews.jsonl · criterion.jsonl — what each agent run, review and claim produced
     └── adr/{README.md, ADR-template.md}
 ```
 **Coordination tickets vs engineering state:** the `tickets/*` files carry only what a repo can't —
@@ -261,8 +269,15 @@ decides who the second reviewer is, and new projects start on the setting that a
 `scripts/second-opinion.sh` is the one entry point: it reads the prompt on stdin, tries the chain, and
 always reports who answered (record it — a review whose author you cannot name is not evidence). To add
 an outside model, write a small wrapper that reads the prompt on stdin and prints the answer, keep its
-API key in the environment or a gitignored `.env`, and list it. To cancel outside models, set `local`
-or `off`; nothing else changes.
+API key in the environment or the gitignored key file (`HARNESS_KEY_FILE`, default `.env`), and list
+it. To cancel outside models, set `local` or `off`; nothing else changes.
+
+Since v1.7: `HARNESS_ALSO_ASK` adds reviewers asked IN ADDITION to the chain, in parallel and each with
+a time limit; their answers are printed after the chain's and never change the result. A failing
+reviewer's reason is printed, not only the word "failed". A call made in a git worktree that has no
+key file goes to the main checkout's own copy of the script, so worktree code never handles a key
+(`scripts/lib/main-checkout.sh`). The review step before every sub-session commit
+(`scripts/check-the-work.sh`, `ci/review-step.md`) uses this same entry point.
 
 ## Where this aligns with established practice (so it's not just our invention)
 - **ADRs** — Michael Nygard's Architecture Decision Records.

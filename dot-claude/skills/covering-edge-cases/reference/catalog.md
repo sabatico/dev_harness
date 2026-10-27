@@ -52,6 +52,36 @@ class because it "rarely happens".
 - **C5 Token/code expires while being read/used**; resend while the old is half-entered.
 - **C6 Optimistic UI vs server reject** — does the shown "success" roll back visibly?
 - **C7 Rapid repeated fires** — client throttle + server rate-limit surfaced as a human message.
+- **C8 A deleting job whose safety rests on a window** — a purge that is safe only because "a deleted
+  row lies wholly before every later reader's window" breaks when the window is widened later or the
+  job's clock differs from the reader's. Test: purge, widen the window, resend the deleted item; run
+  the job with its clock ahead of the reader's; assert nothing is counted twice. *(v1.7, from the first adopting project)*
+- **C9 Absence as evidence** — a rule that infers "X happened" from a missing row plus a time
+  comparison (purged, already charged, already sent) is wrong for every other path that also leaves no
+  row (refused, forgiven, never stored). Test: drive every no-row path into the rule; prefer a positive
+  record (a tombstone) and name the clock of every cutoff. *(v1.7, from the first adopting project)*
+- **C10 A top-severity fix on one endpoint, its twin left on the others** — the same mechanism usually
+  runs on every client or endpoint, so a P0 found on one usually lives on the others; parked as a later
+  check, it ships. Rule: a P0 fixed on one endpoint opens a twin check on every other endpoint in the
+  SAME wave, with the same test rig. *(v1.7, from the first adopting project)*
+- **C11 A boundary rule fixed in one direction, its mirror left** — a fix at a state change in one
+  direction ("use ends when the block goes up") usually has a mirror ("use starts when the block goes
+  away") with the same gap. Test: for every "at the moment X starts" rule, drive the moment X ends with
+  no other event after it. *(v1.7, from the first adopting project)*
+- **C12 A prune rule not crossed with the recovery states** — every rule that deletes data (journals,
+  tombstones, marks) is tested against every recovery state of that data: a lagging counter, a corrupt
+  file read as fresh, a clock change. *(v1.7, from the first adopting project)*
+- **C13 A delete promised by CASCADE that never fires** — the design says "the child rows go when the
+  parent goes", but the code never deletes the parent (it revokes, archives or soft-deletes it). Test:
+  drive the REAL removal path and assert the child rows are gone. *(v1.7, from the first adopting project)*
+- **C14 A flag cleared by the answer to a request built BEFORE the flag was raised** — a fault flag is
+  cleared when a later request is answered, but that request was built before the flag went up, so the
+  server never got the report. Test: raise the flag between building and answering a request; assert
+  the flag stays. Carry an episode number and clear only for the current one. *(v1.7, from the first adopting project)*
+- **C15 A late step of a flow that has already ended** — the second step of a multi-step flow (a code
+  challenge, a callback, an async confirm) arrives after the user closed, cancelled or restarted it,
+  and changes the NEW run. Test: end the flow, deliver the step, assert nothing changes; compare a run
+  number taken at the start. *(v1.7, from the first adopting project)*
 
 ## D. State & permission shifts under the user's feet
 - **D1 Background lock/logout/expiry mid-action** — must fail closed and recover, never half-write.
@@ -60,6 +90,14 @@ class because it "rarely happens".
 - **D4 Stale cached config** — server changed a setting/catalog/price; client acts on the old copy.
 - **D5 Target object changed remotely** — edited record deleted/renamed elsewhere → save into the
   void (404/409, no silent recreate).
+- **D6 Allow-list membership decided by a self-declared property** — an item is let through because it
+  CLAIMS a property (a manifest flag, a label, a file name) that anything can claim. Test: a hostile
+  item that claims the property is still covered; key the list on a fact the platform decides (a
+  signed id). *(v1.7, from the first adopting project)*
+- **D7 A signal the reported party can withhold** — a fault report that the actor it reports on can
+  write or touch is counted on PRESENCE, not on successful reading or removal: a held-open,
+  undeletable or over-the-limit report still says "something happened". Test: hold the report open,
+  flood past the per-pass limit, assert the fault is still reported. *(v1.7, from the first adopting project)*
 
 ## E. Device & environment
 - **E1 Small / resized viewport** — orientation change, on-screen keyboard covering the CTA, overlays
@@ -71,6 +109,18 @@ class because it "rarely happens".
 - **E5 Storage unavailable** — private-mode storage off, quota exceeded, cookies blocked → degrade
   with a message, never a blank screen.
 - **E6 DOM-mutating extensions / translators** — at minimum, don't corrupt data on submit.
+- **E7 The UNDO of a restriction fails** — removing a block (a rule, a key, a policy) can fail like
+  adding one; a block the decision no longer wants but that is still in place locks the user out by
+  our fault. It is reported, retried, and the user gets a way through. Test: make the removal fail;
+  assert the report, the retry and the way through. *(v1.7, from the first adopting project)*
+- **E8 One device, several principals** — a device with several accounts builds each account's report
+  from the CURRENT user's session or from the account's own stale state. Every per-account field must
+  be that account's own value now, or left out. Test: put another user at the console, send an
+  account's report, assert each field is the reported account's. *(v1.7, from the first adopting project)*
+- **E9 A setting the app reads that the build script never sets for that build** — a new build setting
+  has a default that suits production or a simulator, and the script that makes the test build never
+  passes it, so the feature fails only on the real test device. Test: the build script's matrix asserts
+  every setting the target reads is passed with the value for that build. *(v1.7, from the first adopting project)*
 
 ## F. Data extremes & boundaries
 - **F1 Zero state and the pathological many** — nothing yet vs hundreds/thousands (render windows).

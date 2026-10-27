@@ -65,6 +65,13 @@ can never fail), an assumption never verified, a simpler design rejected without
 Parked (out of scope): <one line each>
 ```
 
+When the prompt asks for the check-the-work shape (`scripts/check-the-work.sh`; the text is
+`scripts/lib/review-prompt-header.txt`), answer in THAT shape instead: `VERDICT:`, `GOAL:`, then one
+line per finding `F<n> [P0–P3] [important|nit|pre-existing] <file:line> — defect — evidence — fix`,
+then `UNSEEN:`. Tag `pre-existing` only for a defect in lines the change did not add or alter, and
+`nit` only for what breaks nothing: the tag decides who handles the finding, and the script reads only
+those lines.
+
 ## History
 
 - Formerly the `skill-adversary` skeleton in the agent-skills SOP; aligned with the `red-team`

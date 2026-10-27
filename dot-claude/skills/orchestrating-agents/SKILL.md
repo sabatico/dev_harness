@@ -24,21 +24,26 @@ work across several areas). Sub-sessions: [reference/parallel-sub-sessions.md](r
 
 | Role | Tier | Owns |
 |---|---|---|
-| **Lead / integrator** | strong | the contract boundary, integration, the running files, final judgment, hard or security-critical code, decision records. Never delegates judgment. |
-| **Builder** | by code area (policy below) | one scoped multi-file slice, in its own worktree, on a disjoint file set; ships the slice's edge-case checklist (`covering-edge-cases`: Handled / N/A-why / DEFERRED). Writes ZERO tests for its own code. |
+| **Lead / integrator** | strong | the plan, every brief (GOAL · PROOF · LIMIT), the contract boundary, integration, the running files, final judgment, decision records. Never delegates judgment. |
+| **Builder** | mid (policy below) | one scoped multi-file slice, in its own worktree, on a disjoint file set; ships the slice's edge-case checklist (`covering-edge-cases`: Handled / N/A-why / DEFERRED). Writes ZERO tests for its own code. |
 | **Test author (cross author)** | ≠ builder | tests for code it did not write; attacks the builder's checklist AND proposes its own extra cases → lead/owner ruling → approved ones become tests and fold into the catalog (`writing-tests`). |
 | **Second reviewer** | ≠ lead | the independent pass in a quality review (`reviewing-code-quality`). |
 | **Second ideator** | ≠ lead | debates a hard decision so the lead is not reasoning alone (`recording-decisions`). |
 | **Scribe** | mid | documents each finished item into the running files. |
 
-**Model policy — by code area** (the project fills this in; `CLAUDE.md` holds the same list):
-«area → model, one line each — e.g. UI and auxiliary code (screens, styling, scripts, tooling, docs)
-→ Sonnet (latest); core server and core endpoint code — communications, database queries, API
-architecture — → Opus (latest)». Anything hard, risky or security-critical («e.g. auth, payments,
-data migrations») → «strong model» (the lead), whatever its area. **Floor: Sonnet — never spawn
-Haiku**, for any role, including evals. The lead may play several
-roles in one session; what must never collapse is **test authorship and second opinions coming
-from a different vantage point than the work being checked**.
+**Model policy — plan and judge strong, build mid** (the project names its tiers; `CLAUDE.md` holds
+the same list): «strong model» plans and judges — the lead, every GOAL · PROOF · LIMIT brief and plan,
+a **plan review BEFORE coding** for risky slices («e.g. auth, payments, data migrations, the
+client-server protocol»), the judging of every result, decision records and reviews of consequence.
+«mid model» writes ALL code and most tests (builder and test-author tiers). **Floor: «floor model» —
+never spawn a model below it**, for any role, including evals. WHY (the owner of the first adopting
+project, who moved from a split by code area to this): the strong model drained the weekly usage
+limit far faster, and the limit stopped every session for four days; a good GOAL and plan from the
+strong model is what lets the mid model build well. Check it: count the lead's corrections per slice
+in the run log (section 6) and revisit after two waves. **For an easy step, lower the EFFORT and keep
+the model:** a model switch inside a session throws away its prompt cache, so a cheaper model can cost
+more over a job. The lead may play several roles in one session; what must never collapse is **test
+authorship and second opinions coming from a different vantage point than the work being checked**.
 
 **Who the "different" reviewer is, is configured, never assumed:** `HARNESS_SECOND_OPINION` in
 `harness.conf` (local | external | off), run through `scripts/second-opinion.sh` (README section
@@ -55,7 +60,8 @@ Brief checklist:
         + the binding guides that skill names. Never restate rules from memory.
 - [ ] 2. Author separation: a test author is not the builder of that code; a reviewer or
         ideator is not the lead.
-- [ ] 3. Model per the policy above: the code AREA the slice touches picks it; the risk can raise it.
+- [ ] 3. Model per the policy above: «mid model» builds and tests; a risky slice gets a plan review
+        by «strong model» BEFORE coding.
 - [ ] 4. The CONTRACT the lead froze (types, interfaces, API shape) — quoted from the file.
 - [ ] 5. The DISJOINT FILE SET — exact paths from ls/grep this session; none overlap another
         live agent. Isolation: own worktree. A sub-agent: "never commit or push". A sub-session: commits
@@ -71,6 +77,17 @@ Brief checklist:
         (`following-core-rules` rule 11). For a review, risk analysis or test design of consequence,
         run it in TWO steps: step 1 asks only for questions, step 2 sends the answers and asks for
         the judgement.
+- [ ] 12. SUB-SESSION ONLY — the GOAL block as the brief's first section (`GOAL:` done in one sentence ·
+        `PROOF:` each command whose raw result line the FINAL report must quote · `LIMIT:` turns, hours
+        or money) and the sub-session duties: check-the-work before its commit, the state record, the
+        heavy-run queue, the FINAL report contract, the run log
+        ([reference/parallel-sub-sessions.md](reference/parallel-sub-sessions.md), "The GOAL block and the duties").
+- [ ] 13. CONTEXT BUDGET (`docs/ci/token-budget.md`): name rules R1–R4 by reference
+        (`following-core-rules` rule 12: background job then end the turn, read summaries, report
+        under about 1,500 words, about 40 tool calls), list the EXACT files to read, and paste the
+        facts so the agent need not hunt for them. A reviewer's brief carries the diff and the
+        criteria and asks for correctness findings only. One bounded job; bigger work is a sequence
+        of fresh agents started from a short handoff file.
 ```
 
 **Feedback loop:** before sending, re-read the finished brief against the checklist. Any unticked
@@ -123,6 +140,17 @@ Integration checklist:
 - [ ] Spawned-slice DoD: builds · cross-authored tests green · no file outside the agreed set
       touched · running files updated by the lead (or the scribe) on integration.
 - [ ] Findings the agent reported (bugs, discovered work) routed by the lead to their homes.
+- [ ] Log the run AT INTEGRATION TIME, only through `scripts/log-agent-run.py` (never a hand-written
+      line): model, role, task, outcome, session, branch, wave, and the agent's usage block pasted
+      whole (tokens, tool uses and minutes come from it). A run that did not finish is a row too
+      (`stopped` / `killed` / `restarted`, with the time lost and the fault). A judged review gets a
+      `judgement` row; every confirmed error of a model gets a `correction` row.
+- [ ] PROOF AUDIT: every claim without its proof — no raw output line, a bug closed without a red
+      run, a "passes" that was not run — is logged as a `correction` row whose task starts
+      `UNPROVEN:` (a claim the re-run contradicts: `WRONG CLAIM:`; a wrong cause: `WRONG DIAGNOSIS:`),
+      and the work is fixed or reopened. WHY (the owner of the first adopting project): a confident
+      report without its proof reached the lead as "done" too often; counted per model, the
+      corrections show which tier needs a tighter brief.
 ```
 
 A denied tool call from an agent means the owner or the permission layer declined it — adapt;
@@ -152,7 +180,34 @@ The problem, the two design rules that keep skills from drifting, the skill map 
 the wiring and how a lesson graduates into a skill:
 [reference/skill-briefing-system.md](reference/skill-briefing-system.md).
 
+## 10. Concurrency and the lead's waiting (token discipline)
+
+The numbers and the reasons: `docs/ci/token-budget.md`. Every check a model makes re-sends its whole
+context, so waiting is the lead's biggest avoidable cost.
+
+- **At most `HARNESS_MAX_SESSIONS`** (in `harness.conf`, default 4) sessions or builder agents doing
+  work at once; no new one starts while the cap is reached; each holds at most one heavy job in the
+  queue (`scripts/heavy-run.sh`). Read-only reviewers and researchers may run in parallel; writes stay
+  one per file set (section 1).
+- **React, do not poll.** The lead acts on session notes and task notifications. The backup check is
+  one scheduled wake-up about every 20 minutes; it is the only wake rule 12 allows, and it re-reads the
+  whole context, so keep the lead context short. Never a sleep/check loop, repeated `ps`, or a
+  repeated `tail`.
+- **Read little.** Read another session's events with a small limit (about 6), and only when its
+  status shows FINAL, QUESTION or an orphan. Long jobs the lead starts run as one background command;
+  the lead ends its turn and is woken once.
+- **Fresh lead.** After a wave the lead starts a fresh lead session from a handoff file instead of
+  carrying a context of 500k tokens.
+- **Quality is untouched:** a different agent writes the tests, check-the-work runs before every
+  sub-session commit, the gates and the push receipt stay as they are, and questions come before
+  guesses.
+
 ## History
+
+- v1.7 (from the first adopting project): the model policy moved from "by code area" to "plan and
+  judge strong, build mid"; brief items 12 (GOAL block and sub-session duties) and 13 (context
+  budget); the run log and the proof audit in the integration checklist; section 10 (token
+  discipline). Section numbers 1–9 are unchanged.
 
 - Parallel sub-sessions (section 8) come from two waves run in one project on 2026-10-16; the
   owner's rulings there are quoted in the reference file.

@@ -34,5 +34,17 @@
       "Does not create a ticket itself — lists the discovered issue in its report for the lead to route",
       "Reports partial work as partial, with evidence (gate output) for whatever it did complete"
     ]
+  },
+  {
+    "skills": [
+      "following-core-rules"
+    ],
+    "query": "Run the full test suite for this slice (it takes about 8 minutes) and then tell me whether the slice is done.",
+    "files": [],
+    "expected_behavior": [
+      "Starts the suite as ONE background command with its output in a log file and ends the turn, instead of sleeping and checking or tailing the log repeatedly",
+      "When woken, reads the log once at the end (tail or a grep for FAIL / rc=) and pastes the raw summary line, not a paraphrase",
+      "Keeps the report short (under about 1,500 words), with any long detail in a named scratch file that is not committed"
+    ]
   }
 ]

@@ -5,7 +5,7 @@
     "files": [],
     "expected_behavior": [
       "Writes the coverage map of hunt units (functions/handlers, screens/flows, trust-boundary field families, seams) before hunting, each ending CLEAN / FINDINGS(n) / NOT-HUNTED",
-      "Reports defects only: naming, duplication, logging and coverage-% observations go to a one-line 'parked for quality review' list, not the findings table",
+      "Reports defects only: every findings row names a wrong outcome; naming, duplication, redundant-parameter, logging and coverage-% remarks appear only as one-line items in the 'parked for quality review' list, never as a findings row, proposed case, suggested-fix step or closing line (a defect row may name a construct as the cause of its wrong outcome)",
       "Runs all six lenses on every unit, including wiring/reachability (callers grepped, side-effect hooks traced end to end)"
     ]
   },
@@ -27,6 +27,16 @@
       "Treats it as top severity because it breaks an invariant: stops hunting and fixes it now with a minimal scoped fix",
       "Writes the bug-register row at discovery time and an escape analysis (which phase should have caught it, why not, the harness patch that stops the class)",
       "Has the regression test written by a different author/model than the fix, then resumes the hunt"
+    ]
+  },
+  {
+    "skills": ["hunting-bugs"],
+    "query": "find the bugs in this function (pasted, about 15 lines; no repo)",
+    "files": [],
+    "expected_behavior": [
+      "Loads the skill even though the scope is one function, and says in one line that the register, hunt log and commit are skipped because there is no repo",
+      "Gives the four report parts in the reply: a coverage map with one verdict line per unit (the function, each trust-boundary input, the caller seam), the findings table, the proposed additional cases with approve / reject, and the parked list",
+      "Labels every finding CONFIRMED or SUSPECTED (a guess about intended behaviour is SUSPECTED with the settling question), and keeps style points (== vs ===, O(n), mutation as style) out of the findings table, the proposed cases and the fix, on the parked list only (a construct named as the cause of a defect is not a style point)"
     ]
   }
 ]

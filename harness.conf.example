@@ -184,6 +184,81 @@ HARNESS_SECOND_OPINION="local"
 HARNESS_LOCAL_REVIEWER="red-team"      # .claude/agents/red-team.md — or nominate your own agent
 # external only — space-separated  name=command  pairs. Each command reads the prompt on stdin and
 # prints the answer (a small wrapper script around a provider CLI/API). API keys stay in the
-# environment or a gitignored .env, read by the WRAPPER — never written here. Example:
+# environment or the gitignored key file (HARNESS_KEY_FILE), read by the WRAPPER — never written here. Example:
 #   HARNESS_EXTERNAL_REVIEWERS="modelA=scripts/models/model-a.sh modelB=scripts/models/model-b.sh"
 HARNESS_EXTERNAL_REVIEWERS=""
+# external only — reviewers asked IN ADDITION to the chain, in parallel, never instead of it. Entry form
+# name[@SECONDS]=command [arg ...]: a word like name= starts a new entry, every other word is an argument of
+# the entry before it (no quoting; each word reaches the program as written). Each extra runs in its own
+# process group and is stopped (TERM, then KILL) after its limit. An extra's answer is printed after the
+# chain's, under a header naming it, and never changes the exit code. Needs python3. Example:
+#   HARNESS_ALSO_ASK="fast=scripts/models/fast.sh --model small"
+HARNESS_ALSO_ASK=""
+# Default time limit for an extra reviewer, in seconds (1 to 99999). WHY: a hung outside call must not hold the run.
+HARNESS_ALSO_ASK_LIMIT_S="900"
+# The file holding the reviewers' keys. Used only to decide the worktree hand-over: a call from a linked
+# worktree with no such file goes to the main checkout's own script, so worktree code never handles a key.
+# Never read by the harness; a relative path, no "..".
+HARNESS_KEY_FILE=".env"
+
+# ── Agent work: token discipline, the review step, resilience, the run log (v1.7) ─────────────────
+# Every knob below has a default; leave a line out to take it. WHY each exists: ci/token-budget.md,
+# ci/review-step.md, ci/session-resilience.md.
+
+# At most this many sessions or builder agents doing work at once (token discipline R5). Read by the
+# lead and the briefs, not by a script: past about 4 the extra agents only queued for the test lock
+# and polled while they waited.
+HARNESS_MAX_SESSIONS="4"
+
+# Where the agent logs live: runs.jsonl (scripts/log-agent-run.py), reviews.jsonl (check-the-work.sh
+# judge) and criterion.jsonl (the success-criterion hook). Committed with the work.
+HARNESS_AGENT_DIR="docs/agents"
+
+# The security-hardening register: a review finding tagged pre-existing may be routed to it (SEC-nnn).
+HARNESS_SEC_REGISTER="docs/tickets/security.md"
+
+# Vote mode of the review step: several outside reviewers must agree on a finding. OFF by default,
+# because every round then makes paid outside calls — the owner turns it on.
+HARNESS_REVIEW_VOTE="off"
+# The voters: "name=command ..." (a command reads the prompt on stdin and prints a reviewer answer).
+HARNESS_REVIEW_VOTERS=""
+# The pre-send secret scan for vote mode: a command reading the prompt on stdin (exit 0 clean, 5
+# refused). Empty while the vote is on = nothing is sent (check-the-work.sh exits 6).
+HARNESS_REVIEW_SCAN=""
+# check-the-work.sh also reads CHECK_THE_WORK_MAX_ROUNDS (default 3) and CHECK_THE_WORK_BASE (default:
+# HARNESS_BASE_REF, then its local branch) from the environment.
+
+# Where the lead finds a branch's FINAL report at the merge (the report-contract hook). Empty = the
+# hook says NOT CHECKED (exit 4) unless CTW_REPORT names the file. Never a silent pass.
+HARNESS_REPORT_DIR=""
+# Extra shell patterns for files that JUDGE code (beyond the tests, gates, baselines and registries
+# the success-criterion hook already knows), e.g. golden files or a coverage floor file.
+HARNESS_JUDGE_GLOBS=""
+
+# Reference index (scripts/refs.sh): the id families besides HARNESS_DECISION_PREFIX and
+# HARNESS_BUG_PREFIX. A token PREFIX-NN counts as an id only when its prefix is listed here.
+HARNESS_REFS_IDS="USER DEC FEAT DOC BIZ SEC TBD"
+
+# Run log (scripts/log-agent-run.py). Allowed model names, each optionally name:family; EMPTY = any
+# name is accepted (lower-cased). WHY a list at all: names drift ("mid" vs "mid-5") and then cannot be
+# summed per model. Aliases map a variant to the canonical name: "alias=name ...".
+HARNESS_RUNLOG_MODELS=""
+HARNESS_RUNLOG_MODEL_ALIASES=""
+# Roles the run log accepts (a typo cannot start a new role); default: builder tester test-author
+# reviewer hunter lead sub-session analyst researcher writer scribe architect librarian designer ui-builder
+# HARNESS_RUNLOG_ROLES=""
+# The wave field (the runner row id), as a regex, or "none".
+# HARNESS_RUNLOG_WAVE_RE="[A-Z]{1,2}[0-9]{1,4}[a-z]?"
+
+# Heavy-run queue (scripts/heavy-run.sh): how many heavy runs (full suites, mutation batches) may run
+# at once on this machine, 1-8. WHY: one heavy run already uses several cores, and a plain lock served
+# waiters in random order (one session waited two hours). Default 1.
+# HARNESS_HEAVY_SLOTS="1"
+# The queue folder. WHY: every worktree of one repository must share one queue, and nothing may land in
+# the tree. Default: <the repository's common git dir>/harness-heavy.
+# HARNESS_HEAVY_LOCK_DIR=""
+# The wait-time log. WHY: a wait nobody can see reads as a hung session. Default: <queue folder>/wait-log.tsv
+# HARNESS_HEAVY_LOG=""
+# Most resumes of a dead sub-session before resume-brief.sh prints a STOP summary of the best partial
+# result instead of a brief (0-9). WHY: a third retry of the same work buys luck, not progress. Default 2.
+# HARNESS_RESUME_CAP="2"

@@ -8,7 +8,7 @@
 #
 # ── TIERS ─────────────────────────────────────────────────────────────────────
 #   (default)    the drift + hygiene gates          — seconds, ALWAYS run these
-#   --full       + your test and coverage commands  — minutes
+#   --full       + the slow harness self-tests + your test and coverage commands  — minutes
 #   --lint       + your linter
 #   --all        everything
 #   --docs       ONLY the record gates (links, paths, index, skills, markers, evidence, citations,
@@ -168,7 +168,8 @@ fi
 expect_gates doc-links doc-paths doc-index markers bug-evidence conditional-skips citations log-hygiene \
   guard-matrix read-budget-matrix claim-check-matrix bug-register-rotation bug-rotation-matrix \
   onboarding-limits onboarding-rotation-matrix secret-read-matrix image-pins image-pins-matrix second-opinion-matrix \
-  verify-check-matrix repeat-check-matrix find-matrix librarian-sweep-matrix session-start-matrix
+  verify-check-matrix repeat-check-matrix find-matrix librarian-sweep-matrix session-start-matrix \
+  review-tally-matrix
 
 run_gate doc-links         "$HERE/check-doc-links.sh"
 run_gate doc-paths         "$HERE/check-doc-paths.sh"
@@ -205,14 +206,39 @@ run_gate onboarding-rotation-matrix "$HERE/rotate-onboarding-test.sh"
 run_gate secret-read-matrix        "$HERE/hook-pretooluse-secretread-test.sh"
 run_gate image-pins                "$HERE/check-image-pins.sh" --check
 run_gate image-pins-matrix         "$HERE/check-image-pins-test.sh"
-# The second-opinion dispatcher: a missing outside reviewer must never break a run (README).
+# The second-opinion dispatcher: a missing outside reviewer must never break a run (README). It also holds the
+# worktree key hand-over, so it stays in the fast tier and in every push receipt, although it takes about 90 s.
 run_gate second-opinion-matrix     "$HERE/second-opinion-test.sh"
+# v1.7: the one parser of reviewer answers (check-the-work judge and vote read findings the same way).
+run_gate review-tally-matrix       "$HERE/review-tally-test.sh"
 # OPTIONAL, LOCAL-ONLY gate: a maintainer may keep a personal-data check (scripts/check-no-pii.sh +
 # its test) that is gitignored, not shipped. It runs when present; a clone without it is not "incomplete".
 if [ -f "$HERE/check-no-pii.sh" ]; then
   expect_gates no-pii
   run_gate no-pii                  "$HERE/check-no-pii.sh"
   [ -f "$HERE/check-no-pii-test.sh" ] && { expect_gates no-pii-matrix; run_gate no-pii-matrix "$HERE/check-no-pii-test.sh"; }
+fi
+
+# ── slow harness self-tests (v1.7) ────────────────────────────────────────────
+# The agent-work scripts (ci/review-step.md, ci/session-resilience.md, the reference index, the run log)
+# have matrices of 40 s to over 10 min each: process races, real git fixtures, timing rows. In the fast
+# tier they would teach agents to skip the runner, so they run with --full / --all, and a fast run names
+# them as NOT RUN — a skip is never a pass. LIMIT: a fast receipt ("covers: fast") does not cover them; after
+# changing one of their scripts, push only on a --full receipt ("covers: fast,suites").
+SLOW_MATRICES="resume-brief-matrix heavy-run-matrix refs-matrix log-agent-run-matrix ctw-report-contract-matrix ctw-success-criterion-matrix check-the-work-matrix"
+if [ "$WANT_FULL" -eq 1 ]; then
+  printf '\n%sslow harness self-tests%s\n' "$C_B" "$C_0"
+  # shellcheck disable=SC2086
+  expect_gates $SLOW_MATRICES
+  run_gate resume-brief-matrix          "$HERE/resume-brief-test.sh"
+  run_gate heavy-run-matrix             "$HERE/heavy-run-test.sh"
+  run_gate refs-matrix                  "$HERE/refs-test.sh"
+  run_gate log-agent-run-matrix         "$HERE/log-agent-run-test.sh"
+  run_gate ctw-report-contract-matrix   "$HERE/ctw-report-contract-test.sh"
+  run_gate ctw-success-criterion-matrix "$HERE/ctw-success-criterion-test.sh"
+  run_gate check-the-work-matrix        "$HERE/check-the-work-test.sh"
+elif [ "$WANT_DOCS" -eq 0 ]; then
+  printf '\n  %-22s %sNOT RUN%s  (7 slow harness self-tests; pass --full)\n' "slow-matrices" "$C_DIM" "$C_0"
 fi
 
 # ── suites ────────────────────────────────────────────────────────────────────

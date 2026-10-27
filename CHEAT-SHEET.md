@@ -41,11 +41,29 @@
 3. **Integrate BEFORE removing its worktree** (agents leave work uncommitted → lost otherwise).
 4. Verify its claims yourself.
 
+## Token discipline (every agent, every session)
+
+1. **Wait without polling:** a long job = ONE background command, output to a log file, END THE TURN. No sleep/check loops, no repeated `tail` or `ps`.
+2. **Read summaries:** a log once at the end (`tail -40`, grep FAIL / rc=); files by section after `scripts/find.sh` or `scripts/refs.sh <ID|path>`.
+3. **Return summaries:** a report under ~1,500 words; detail in a named scratch file, never committed.
+4. **Small slices:** ~40 tool calls per sub-agent; bigger work = a chain of fresh agents from a handoff file.
+5. **At most `HARNESS_MAX_SESSIONS` (default 4)** sessions or builders at once; heavy runs through `scripts/heavy-run.sh -- <cmd>`.
+6. **Models:** the strong model plans, briefs and judges; the mid model writes the code. Easy step → lower the effort, not the model.
+7. **Quality unchanged:** a different agent writes the tests, check-the-work before every sub-session commit, gates, questions before guesses. Detail: `ci/token-budget.md`.
+
+## Sub-session duties (in every sub-session brief)
+
+1. Brief opens with **`GOAL:` · `PROOF:` · `LIMIT:`**.
+2. Keep `scripts/session-state.sh` current (`init --goal`, `step`, `gate`, `question`) — a dead session can then be resumed with `scripts/resume-brief.sh`.
+3. Before the commit: `scripts/check-the-work.sh run --goal <f> --summary <f>` → `judge` every finding (FIXED / REJECTED why / DEFERRED where) → commit the judged row with the work.
+4. FINAL report: first line `FINAL — DONE` / `INTERIM` / `QUESTION`; fields `COMMITS:` `GATES:` `BUGS:` `DEFERRED:` `QUESTIONS:`.
+5. Lead before the merge: `check-the-work.sh verify --branch <b>`, the report-contract hook, the success-criterion flag; log every run with `scripts/log-agent-run.py`; a claim without proof = a `correction` row (`UNPROVEN:`).
+
 ## Parallel sub-sessions (a wave across several areas)
 
 1. One sub-session per area, only on **disjoint file sets**; each in its **own worktree + branch**.
 2. Start the next as soon as there is ready work in an area no running one touches — don't wait.
-3. Brief it for a fresh context: slice · files/decisions to read · model by area · editable files · area checks · DoD · report format.
+3. Brief it for a fresh context: GOAL · PROOF · LIMIT · files/decisions to read · model per the policy · editable files · area checks · DoD · report format.
 4. It runs only its **own area's checks**, commits only to **its own branch**, never pushes, never edits the shared running files (it lists the changes in its report).
 5. No product decision? It asks the lead (main + backup proposal) — never guesses. The lead checks in with every running one.
 6. Lead: verify each report, merge `--no-ff`, update running files, file findings, **full gates ONCE**, push.

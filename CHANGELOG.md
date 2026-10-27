@@ -12,6 +12,63 @@ only its verdict and per-version means — never task names or contents.
 2. Commit, then tag: `git tag -a vX.Y -m "harness vX.Y"` on that commit.
 3. Push the commit and the tag (`git push origin master vX.Y`).
 
+## v1.7 — 2026-10-27
+
+Token discipline and the agent-work toolkit. The first adopting project improved its harness after
+v1.6, mostly to cut AI token use after a weekly usage limit stopped every session for four days. Its
+changes are ported here in generic form: no product names, paths or ids; every project number is a
+`harness.conf` knob. Not yet benchmarked: it changes how agents wait, brief and report, so run
+harness-bench against v1.6 before tagging.
+
+- **Token discipline (R1–R7)** — new `ci/token-budget.md` (the measurement: waiting checks were 35%
+  of all tokens; the rules; the published guidance; how to re-measure), `following-core-rules` rule
+  12 "Spend context like money" (wait without polling, read summaries, return summaries, small
+  slices), `orchestrating-agents` section 10 (the session cap `HARNESS_MAX_SESSIONS`, default 4;
+  react, do not poll; a fresh lead after a wave) and brief item 13 (the context budget), a
+  `CLAUDE.md` standing rule. R7: the quality process does not change.
+- **Model policy: plan and judge strong, build mid** — replaces "by code area". «strong model»
+  plans, briefs (GOAL · PROOF · LIMIT), plan-reviews risky slices before coding, and judges;
+  «mid model» writes all code and most tests; a «floor model» tier. For an easy step lower the
+  effort, not the model (a switch throws away the prompt cache).
+- **The check-the-work review step** — new `scripts/check-the-work.sh` (+ `lib/review_tally.py`,
+  `lib/review-prompt-header.txt`) and `ci/review-step.md`: every sub-session brief opens with a GOAL
+  block; before its commit the configured second opinion (`second-opinion.sh`) reads the work against
+  the goal; every finding is judged FIXED / REJECTED / DEFERRED; tags (`nit`, `pre-existing`; a P0/P1
+  is never a nit); a round cap of 3 with the lead's quoted yes; delta rounds; an optional vote that
+  fails closed without a pre-send secret scan; a hook point `check-the-work.d/` (a missing enforcing
+  hook exits 3); `verify --branch` for the lead before a merge. The reviewer test-set method is
+  documented; its scorer is not shipped (its cases are a project's own bugs).
+- **Session resilience** — new `ci/session-resilience.md`: `session-state.sh` (a resumable record in
+  the worktree's git dir) and `resume-brief.sh` (a fenced brief for a fresh session; at most 2
+  resumes, then the best partial result); the FINAL report contract (`lib/report-contract.sh`,
+  hook `20-report-contract.sh`: `COMMITS:` `GATES:` `BUGS:` `DEFERRED:` `QUESTIONS:`); the
+  success-criterion guard (hook `10-success-criterion.sh`: a branch that changes code AND what judges
+  it must declare who wrote the tests); the fair heavy-run queue (`heavy-run.sh`, numbered tickets,
+  one queue per repository in its common git dir, a symlink lock that works on macOS and Linux).
+- **The agent-run log and the proof audit** — `scripts/log-agent-run.py` is the only door into
+  `runs.jsonl` (templates in `running-files/agents/`); a claim without its proof is logged as a
+  `correction` row (`UNPROVEN:`, `WRONG CLAIM:`, `WRONG DIAGNOSIS:`).
+- **The reference index** — `scripts/refs.sh` (+ `refs-index.py`): "what points at X" for a known
+  id or path, with id variants a text search misses; a token saver for lookups. The librarian skill
+  and `CLAUDE.md` name it before `find.sh` for a known id.
+- **second-opinion.sh** — extra reviewers asked in parallel beside the chain (`HARNESS_ALSO_ASK`,
+  each with a time limit), the failing reviewer's reason printed, and a worktree call handed to the
+  main checkout's own copy when only the main checkout holds the key file (`lib/main-checkout.sh`,
+  `HARNESS_KEY_FILE`).
+- **Skills and evals** — `hunting-bugs` scales down to one pasted function (four-part report in the
+  reply; style remarks only on the parked list); `reviewing-adversarially` knows the check-the-work
+  answer shape; 13 generic edge-case classes (C8–C15, D6–D7, E7–E9) in the catalog; the
+  sub-session reference gains the GOAL block, the duties table, the new merge checks and the
+  dead-session procedure; eval scenarios for token discipline and small-scope hunts; the evals
+  README describes `claude plugin eval`.
+- **Gates** — `review-tally-matrix` joins the fast tier; seven slow matrices (40 s to over 10 min)
+  run with `--full` / `--all` and are named NOT RUN in a fast run; a fast receipt does not cover them.
+  The grown second-opinion matrix (about 90 s) stays in the fast tier: it holds the key hand-over.
+- **Not ported, on purpose** — the agent dashboard and its publishing (project-specific page), the
+  stall/loop status view (reads one launcher's session notes), the reviewer test-set scorer and its
+  cases (project bugs), the shrink-only baseline-growth gate (a follow-up), and every product
+  feature commit.
+
 ## v1.6 — 2026-10-16
 
 Parallel sub-sessions. The way of working was decided and proven in an installed project

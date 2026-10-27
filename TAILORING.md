@@ -72,6 +72,10 @@ Adopt a pillar when its trigger fires, and say in the commit which trigger it wa
 | **Control timing / hooks** | `ci/control-timing.md` | …a gate catches something *after* you already built on the mistake. |
 | **Roles & orchestration** | the `orchestrating-agents` skill | …you spawn your first parallel sub-agent. |
 | **Agent skills** | the `orchestrating-agents` skill | …you brief sub-agents often enough that repeating the rules by hand produces drift. |
+| **Check-the-work review** | `ci/review-step.md`, `scripts/check-the-work.sh` | …you start your first sub-session, or a "done" report reaches you that nobody else checked. |
+| **Session resilience** | `ci/session-resilience.md`, `scripts/session-state.sh`, `scripts/heavy-run.sh` | …a session dies mid-task and you re-brief from memory, or two heavy runs fight over one machine. |
+| **Token discipline** | `ci/token-budget.md` | …you run agents in parallel or hit a usage limit. The rules cost nothing; adopt them with the first sub-agent. |
+| **Agent-run log** | `running-files/agents/`, `scripts/log-agent-run.py` | …you want to know which model, brief or reviewer cost what — usually with the first wave of sub-sessions. |
 | **Owner communication** | the `communicating-with-the-owner` skill | …a non-technical owner depends on your reports. |
 | **Third-party services** | `running-files/third-party-services.md` | …the second external dependency lands. |
 

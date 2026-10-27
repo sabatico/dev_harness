@@ -1,6 +1,6 @@
 ---
 name: hunting-bugs
-description: Runs a defect-only adversarial bug hunt over the scope the owner names (whole codebase, a directory, a feature, a diff) — unit by unit (function, screen, field family, seam) through a six-lens stack (logic, abnormal usage, hostile input, security/authz/IDOR, UI desync, wiring/reachability), with a mandatory per-unit duty to invent nastier cases and propose them back for a ruling, findings registered at discovery, and a bug-hunt-prefixed commit. Use when the owner says "bug hunt", "hunt for bugs", or asks what defects exist in a named area. Not a quality review — style, logs, coverage % and refactors are out of scope.
+description: Hunts for defects in whatever scope is named — one pasted function, a small diff, a file, a feature, a directory or the whole codebase. Use whenever a request says "bug hunt", "hunt for bugs", "find the bugs in", "find bugs", "what defects are in", "what's broken in", "any bugs in this", or asks for bugs in a named scope, even a single function or snippet. Works unit by unit (function, screen, field family, seam) through six lenses (logic, abnormal usage, hostile input, security/authz/IDOR, UI desync, wiring/reachability), invents nastier cases per unit and proposes them back for a ruling, labels every finding CONFIRMED or SUSPECTED, registers findings at discovery, and ends with a coverage map that scales to the scope (one unit = one verdict line). Not a quality review — style, logs, coverage % and refactors are out of scope.
 ---
 
 # Hunting bugs
@@ -8,12 +8,18 @@ description: Runs a defect-only adversarial bug hunt over the scope the owner na
 **Posture:** the code is guilty until proven innocent. A bug hunt is NOT a quality review
 (`reviewing-code-quality` makes good code better; this finds defects) — mixing them dilutes both.
 
-**Scope is always named by the owner** at invocation (whole codebase / directory / feature / diff);
-there is no implicit baseline. A delta hunt scopes "since the last `bug-hunt:` commit".
+**Scope is always named by the owner** at invocation (whole codebase / directory / feature / diff /
+one pasted function); there is no implicit baseline. A delta hunt scopes "since the last `bug-hunt:`
+commit". **The procedure scales down, it never switches off:** a single function is a hunt of one or
+a few units, with the same four report parts, only shorter.
 
 **Out of scope on purpose:** log/observability coverage · code quality and tuning (duplication,
-naming, structure, dead code) · coverage percentages · refactoring. Trip over one → ONE line in the
-"parked for quality review" list, then keep hunting.
+naming, structure, dead code, `==` vs `===` as style, a mutable argument as style, O(n) lookups,
+testability, injecting a clock) · coverage percentages · refactoring. Trip over one → ONE line in the
+"parked for quality review" list — never a findings row, never an item in the suggested fix — then
+keep hunting. A style point that CAUSES a defect is named inside that defect's row, not as its own.
+This holds in a reply too: a design remark (a redundant parameter, a hardening idea with no input that
+triggers a wrong outcome) is a parked one-liner, never a findings row, a proposed case or a closing line.
 
 ## Workflow
 
@@ -21,16 +27,20 @@ Copy this checklist and tick it off:
 
 ```
 Bug hunt progress:
-- [ ] 0. Context gaps (intended behaviour, the governing decision, the threat model) are asked
-        as QUESTIONS, never guessed; a defect claim resting on a guess is ASSUMPTION, not CONFIRMED
-        (`following-core-rules` rule 11)
+- [ ] 0. Where does the report go? Repo with docs/bug-hunt-log.md and write access → the log,
+        the register and the commit (steps 5, 7). Pasted code, no repo, or read-only → the SAME
+        four report parts in the reply (example below); say in one line that the register, log
+        and commit were skipped and why. Context gaps (intended behaviour, the governing decision,
+        the threat model) are asked as QUESTIONS, never guessed (`following-core-rules` rule 11)
 - [ ] 1. Coverage map FIRST: list every hunt unit (waves by blast radius for a whole-codebase hunt)
 - [ ] 2. Per unit: all six lenses (reference/lens-stack.md)
 - [ ] 3. Per unit: invent nastier cases → try or trace each → add to the proposals list
-- [ ] 4. Per finding: CONFIRMED (repro) or SUSPECTED (why not reproduced); judge → reject false positives with a reason
+- [ ] 4. Per finding: CONFIRMED (repro) or SUSPECTED (why not reproduced) — no third label;
+        judge → reject false positives with a reason
 - [ ] 5. Record at discovery: register row; top severity → STOP, fix now
 - [ ] 6. Unit verdict: CLEAN / FINDINGS(n) / NOT-HUNTED → next unit (back to 2)
-- [ ] 7. Report → docs/bug-hunt-log.md; fold approved proposals; commit "bug-hunt: …"
+- [ ] 7. Report (4 parts) → docs/bug-hunt-log.md or the reply (step 0); fold approved
+        proposals; commit "bug-hunt: …"
 ```
 
 **1 — Hunt units.** A hunt is credible only if its own coverage is provable, so list the units
@@ -41,6 +51,9 @@ before hunting:
   upload, client-supplied value).
 - **Seams get their own units** — bugs cluster at boundaries: client↔server contract,
   module↔module, service↔service, app↔worker, webhook intake, schema/migration edges, serialization.
+- **Small scope:** one pasted function = the function itself + each input that crosses a trust
+  boundary + the seam with its caller (what the caller must persist or check). A small diff = one
+  unit per changed function plus each seam the change crosses.
 
 A whole-codebase hunt runs in **waves ordered by blast radius**, defined per project (e.g. ① anything
 touching the invariants → ② auth/session → ③ money/irreversible actions → ④ core data CRUD →
@@ -66,7 +79,9 @@ makes the harness permanently smarter.
 
 **4 — Verify before you report (no noise).** CONFIRMED = reproduced: a failing test, a real-driver
 walk, or an exact traced path with concrete inputs → wrong outcome. SUSPECTED = plausible, not
-reproduced — say WHY (missing sandbox, blocked access, needs a live env). Judge every finding before
+reproduced — say WHY (missing sandbox, blocked access, needs a live env, or `ASSUMPTION:` the intended
+behaviour, with the question that settles it). Every finding carries one of the two labels; a claim
+resting on a guess is SUSPECTED, never CONFIRMED. Judge every finding before
 it reaches the report: a second-pass reviewer over-flags; an "orphan" may have a caller outside the
 packet. Independent parallel hunters from different models/vantage points on the same wave catch
 different bugs — judge and merge.
@@ -88,15 +103,36 @@ different bugs — judge and merge.
 **6 — Unit verdict.** Each unit ends with a verdict: **CLEAN / FINDINGS(n) / NOT-HUNTED** — and
 NOT-HUNTED is stated out loud in the report, never silently dropped. Then the next unit.
 
-**7 — Report and close-out.** Append to `docs/bug-hunt-log.md` (dated, newest first):
-1. the **coverage map** — units clean / findings / not-hunted, the remainder named as the next wave
-   (NOT-HUNTED is stated out loud, never silently dropped);
-2. the **findings table**: `[sev] unit · defect · CONFIRMED/SUSPECTED · repro · register ID · fixed/scheduled`;
-3. the **proposed additional cases** list (for the ruling in step 3);
-4. the one-line **parked for quality review** list.
+**7 — Report and close-out.** The report has four parts, in this order — appended to
+`docs/bug-hunt-log.md` (dated, newest first), or written in the reply when step 0 says so:
+1. the **coverage map** — one line per unit with its verdict CLEAN / FINDINGS(n) / NOT-HUNTED, the
+   remainder named as the next wave (NOT-HUNTED is stated out loud, never silently dropped);
+2. the **findings table**: `[sev] unit · defect · CONFIRMED/SUSPECTED · repro · register ID · fixed/scheduled`
+   (in a reply, the register ID column says "not registered — no repo");
+3. the **proposed additional cases** — the invented cases from step 3, separate from the findings,
+   each with "approve / reject?" for the owner's ruling;
+4. the one-line **parked for quality review** list (write "none" if empty).
 
 Then: register rows written, approved proposals folded (tests + catalog), escape analyses for any
 top-severity finds, the end-of-act running-file update, and commit with a `bug-hunt:` prefix.
+
+**Example — "find the bugs in this" with a pasted `acceptInvite` function, no repo.** Correct reply skeleton:
+
+```
+Register, hunt log and commit skipped: pasted code, no repo.
+Coverage map
+- acceptInvite (logic)              FINDINGS(2)
+- token, teamId (input fields)      FINDINGS(1)
+- caller seam (saving the member)   CLEAN
+Findings
+| sev | unit | defect | label | repro |
+| P0 | acceptInvite | expiry checked with < on seconds vs ms → expired tokens accepted | CONFIRMED | token expired 1 h ago → accepted |
+| P1 | acceptInvite | token not marked used before the member insert → two taps, two joins | SUSPECTED — depends on whether the store has a unique key |
+Proposed additional cases (approve / reject?)
+- invite accepted by the user who sent it → joins own team twice
+Parked for quality review
+- loose == on the role string (no wrong outcome found)
+```
 
 ## Bug hunt vs quality review
 

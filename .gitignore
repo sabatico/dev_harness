@@ -22,3 +22,8 @@
 # examples read like real personal data, and the check pairs with a local list of the maintainer's terms.
 scripts/check-no-pii.sh
 scripts/check-no-pii-test.sh
+
+# The reference index cache (scripts/refs.sh): rebuilt on demand from the tree, per machine.
+.refs-cache/
+# Python byte-code from the harness scripts (py_compile, imports).
+__pycache__/
