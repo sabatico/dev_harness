@@ -36,7 +36,9 @@ harness-bench against v1.6 before tagging.
   the goal; every finding is judged FIXED / REJECTED / DEFERRED; tags (`nit`, `pre-existing`; a P0/P1
   is never a nit); a round cap of 3 with the lead's quoted yes; delta rounds; an optional vote that
   fails closed without a pre-send secret scan; a hook point `check-the-work.d/` (a missing enforcing
-  hook exits 3); `verify --branch` for the lead before a merge. The reviewer test-set method is
+  hook exits 3); `verify --branch` for the lead before a merge. The hooks get the base check-the-work
+  resolved (`CTW_BASE`) and otherwise derive it from `HARNESS_BASE_REF`, so a repository whose main branch
+  is `master` works; `init.sh` removes the kit's own review logs (`.harness/agents`) from a new project. The reviewer test-set method is
   documented; its scorer is not shipped (its cases are a project's own bugs).
 - **Session resilience** — new `ci/session-resilience.md`: `session-state.sh` (a resumable record in
   the worktree's git dir) and `resume-brief.sh` (a fenced brief for a fresh session; at most 2

@@ -20,7 +20,7 @@
 #         CTW_BRANCH as a whole word. None found -> prints "NOT CHECKED" and exits 4: a skip said loudly, never a pass.
 #         Found -> the same check as --file, but a refusal exits 1 (the merge stops).
 #   (no argument)                   runs the self-proof, prints usage, exit 1.
-# Env of the hook calls: CTW_STAGE, CTW_ROOT (the repository the commit ids are looked up in; by hand: the current one),
+# Env of the hook calls (also CTW_BASE: the base check-the-work resolved, empty when none): CTW_STAGE, CTW_ROOT (the repository the commit ids are looked up in; by hand: the current one),
 #   CTW_BRANCH, CTW_REPORT, HARNESS_REPORT_DIR (set it in the environment or in harness.conf; empty = no folder to search, so
 #   verify says NOT CHECKED unless CTW_REPORT names the file) and HARNESS_BUG_PREFIX (the BUGS field's id prefix; default BUG,
 #   SEC always allowed). The environment wins over harness.conf (the others of the check-the-work hook design are not used here).

@@ -21,7 +21,7 @@
 # Usage:
 #   10-success-criterion.sh scan [--base REF] [--goal FILE] [--section]
 #         by hand, BEFORE `check-the-work.sh run`: scans the work tree (committed, staged, unstaged, untracked) against the
-#         merge base with REF (default main). Prints the flag; when it is up, also a ready "## Success-criterion check"
+#         merge base with REF (default: CTW_BASE, CHECK_THE_WORK_BASE, HARNESS_BASE_REF or its local branch, then main). Prints the flag; when it is up, also a ready "## Success-criterion check"
 #         section for the --summary file (--section prints only that section, so `scan --section >> summary.md` works).
 #         Exit 0 after a good scan (flag or no flag), 3 when it cannot scan.
 #   10-success-criterion.sh answer --text "<who wrote the judging files (agent, model) and why no criterion was weakened>"
@@ -32,10 +32,10 @@
 #         valid answer -> exit 1 (the command stops, logs nothing); flag up with an answer -> appends ONE row to
 #         $HARNESS_AGENT_DIR/criterion.jsonl (default docs/agents) under CTW_ROOT (commit it WITH the work), exit 0; flag down -> exit 0.
 #   10-success-criterion.sh verify     hook, for the lead at the merge (usually from the main checkout): scans the branch's
-#         COMMITS since its merge base with main (CTW_BASE overrides), reads the criterion row the branch added, prints
+#         COMMITS since its merge base with the base (default_base: CTW_BASE, then HARNESS_BASE_REF), reads the criterion row the branch added, prints
 #         flag and answer; flag up and no row -> exit 1 (the step was skipped).
 #   (no argument)                      runs the self-proof, prints usage, exit 1.
-# Env of the hook calls: CTW_STAGE, CTW_ROOT, CTW_STATE (goal.md, base, branch), CTW_BRANCH, CTW_LOG, CTW_JUDGEMENT. By hand
+# Env of the hook calls: CTW_STAGE, CTW_ROOT, CTW_STATE (goal.md, base, branch), CTW_BRANCH, CTW_LOG, CTW_JUDGEMENT, CTW_BASE. By hand
 #   they default to the current repository (CTW_STATE to <git-dir>/check-the-work).
 # Exit: 0 pass · 1 fail (flag without answer, refused answer, usage) · 3 could not run (no repo, bad base, the detector failed
 #   its known-answer proof, no python3) · 4 not applicable (not used here). Bash 3.2 compatible; git is asked about the
@@ -402,6 +402,21 @@ usage: 10-success-criterion.sh scan [--base REF] [--goal FILE] [--section]
 EOF
 }
 
+# default_base: the base ref when none is given — CTW_BASE (check-the-work.sh passes the base it resolved), then
+# CHECK_THE_WORK_BASE, then the first of HARNESS_BASE_REF and its local branch name (origin/master also tries master) that
+# is a commit, else the configured ref itself (so the error names it). WHY: the same order as check-the-work.sh resolve_base; a fixed "main" stopped verify in every
+# repository whose main branch is master (found by verify on the kit's own v1.7 branch).
+default_base() {
+  local want c
+  if [ -n "${CTW_BASE:-}" ]; then printf '%s' "$CTW_BASE"; return 0; fi
+  if [ -n "${CHECK_THE_WORK_BASE:-}" ]; then printf '%s' "$CHECK_THE_WORK_BASE"; return 0; fi
+  want="${HARNESS_BASE_REF:-origin/main}"
+  for c in "$want" "${want#*/}"; do
+    if G rev-parse --verify --quiet "$c^{commit}" >/dev/null 2>&1; then printf '%s' "$c"; return 0; fi
+  done
+  printf '%s' "$want"   # as resolve_base: main_base then fails and NAMES the configured ref, never a silent "main"
+}
+
 main_base() { # main_base <ref> -> the merge base of <ref> and HEAD, or exit 3
   local ref="$1" mb
   G rev-parse --verify --quiet "$ref^{commit}" >/dev/null || die "base '$ref' is not a commit here" 3
@@ -410,10 +425,10 @@ main_base() { # main_base <ref> -> the merge base of <ref> and HEAD, or exit 3
 }
 
 cmd_scan() {
-  local ref="main" gf="" only_section=0 mb out
+  local ref="" ref_given=0 gf="" only_section=0 mb out   # ref_given: an explicit empty --base is an error, not "the default"
   while [ $# -gt 0 ]; do
     case "$1" in
-      --base) ref="${2-}"; shift 2 || die "--base needs a ref" ;;
+      --base) ref="${2-}"; ref_given=1; shift 2 || die "--base needs a ref" ;;
       --goal) gf="${2-}"; shift 2 || die "--goal needs a file" ;;
       --section) only_section=1; shift ;;
       *) usage; exit 1 ;;
@@ -423,6 +438,7 @@ cmd_scan() {
   # (an existing but EMPTY file is a legitimate "no goal text to compare" and is accepted; only a path that is no readable file is refused)
   if [ -n "$gf" ] && { [ ! -f "$gf" ] || [ ! -r "$gf" ]; }; then die "--goal file not found or not readable: $gf" 1; fi
   need_repo; selfproof || exit 3
+  [ "$ref_given" -eq 1 ] || ref="$(default_base)"
   mb="$(main_base "$ref")" || exit 3
   out="$TMPD/scan.out"
   scan_to "$out" "$mb" "" "$GITDIR/session-state.txt" "$gf" || die "the scan could not read the repository's changes" 3
@@ -455,7 +471,7 @@ cmd_answer() {
   need_repo; selfproof || exit 3
   if [ -n "$ref" ]; then mb="$(main_base "$ref")" || exit 3
   elif [ -s "${CTW_STATE:-$GITDIR/check-the-work}/base" ]; then mb="$(cat "${CTW_STATE:-$GITDIR/check-the-work}/base")"   # the base 'run' used
-  else mb="$(main_base main)" || exit 3; fi
+  else mb="$(main_base "$(default_base)")" || exit 3; fi
   out="$TMPD/scan.out"
   # the goal file `run` stored: judge compares it too, so the answer must be bound to the same flag (a goal line in it)
   scan_to "$out" "$mb" "" "$GITDIR/session-state.txt" "${CTW_STATE:-$GITDIR/check-the-work}/goal.md" || die "the scan could not read the repository's changes" 3
@@ -532,7 +548,7 @@ cmd_verify() {
   command -v python3 >/dev/null 2>&1 || die "python3 is missing — cannot read the criterion rows" 3
   br="${CTW_BRANCH:-}"
   [ -n "$br" ] || br="$(G symbolic-ref --quiet --short HEAD 2>/dev/null)" || die "no CTW_BRANCH and a detached HEAD: name the branch" 3
-  base="${CTW_BASE:-main}"; tip="$br"
+  base="$(default_base)"; tip="$br"
   G rev-parse --verify --quiet "$tip^{commit}" >/dev/null || die "branch '$br' is not a commit here" 3
   mb="$(G merge-base "$base" "$tip" 2>/dev/null)" || die "no merge base between '$base' and '$br'" 3
   # the branch's own state record lives in ITS worktree's git folder (the lead runs verify from the main checkout)

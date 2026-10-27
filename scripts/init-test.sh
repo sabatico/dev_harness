@@ -42,6 +42,9 @@ while IFS= read -r -d '' f; do
 done < <(git -C "$KIT" ls-files -z --cached --others --exclude-standard)
 [ "$copied" -gt 0 ] || { echo "init-test: INCOMPLETE — copied no files from $KIT (is it a git work tree?)"; exit 3; }
 git -C "$P" init -q . || { echo "init-test: INCOMPLETE — git init failed in the copy"; exit 3; }
+# Setup control for the .harness/agents row below: the kit tracks its OWN agent logs (v1.7), so the copy must
+# hold them BEFORE init, or "the folder is gone after init" would prove nothing.
+if [ -d "$P/.harness/agents" ] && [ -n "$(ls -A "$P/.harness/agents" 2>/dev/null)" ]; then AGENTS_BEFORE=0; else AGENTS_BEFORE=1; fi
 
 echo "-- init into a copy of the kit ($copied files, stack $STACK)"
 OUT="$(cd "$P" && bash scripts/init.sh "Init Test" P3 "$STACK" 2>&1)"; RC=$?
@@ -50,6 +53,10 @@ ok "init.sh exits 0" "$RC" "$(printf '%s\n' "$OUT" | tail -5)"
 ok "its closing advice names every kit original to remove (running-files ci dot-claude)" \
   "$(printf '%s\n' "$OUT" | grep -q 'git rm -r running-files ci dot-claude'; echo $?)"
 
+ok "setup control: the kit copy holds .harness/agents (non-empty) before init" "$AGENTS_BEFORE" "$(ls -A "$P/.harness" 2>/dev/null)"
+ok "init removes the kit's own .harness/agents (its review logs must not ship into a new project)" \
+  "$([ ! -e "$P/.harness/agents" ]; echo $?)" "$(ls -A "$P/.harness/agents" 2>/dev/null)"
+ok "init still re-creates .harness/baselines" "$([ -f "$P/.harness/baselines/doc-paths.txt" ]; echo $?)" "$(ls -A "$P/.harness" 2>/dev/null)"
 OUT="$(gate check-doc-paths.sh)"; ok "doc-paths passes straight after init" $? "$OUT"
 BL="$P/.harness/baselines/doc-paths.txt"
 FROZEN="$(grep -v '^#' "$BL" 2>/dev/null | grep -c .)"

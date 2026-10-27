@@ -51,7 +51,7 @@
 #         (<HARNESS_BUG_PREFIX>-nnn or SEC-nnn) in the reason, and that row must exist in a register file
 #         (CHECK_THE_WORK_REGISTERS). An untagged finding counts as important.
 #         Appends the judged review to <HARNESS_AGENT_DIR>/reviews.jsonl; commit that file WITH the work.
-#   scripts/check-the-work.sh verify [--branch <name>] [--base <ref>]
+#   scripts/check-the-work.sh verify [--branch <name>] [--base <ref>]   (base: --base, CHECK_THE_WORK_BASE, HARNESS_BASE_REF)
 #         for the lead at integration (before the merge): exit 0 when the branch's commits since the merge base with
 #         the base ref add a judged review row for that branch; 1 when none (the step was skipped), or when a row of a
 #         round above the cap (the LEAD's CHECK_THE_WORK_MAX_ROUNDS, default 3) has no lead_ok; 3 when it cannot tell
@@ -90,7 +90,7 @@
 # and add no lines here). Each EXECUTABLE `*.sh` in the folder CHECK_THE_WORK_HOOKS (default check-the-work.d beside this
 # script) runs in name order as `<hook> <stage>`, from the checkout root, with the env
 # CTW_STAGE (judge | verify), CTW_ROOT (the checkout), CTW_STATE (the state folder: goal.md, answer.md, prompt.md ...,
-# an ABSOLUTE path), CTW_BRANCH, CTW_LOG (the review log, an ABSOLUTE path) and CTW_JUDGEMENT (the judgement file; empty at verify). No folder, or no
+# an ABSOLUTE path), CTW_BRANCH, CTW_LOG (the review log, an ABSOLUTE path), CTW_JUDGEMENT (the judgement file; empty at verify) and CTW_BASE (the base this step resolved; empty when none). No folder, or no
 # executable `*.sh` in it, means nothing runs and nothing is said — EXCEPT the two enforcing hooks (EXPECTED_HOOKS) in
 # the default folder of the checkout: missing or not executable there exits 3. Stage `judge`: the hooks run AFTER the judgement
 # passed every check and BEFORE the row is written, so a hook that stops leaves the log untouched. Stage `verify`: they
@@ -179,7 +179,8 @@ run_hooks() {
     name="$(basename "$h")"
     # STATE and LOG as ABSOLUTE paths (cross-author finding 2026-10-24: in a normal checkout STATE is ".git/check-the-work",
     # and a hook that changes directory lost both).
-    CTW_STAGE="$1" CTW_ROOT="$ROOT" CTW_STATE="$abs_state" CTW_BRANCH="$2" CTW_LOG="$ROOT/$LOG" CTW_JUDGEMENT="$3" "$h" "$1" </dev/null
+    # CTW_BASE: the base this step resolved (empty when it resolved none), so a hook never guesses "main" on a master repo.
+    CTW_STAGE="$1" CTW_ROOT="$ROOT" CTW_STATE="$abs_state" CTW_BRANCH="$2" CTW_LOG="$ROOT/$LOG" CTW_JUDGEMENT="$3" CTW_BASE="${base:-}" "$h" "$1" </dev/null
     rc=$?
     case "$rc" in
       0|4) ;;

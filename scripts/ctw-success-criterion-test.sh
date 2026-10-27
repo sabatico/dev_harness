@@ -491,7 +491,7 @@ r_scan_no_repo_is_3() {
 }
 r_scan_no_main_branch() {
   new_fx nm; git -C "$FX" branch -q -m main trunk; code_and_test
-  sut "$FX" scan; want_rc 3; has "$ERR" "base 'main' is not a commit here"
+  sut "$FX" scan; want_rc 3; has "$ERR" "base 'origin/main' is not a commit here"   # default_base returns the configured ref (origin/main when none is set), not a silent "main"
   sut "$FX" scan --base trunk; want_rc 0; flag_up_out || fail "control: --base trunk scans the same tree"
 }
 r_scan_ctw_root_beats_cwd() {
@@ -1051,6 +1051,85 @@ r_verify_hostile_branch_name() {
   [ ! -e "$VW/PWNED" ] && [ ! -e "$VM/PWNED" ] && [ ! -e "$T/PWNED" ] || fail "a command inside the branch name was executed"
 }
 
+# ── verify / scan / answer with a default branch that is not "main" (default_base) ──────────────────────────────────────
+# WHY: a fixed "main" stopped `verify` ("no merge base between 'main' and ...", exit 3) in every repository whose main branch is
+# master (found by verify on the kit's own branch). The base now comes from CTW_BASE, CHECK_THE_WORK_BASE, then HARNESS_BASE_REF
+# (harness.conf) or its part after the first "/" that is a commit, else main. The fixtures have NO origin remote, so
+# "origin/master" is not a commit and the fallback to the local "master" must be taken.
+vx_new_master() { # vx_new_master <name> [conf-line]: like vx_new, but the default branch is master (there is no main); harness.conf (untracked, main checkout only) holds [conf-line]
+  local root="$T/fx/$1"; mkdir -p "$root"; VM="$root/main"; VW="$root/wt"
+  cp -R "$TPL" "$VM" || setup_fail "cp"; git -C "$VM" branch -m main master || setup_fail "rename main to master"
+  git -C "$VM" worktree add -q -b feat/x "$VW" master || setup_fail "worktree add"
+  BASESHA="$(git -C "$VM" rev-parse master)"; FX="$VW"; mkstate
+  if [ -n "${2:-}" ]; then printf '%s\n' "$2" > "$VM/harness.conf" || setup_fail "write harness.conf"; fi
+}
+r_verify_master_repo_harness_base_ref() {
+  vx_new_master vmr 'HARNESS_BASE_REF="origin/master"'
+  git -C "$VM" rev-parse --verify --quiet main >/dev/null 2>&1 && setup_fail "fixture: a main branch exists"
+  git -C "$VM" rev-parse --verify --quiet origin/master >/dev/null 2>&1 && setup_fail "fixture: origin/master exists (no remote expected)"
+  vx_flag_work; vx_say "$LONG"; vx_commit_log
+  vx_verify; want_rc 0; lacks "$ERR" "no merge base" "a master repository: the base is not guessed as main"
+  has "$OUT" "pkg/b_test.go  (+1 -0)" "the flag is shown"; has "$OUT" "): $LONG" "the committed answer is found"
+  # control: the same repository, a flagged branch with no row, still fails the normal way (the base is really used)
+  vx_new_master vmr2 'HARNESS_BASE_REF="origin/master"'; vx_flag_work
+  vx_verify; want_rc 1; has "$ERR" "the success-criterion step was skipped" "control: flag and no row -> exit 1, not exit 3"
+}
+r_scan_master_repo_default_base() {
+  vx_new_master smr 'HARNESS_BASE_REF="origin/master"'
+  vx_flag_work
+  printf '%s\n' 'HARNESS_BASE_REF="origin/master"' > "$VW/harness.conf"
+  XE=(CTW_ROOT="$VW"); sut "$VW" scan; want_rc 0; lacks "$ERR" "is not a commit here" "scan without --base in a master repository"
+  flag_up_out || fail "the branch's code + test changes must flag against master"
+  judged "pkg/b_test.go" "test file" || has "$OUT" "pkg/b_test.go" "the branch's test file is a judging file"
+  # control: the explicit base gives the same answer
+  sut "$VW" scan --base master; want_rc 0; flag_up_out || fail "control: --base master flags"
+}
+r_base_ctw_base_beats_harness_base_ref() {
+  vx_new_master cbr 'HARNESS_BASE_REF="origin/master"'
+  wf "$VW" pkg/b.go 'package b\n'; vx_commit pkg/b.go                        # the code first ...
+  git -C "$VM" branch -q dev feat/x                                           # ... dev = feat/x so far
+  wf "$VW" pkg/b_test.go 'b\n'; vx_commit pkg/b_test.go                       # ... then the test
+  vx_verify CTW_BASE=dev; want_rc 0; has "$OUT" "no success-criterion flag on feat/x" "CTW_BASE=dev wins: against dev only the test is new"
+  vx_verify; want_rc 1; has "$ERR" "step was skipped" "control: without CTW_BASE the HARNESS_BASE_REF fallback (master) sees code + test"
+  printf '%s\n' 'HARNESS_BASE_REF="origin/master"' > "$VW/harness.conf"   # scan reads the conf of its root (the branch's worktree)
+  XE=(CTW_ROOT="$VW" CTW_BASE=dev); sut "$VW" scan; want_rc 0; has "$OUT" "no success-criterion flag" "scan: CTW_BASE=dev wins over HARNESS_BASE_REF"
+  XE=(CTW_ROOT="$VW" CHECK_THE_WORK_BASE=dev); sut "$VW" scan; want_rc 0; has "$OUT" "no success-criterion flag" "scan: CHECK_THE_WORK_BASE=dev wins over HARNESS_BASE_REF"
+  XE=(CTW_ROOT="$VW" CTW_BASE=nosuchbase CHECK_THE_WORK_BASE=dev); sut "$VW" scan; want_rc 3; has "$ERR" "is not a commit here" "CTW_BASE comes before CHECK_THE_WORK_BASE"
+  XE=(CTW_ROOT="$VW"); sut "$VW" scan; want_rc 0; flag_up_out || fail "control: scan with no environment base falls back to master and flags"
+}
+r_base_main_repo_without_harness_base_ref() {
+  vx_new vmc; vx_flag_work; vx_say "$LONG"; vx_commit_log
+  [ ! -e "$VM/harness.conf" ] || setup_fail "fixture: harness.conf present"
+  vx_verify; want_rc 0; has "$OUT" "): $LONG" "positive control: a main repository with no HARNESS_BASE_REF"
+  XE=(CTW_ROOT="$VW"); sut "$VW" scan; want_rc 0; flag_up_out || fail "control: scan with no --base uses main"
+  # HARNESS_BASE_REF=origin/main with no remote falls back to the local main
+  printf '%s\n' 'HARNESS_BASE_REF="origin/main"' > "$VM/harness.conf"
+  vx_verify; want_rc 0; has "$OUT" "): $LONG" "origin/main with no remote: the local main"
+}
+r_base_configured_but_missing_names_the_ref() {
+  # WHY: a configured base that does not exist (HARNESS_BASE_REF=origin/develop, no develop branch, no remote) used to fall back
+  # silently to "main" and report results against the wrong base; it must fail (exit 3) and NAME the configured ref, as
+  # check-the-work.sh resolve_base does. The fixture HAS a main branch, so a silent fallback to main would "work" and be caught.
+  vx_new cmb; vx_flag_work; vx_say "$LONG"; vx_commit_log
+  git -C "$VM" rev-parse --verify --quiet main >/dev/null 2>&1 || setup_fail "fixture: a main branch must exist"
+  git -C "$VM" rev-parse --verify --quiet develop >/dev/null 2>&1 && setup_fail "fixture: a develop branch exists"
+  git -C "$VM" rev-parse --verify --quiet origin/develop >/dev/null 2>&1 && setup_fail "fixture: origin/develop exists (no remote expected)"
+  printf '%s\n' 'HARNESS_BASE_REF="origin/develop"' > "$VM/harness.conf" || setup_fail "write harness.conf"
+  printf '%s\n' 'HARNESS_BASE_REF="origin/develop"' > "$VW/harness.conf" || setup_fail "write worktree harness.conf"
+  vx_verify; want_rc 3; has "$ERR" "origin/develop" "verify: the error names the configured ref"
+  lacks "$OUT" "no success-criterion flag" "verify must not report results against main"; lacks "$OUT" "pkg/b_test.go" "verify must not list main-based findings"
+  XE=(CTW_ROOT="$VW"); sut "$VW" scan; want_rc 3; has "$ERR" "origin/develop" "scan (no --base): the error names the configured ref"
+  lacks "$OUT" "pkg/b_test.go" "scan must not report results against main"; lacks "$OUT" "FLAG" "scan must not flag against main"
+  # control: the same repository with an explicit --base main still scans (the failure above is the base, not the fixture)
+  sut "$VW" scan --base main; want_rc 0; flag_up_out || fail "control: --base main flags the branch"
+}
+r_answer_master_repo_without_stored_base() {
+  vx_new_master amr 'HARNESS_BASE_REF="origin/master"'; vx_flag_work
+  rm -f "$SD/base"; printf '%s\n' 'HARNESS_BASE_REF="origin/master"' > "$VW/harness.conf"   # no 'run' happened: no stored base; the root's conf names the base
+  XE=(CTW_ROOT="$VW" CTW_STATE="$SD" CTW_BRANCH=feat/x); sut "$VW" answer --text "$LONG"
+  want_rc 0; lacks "$ERR" "is not a commit here" "answer with no stored base in a master repository"; has "$OUT" "answer stored"
+}
+
 # ══ 8. the self-proof ═════════════════════════════════════════════════════════════════════════════════════════════════
 mutate() { # mutate <name> <old> <new>: a copy of the script with the text <old> (exactly once) replaced; sets SUT_ALT
   local out="$T/mut/$1.sh"
@@ -1297,6 +1376,12 @@ if begin "verify: run from the branch's own worktree works"; then r_verify_from_
 if begin "verify: a deleted test file in the commits is a judging change"; then r_verify_deleted_judge_is_listed; finish; fi
 if begin "verify: junk lines and malformed fields in the log do not crash it"; then r_verify_row_json_variants; finish; fi
 if begin "verify: a hostile branch name is data (judge, verify, row)"; then r_verify_hostile_branch_name; finish; fi
+if begin "verify: a master repository (HARNESS_BASE_REF=origin/master, no remote) is verified against master, not main"; then r_verify_master_repo_harness_base_ref; finish; fi
+if begin "scan: no --base in a master repository scans against master"; then r_scan_master_repo_default_base; finish; fi
+if begin "base: CTW_BASE and CHECK_THE_WORK_BASE win over HARNESS_BASE_REF (verify and scan)"; then r_base_ctw_base_beats_harness_base_ref; finish; fi
+if begin "base: control - a main repository with no HARNESS_BASE_REF (or origin/main, no remote) still works"; then r_base_main_repo_without_harness_base_ref; finish; fi
+if begin "base: a configured HARNESS_BASE_REF that does not exist (origin/develop, main present) exits 3 naming it, never scans against main"; then r_base_configured_but_missing_names_the_ref; finish; fi
+if begin "answer: no --base and no stored base in a master repository uses the configured base"; then r_answer_master_repo_without_stored_base; finish; fi
 if begin "proof: no argument runs the self-proof, prints usage, exits 1"; then r_proof_clean_no_argument; finish; fi
 if begin "proof: a classifier that loses go.sum exits 3 and no mode runs"; then r_proof_broken_classifier_machine_files; finish; fi
 if begin "proof: a classifier that reads docs/*.md as code exits 3 and no mode runs"; then r_proof_broken_classifier_docs; finish; fi

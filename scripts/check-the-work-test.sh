@@ -2032,6 +2032,21 @@ r_hook_that_changes_directory_still_reads_state_and_log() {
   has "$e" "cwd=/" "verify: the hook changed directory"; has "$e" "state_abs=yes" "CTW_STATE is absolute (verify)"; has "$e" "log_abs=yes" "CTW_LOG is absolute (verify)"
   has "$e" "answer=yes" "the state folder is readable after the cd (verify)"; has "$e" "log=yes" "the log is readable after the cd (verify)"
 }
+r_hook_receives_ctw_base() {
+  # run_hooks passes CTW_BASE = the base this step resolved (empty when it resolved none), so a hook never guesses "main" in a
+  # repository whose main branch is master (found by 10-success-criterion.sh verify on the kit's own branch).
+  hfx hk14; local e="$HLOG.base"
+  # shellcheck disable=SC2016  # the hook script text: its variables must stay unexpanded here
+  mkhook "$HDIR" 10-base.sh 0 'echo "base=${CTW_BASE-UNSET}" >"$HLOG.base"'
+  hj; want_rc 0; eq "$(cat "$e" 2>/dev/null)" "base=" "judge resolves no base: CTW_BASE is set but empty (not unset)"
+  hcommit; rm -f "$e"; hv --branch feature/x; want_rc 0
+  eq "$(cat "$e" 2>/dev/null)" "base=main" "verify: the base resolved from HARNESS_BASE_REF (origin/main -> local main) reaches the hook"
+  git -C "$FXP" branch trunk main
+  rm -f "$e"; hv --branch feature/x --base trunk; want_rc 0; eq "$(cat "$e" 2>/dev/null)" "base=trunk" "verify --base trunk: the hook sees trunk"
+  rm -f "$e"; CHECK_THE_WORK_BASE=trunk hv --branch feature/x; want_rc 0; eq "$(cat "$e" 2>/dev/null)" "base=trunk" "verify with CHECK_THE_WORK_BASE=trunk: the hook sees trunk"
+  # the value is the one this step resolved, never one inherited from the caller's environment
+  rm -f "$e"; CTW_BASE=inherited-from-outside hv --branch feature/x; want_rc 0; eq "$(cat "$e" 2>/dev/null)" "base=main" "an inherited CTW_BASE is replaced by the resolved base"
+}
 r_vote_a_voter_name_listed_twice_is_asked_once() {
   vfx vtw "a:va.txt:0" "b:vb.txt:0"; local d="$T/stub/vtw" second="$T/voters/vtw-a-second.sh"
   sed "s/N='a'/N='a-second'/" "$T/voters/vtw-a.sh" >"$second"; chmod +x "$second"
@@ -2611,6 +2626,7 @@ begin "logs: a previous tree that still holds the criterion log does not bring i
 begin "logs: CHECK_THE_WORK_REVIEW_LOGS replaces the list" && r_logs_override_replaces_the_list; finish
 begin "logs: an override of blanks (empty list) does not fail under set -u; an empty variable means the default" && r_logs_empty_override_does_not_fail; finish
 begin "hook: a hook that does cd / still reads CTW_STATE and CTW_LOG (both absolute) at judge and at verify" && r_hook_that_changes_directory_still_reads_state_and_log; finish
+begin "hook: a hook receives CTW_BASE = the base the step resolved (derived, --base, CHECK_THE_WORK_BASE), empty at judge" && r_hook_receives_ctw_base; finish
 begin "hook: a missing or non-executable enforcing hook (folder, file, dir, broken link) exits 3 at judge, names the hook, leaves the log alone" && r_hook_enforcing_hook_missing_exits_3; finish
 begin "hook: the enforcing-hook check is armed by a relative call, a symlinked checkout, a copy holding one expected hook; not by an override, an unrelated copy or the self-proof" && r_hook_enforcing_arming; finish
 begin "hook: at verify a missing enforcing hook exits 3 after the OK line; a verify that fails for its own reason keeps exit 1" && r_hook_enforcing_verify_stage; finish

@@ -200,6 +200,8 @@ CONF
 
 # ── 6. baseline against the REAL layout ──────────────────────────────────────
 rm -rf .harness/baselines
+# The kit's OWN agent logs (its reviews of its own branches, v1.7) are history of the kit, not of this project.
+rm -rf .harness/agents
 bash "$HERE/check-doc-paths.sh" --write-baseline >/dev/null 2>&1 || true
 
 # ── 7. what this profile does not need ───────────────────────────────────────
