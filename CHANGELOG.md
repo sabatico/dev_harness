@@ -12,6 +12,17 @@ only its verdict and per-version means — never task names or contents.
 2. Commit, then tag: `git tag -a vX.Y -m "harness vX.Y"` on that commit.
 3. Push the commit and the tag (`git push origin master vX.Y`).
 
+## v1.9 — 2026-10-28
+
+Full runs only on the owner's request or before a push. Not yet benchmarked: it changes what runs at a merge, so run
+harness-bench against v1.8 before relying on the tag.
+
+- **R9 — three test levels** (`ci/token-budget.md`; `following-core-rules` rule 12 (e); `orchestrating-agents`
+  section 10 "Scoped PROOF"; the `CLAUDE.md` token-discipline bullet): while working, the changed code only (R8);
+  at a merge into the main branch, the affected set (changed packages plus what imports them; containers only when
+  the branch touches what runs against them); the full set only when the owner asks or before a push. Narrows R8's
+  "heavy run once per branch before the final commit". Each stack's test runner should offer an "affected" mode.
+
 ## v1.8 — 2026-10-28
 
 Scoped checks while working. The first adopting project found that its builder briefs asked every agent

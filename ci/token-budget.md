@@ -14,7 +14,7 @@ quality", and the details were delegated ("once decided yourself - implement").
 
 - Why: what a scan of one project measured
 - Published guidance
-- The rules R1–R8
+- The rules R1–R9
 - Trade-offs and what was not done
 - How to re-measure in your project
 
@@ -55,7 +55,7 @@ These quotes were fetched on the day of the decision; re-check them before you r
 - "A fresh context improves code review since Claude won't be biased toward code it just wrote." —
   https://code.claude.com/docs/en/best-practices
 
-## The rules R1–R8
+## The rules R1–R9
 
 - **R1 Wait without polling.** Run every long job (tests, gates, builds, anything that takes the
   heavy-run queue) as ONE background command with its output in a log file, then END THE TURN. The
@@ -103,6 +103,16 @@ These quotes were fetched on the day of the decision; re-check them before you r
   forward. at commit or at full scans- perform dockertesting and such" and "running dockertets at
   every hagne - is too expensive" — two builders whose briefs asked for the full run as their proof
   queued more than 30 minutes behind each other for a 10-minute container-backed test run.
+- **R9 Full runs only on the owner's request or before a push; merges test what the change can affect.** This
+  narrows R8's "the heavy run once per branch, by the last agent before the final commit". Three levels: (1) while
+  working — only the checks of the changed code (R8); (2) at a merge of a code branch into the main branch — the
+  AFFECTED set: the changed packages or modules plus everything that imports them, with containers (an integration
+  database, container builds) only when the branch changes code that runs against them; small and documentation-only
+  commits run no code tests; (3) the full set (whole tree, containers, the push-receipt gate run) only when the owner
+  asks, or before a push, which the owner requests after a longer series of commits. Each stack's test runner should
+  offer an "affected" mode beside its fast mode. WHY (the owner of the first adopting project): "ful ltests only at my
+  request or at push towards github - i usually request pushestowards fithub after a longer series of commits" — a
+  10-minute container-backed run before a merge re-tested parts the branch did not touch.
 
 **Model choice is part of the budget** (`orchestrating-agents` section 2): the strong model plans,
 briefs and judges; the mid model writes the code. For an easy step, lower the EFFORT and keep the

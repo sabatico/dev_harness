@@ -197,8 +197,9 @@ context, so waiting is the lead's biggest avoidable cost.
   status shows FINAL, QUESTION or an orphan. Long jobs the lead starts run as one background command;
   the lead ends its turn and is woken once.
 - **Scoped PROOF (R8).** A builder's or tester's PROOF names only the checks of its own code (the
-  stack's fast mode). The heavy run (whole tree, containers) is named once per branch, in the brief of
-  the last agent before the final commit. A brief that asks every agent for the heavy run makes them
+  stack's fast mode). At a merge the lead runs only the AFFECTED set (R9: changed code plus what imports it,
+  containers only when the branch touches what runs against them); the full run is named only when the owner asks
+  or before a push. A brief that asks every agent for the heavy run makes them
   queue behind each other for it.
 - **Fresh lead.** After a wave the lead starts a fresh lead session from a handoff file instead of
   carrying a context of 500k tokens.

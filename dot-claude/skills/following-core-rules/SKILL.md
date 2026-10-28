@@ -58,7 +58,8 @@ Every spawned agent gets these, plus exactly one task-type skill. The canonical 
     small:** one job, about 40 tool calls; if it grows, hand back a handoff file for a fresh agent.
     (e, R8) **Check your scope:** while you work, run only the tests and lint of the code you changed (the
     stack's fast mode); the heavy run (whole tree, containers) is only for the last agent before the
-    branch's final commit, when your brief names it. R5–R7 are the lead's (`orchestrating-agents` section 10). None of this relaxes rules 7 and 11, the
+    branch's merge only for the affected set (R9), and the full run only when the owner asks or before a push.
+    R5–R7 are the lead's (`orchestrating-agents` section 10). None of this relaxes rules 7 and 11, the
     separate test author or the check-the-work review.
 
 ## Before you report

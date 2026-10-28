@@ -126,7 +126,7 @@ dev_harness/
 │   ├── gates.md                    ← the enforcement layer + the security sweep + deploy/rollback + Gate INTEGRITY (G1–G8)
 │   ├── control-timing.md           ← WHEN a control fires: write-time vs push, blocking vs advisory, wiring ≠ logic
 │   ├── run-integrity.md            ← multi-stage runs: the manifest, the status vocabulary, COMPLETE/INCOMPLETE
-│   ├── token-budget.md             ← token discipline R1–R8: wait without polling, small context, summaries, the session cap
+│   ├── token-budget.md             ← token discipline R1–R9: wait without polling, small context, summaries, the session cap
 │   ├── review-step.md              ← check-the-work: GOAL block, judged findings, tags, round cap, delta rounds, optional vote
 │   └── session-resilience.md       ← a dead session (state record + resume brief), the FINAL report contract, the success-criterion guard, the fair heavy-run queue
 ├── scripts/                        ← the EXECUTABLE layer — config-driven gates, drop-in, bash 3.2 / BSD-safe
