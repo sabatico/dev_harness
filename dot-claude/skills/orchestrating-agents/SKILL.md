@@ -196,6 +196,10 @@ context, so waiting is the lead's biggest avoidable cost.
 - **Read little.** Read another session's events with a small limit (about 6), and only when its
   status shows FINAL, QUESTION or an orphan. Long jobs the lead starts run as one background command;
   the lead ends its turn and is woken once.
+- **Scoped PROOF (R8).** A builder's or tester's PROOF names only the checks of its own code (the
+  stack's fast mode). The heavy run (whole tree, containers) is named once per branch, in the brief of
+  the last agent before the final commit. A brief that asks every agent for the heavy run makes them
+  queue behind each other for it.
 - **Fresh lead.** After a wave the lead starts a fresh lead session from a handoff file instead of
   carrying a context of 500k tokens.
 - **Quality is untouched:** a different agent writes the tests, check-the-work runs before every

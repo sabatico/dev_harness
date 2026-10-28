@@ -16,6 +16,11 @@ How we write code and docs here, so a swarm of agents (and the owner) produce on
 5. **Errors and outcomes are observable; secrets are not.** Log meaningful outcomes; never log a secret/PII/sensitive value.
 6. **Small, reviewable slices.** A change should be reviewable as one coherent unit.
 
+- **Time limits in scripts must work on macOS.** macOS has no `timeout` command, so `timeout 15 docker
+  info` always fails there and looks like a hang (one project restarted a healthy Docker because of it
+  and broke a running test). Use `perl -e 'alarm 15; exec @ARGV' docker info`, which ships with macOS
+  and Linux.
+
 ## Commits & branches
 - «Branch policy — e.g. trunk-based with short-lived branches, or direct-to-main during early buildup.»
 - Commit messages: imperative subject, a body that says *why* for anything non-obvious. Special prefixes the harness uses: **`quality-review:`** (a review baseline — the next review diffs from it) and **`bug-hunt:`** (a hunt baseline — a later delta hunt scopes from it). Both are scoping anchors, so the prefix is load-bearing, not decoration.

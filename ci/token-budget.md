@@ -14,7 +14,7 @@ quality", and the details were delegated ("once decided yourself - implement").
 
 - Why: what a scan of one project measured
 - Published guidance
-- The rules R1–R7
+- The rules R1–R8
 - Trade-offs and what was not done
 - How to re-measure in your project
 
@@ -55,7 +55,7 @@ These quotes were fetched on the day of the decision; re-check them before you r
 - "A fresh context improves code review since Claude won't be biased toward code it just wrote." —
   https://code.claude.com/docs/en/best-practices
 
-## The rules R1–R7
+## The rules R1–R8
 
 - **R1 Wait without polling.** Run every long job (tests, gates, builds, anything that takes the
   heavy-run queue) as ONE background command with its output in a log file, then END THE TURN. The
@@ -90,6 +90,19 @@ These quotes were fetched on the day of the decision; re-check them before you r
 - **R7 What does NOT change.** A different agent writes the tests; the check-the-work review runs
   before every sub-session commit (`ci/review-step.md`); the gates and the push receipt are
   unchanged; questions come before guesses (`following-core-rules` rule 11).
+- **R8 Scoped checks while working; heavy checks only at a commit or a full scan.** While a builder or
+  a tester works, it runs only the tests and lint of the code it changed — seconds, no containers, no
+  place in the heavy-run queue. The heavy checks (the whole-tree test run, integration tests against a
+  database in a container, platform builds in a container, the full lint) run once per branch, by the
+  last agent before the branch's final commit (normally the cross-author tester, after the tests are
+  in), and again in the full gate run before a push (unchanged, R7). A change to shared code or to a
+  contract still gets the heavy run before its commit. Each stack's test runner should offer a scoped
+  fast mode (for example `--fast <packages>`) that prints, first and last, that it is NOT a full run,
+  writes no receipt, and still fails on zero tests or a skipped test. WHY (the owner of the first
+  adopting project): "write code , cover it with tests with another agent - pass gated tests and move
+  forward. at commit or at full scans- perform dockertesting and such" and "running dockertets at
+  every hagne - is too expensive" — two builders whose briefs asked for the full run as their proof
+  queued more than 30 minutes behind each other for a 10-minute container-backed test run.
 
 **Model choice is part of the budget** (`orchestrating-agents` section 2): the strong model plans,
 briefs and judges; the mid model writes the code. For an easy step, lower the EFFORT and keep the

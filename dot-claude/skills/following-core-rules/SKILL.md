@@ -56,7 +56,9 @@ Every spawned agent gets these, plus exactly one task-type skill. The canonical 
     text reads first. (c, R3) **Return summaries:** your final report stays under about 1,500 words;
     detail goes in a file (scratchpad, never committed) and the report names its path. (d, R4) **Stay
     small:** one job, about 40 tool calls; if it grows, hand back a handoff file for a fresh agent.
-    R5–R7 are the lead's (`orchestrating-agents` section 10). None of this relaxes rules 7 and 11, the
+    (e, R8) **Check your scope:** while you work, run only the tests and lint of the code you changed (the
+    stack's fast mode); the heavy run (whole tree, containers) is only for the last agent before the
+    branch's final commit, when your brief names it. R5–R7 are the lead's (`orchestrating-agents` section 10). None of this relaxes rules 7 and 11, the
     separate test author or the check-the-work review.
 
 ## Before you report

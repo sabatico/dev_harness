@@ -12,6 +12,23 @@ only its verdict and per-version means — never task names or contents.
 2. Commit, then tag: `git tag -a vX.Y -m "harness vX.Y"` on that commit.
 3. Push the commit and the tag (`git push origin master vX.Y`).
 
+## v1.8 — 2026-10-28
+
+Scoped checks while working. The first adopting project found that its builder briefs asked every agent
+for the heavy test run (whole tree, an integration database in a container) as proof, so parallel
+builders queued behind each other for a 10-minute run, and one hung-looking container check restarted
+a healthy Docker. Ported in generic form. Not yet benchmarked: it changes what an agent runs as proof,
+so run harness-bench against v1.7 before tagging.
+
+- **R8 — scoped checks while working; heavy checks only at a commit or a full scan** (`ci/token-budget.md`;
+  `following-core-rules` rule 12 (e); `orchestrating-agents` section 10 "Scoped PROOF"; the `CLAUDE.md`
+  token-discipline bullet). Builders and testers run only the checks of the code they changed; the
+  heavy run happens once per branch, by the last agent before the final commit, and in the full gate
+  run before a push (R7 unchanged). Each stack's test runner should offer a fast mode that names itself
+  "not a full run", writes no receipt and still fails on zero or skipped tests.
+- **Time limits in scripts must work on macOS** (`CONVENTIONS.md`): macOS has no `timeout`; use
+  `perl -e 'alarm N; exec @ARGV' <command>`.
+
 ## v1.7 — 2026-10-27
 
 Token discipline and the agent-work toolkit. The first adopting project improved its harness after
